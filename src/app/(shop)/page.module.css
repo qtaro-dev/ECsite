@@ -1,28 +1,28 @@
 .main {
-  min-height: 100vh;
+  flex: 1;
   display: grid;
   place-items: center;
-  padding: 24px;
-  color: #172033;
-  background: #f7f9fc;
+  padding: var(--space-4);
+  color: var(--color-text);
+  background: var(--color-background);
 }
 
 .panel {
-  width: min(100%, 640px);
+  width: min(100%, 40rem);
   padding: clamp(24px, 5vw, 48px);
-  border: 1px solid #d7dfea;
-  border-radius: 16px;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
 }
 
 .panel h1 {
   margin: 8px 0 20px;
-  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-size: var(--font-size-heading);
   line-height: 1.3;
 }
 
 .panel p {
-  line-height: 1.7;
+  line-height: var(--line-height-body);
 }
 
 .eyebrow {
@@ -30,10 +30,4 @@
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
-}
-
-.notice {
-  margin-top: 24px;
-  color: #9a5b00;
-  font-weight: 700;
 }
