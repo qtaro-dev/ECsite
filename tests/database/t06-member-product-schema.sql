@@ -26,6 +26,13 @@ end $$;
 -- Incomplete drafts are valid and can omit shipping data.
 insert into public.products(category_id,slug,sku,name,brand)
 values ((select id from public.categories where slug='cpu'),'t06-draft','T06-DRAFT','Draft','Maker');
+do $$ begin
+  begin
+    update public.products set status='published' where slug='t06-draft';
+    raise exception 'expected incomplete product publication to fail';
+  exception when check_violation then null;
+  end;
+end $$;
 
 insert into public.products(category_id,slug,sku,name,brand,description,beginner_note,price_tax_included_yen,weight_g,pack_length_mm,pack_width_mm,pack_height_mm)
 values ((select id from public.categories where slug='cpu'),'t06-cpu','T06-CPU','Test CPU','Maker','Desc','Note',10000,500,100,100,50);

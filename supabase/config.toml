@@ -22,9 +22,3 @@ enable_signup = true
 
 [storage]
 enabled = false
-
-[analytics]
-enabled = false
-
-[functions]
-enabled = false

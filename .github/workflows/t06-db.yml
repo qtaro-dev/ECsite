@@ -20,12 +20,12 @@ jobs:
   t06-db:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: supabase/setup-cli@adc7f6c42cdd496c1c01bd3d49bd1c9f7da9630d # main as of 2026-09-24
         with:
-          version: latest
+          version: 2.117.0
       - name: Start local Supabase
-        run: supabase start
+        run: supabase start --debug
       - name: Apply migrations from a clean database
         run: supabase db reset --local
       - name: Check T06 constraints and indexes
