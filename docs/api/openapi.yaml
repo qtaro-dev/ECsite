@@ -78,7 +78,7 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/QuoteRequest' } } } }
       responses:
-        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '200': { $ref: '#/components/responses/Quote' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -130,9 +130,20 @@ paths:
     post:
       operationId: post_internal_reconcile-payments
       summary: Reconcile expired attempts from Supabase Cron
-      description: 'Internal signed call. Header, algorithm, signed bytes and replay window are unresolved; deployment blocked until decided. Do not infer a scheme.'
-      x-design-status: unresolved-security-contract
-      security: []
+      description: >-
+        Supabase Cron only. Send X-Internal-Job-Timestamp as Unix seconds and
+        X-Internal-Job-Signature as lowercase hexadecimal HMAC-SHA256. The key
+        is the environment-specific INTERNAL_JOB_SECRET. The MAC input bytes
+        are the ASCII timestamp, one LF byte (0x0A), then the exact raw HTTP
+        request body bytes; do not parse, reserialize, or normalize the body
+        before verification. Accept timestamps no more than 300 seconds from
+        verifier time. Reject missing/malformed headers, bad MAC, or stale
+        timestamp with 401. Calls for already processed work are idempotent;
+        a valid request may be retried within the timestamp window.
+      security: [{ internalJobHmac: [] }]
+      parameters:
+        - { name: X-Internal-Job-Timestamp, in: header, required: true, description: Unix timestamp in seconds, schema: { type: string, pattern: '^[0-9]+$' } }
+        - { name: X-Internal-Job-Signature, in: header, required: true, description: Lowercase hex HMAC-SHA256 over ASCII timestamp + LF + exact raw request body bytes, schema: { type: string, pattern: '^[0-9a-f]{64}$' } }
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReconcileRequest' } } } }
       responses:
         '200': { $ref: '#/components/responses/GenericSuccess' }
@@ -148,7 +159,7 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SmsStart' } } } }
       responses:
-        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '200': { $ref: '#/components/responses/SmsChallenge' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/Unavailable' }
@@ -160,7 +171,7 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SmsVerify' } } } }
       responses:
-        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '200': { $ref: '#/components/responses/SmsChallenge' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/RateLimited' }
@@ -257,7 +268,7 @@ paths:
       x-admin-membership-required: true
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminMutation' } } } }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminProductCreate' } } } }
       responses: { '201': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
     patch:
       operationId: patch_admin_products
@@ -266,7 +277,7 @@ paths:
       x-admin-membership-required: true
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminMutation' } } } }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminProductUpdate' } } } }
       responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
   /admin/inventory:
     get:
@@ -282,7 +293,7 @@ paths:
       x-admin-membership-required: true
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminMutation' } } } }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/InventoryAdjustment' } } } }
       responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
   /admin/orders:
     get:
@@ -305,7 +316,7 @@ paths:
       x-admin-membership-required: true
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminMutation' } } } }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ShippingSettingsUpdate' } } } }
       responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
   /admin/settings/email:
     get:
@@ -321,7 +332,7 @@ paths:
       x-admin-membership-required: true
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminMutation' } } } }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/EmailSettingsUpdate' } } } }
       responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
   /admin/settings/email/test:
     post:
@@ -342,6 +353,11 @@ components:
     standardWebhookId: { type: apiKey, in: header, name: webhook-id }
     standardWebhookTimestamp: { type: apiKey, in: header, name: webhook-timestamp }
     standardWebhookSignature: { type: apiKey, in: header, name: webhook-signature }
+    internalJobHmac:
+      type: apiKey
+      in: header
+      name: X-Internal-Job-Signature
+      description: HMAC-SHA256; see reconcile-payments operation for canonical bytes and timestamp contract. Uses environment-specific INTERNAL_JOB_SECRET.
   parameters:
     Q: { name: q, in: query, schema: { type: string, maxLength: 100 } }
     Origin: { name: Origin, in: header, required: true, schema: { type: string, format: uri } }
@@ -350,7 +366,8 @@ components:
     Envelope:
       type: object
       required: [data, requestId]
-      properties: { data: {}, requestId: { type: string } }
+      additionalProperties: false
+      properties: { data: {}, requestId: { type: string, minLength: 1 } }
     ErrorEnvelope:
       type: object
       required: [error, requestId]
@@ -362,7 +379,7 @@ components:
             code: { type: string }
             message: { type: string }
             fieldErrors: { type: object, additionalProperties: { type: array, items: { type: string } } }
-        requestId: { type: string }
+        requestId: { type: string, minLength: 1 }
     Product:
       type: object
       description: Published product projection; fields follow category schema.
@@ -387,6 +404,22 @@ components:
         reason: { type: string }
         comparedValues: { type: object, additionalProperties: true }
         matchingUrl: { type: [string, 'null'], format: uri-reference }
+    CartProjection:
+      type: object
+      required: [items, goodsTotalYen, estimatedShippingYen]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/CartLine' } }
+        goodsTotalYen: { type: integer, minimum: 0 }
+        estimatedShippingYen: { type: integer, minimum: 0 }
+    CartLine:
+      type: object
+      required: [productId, quantity, unitPriceYen, lineTotalYen, availableQuantity]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 10 }
+        unitPriceYen: { type: integer, minimum: 0 }
+        lineTotalYen: { type: integer, minimum: 0 }
+        availableQuantity: { type: integer, minimum: 0 }
     CartItemInput:
       type: object
       required: [productId, quantity]
@@ -395,7 +428,28 @@ components:
     QuoteRequest:
       type: object
       oneOf: [{ required: [addressId] }, { required: [address] }]
+      additionalProperties: false
       properties: { addressId: { type: string, format: uuid }, address: { $ref: '#/components/schemas/Address' } }
+    Quote:
+      type: object
+      required: [quoteId, expiresAt, items, goodsTotalYen, shipping, taxTotalYen, grandTotalYen, compatibility]
+      additionalProperties: false
+      properties:
+        quoteId: { type: string, format: uuid }
+        expiresAt: { type: string, format: date-time }
+        items: { type: array, items: { $ref: '#/components/schemas/CartLine' } }
+        goodsTotalYen: { type: integer, minimum: 0 }
+        shipping:
+          type: object
+          required: [baseYen, heavyYen, totalYen]
+          additionalProperties: false
+          properties:
+            baseYen: { type: integer, minimum: 0 }
+            heavyYen: { type: integer, minimum: 0 }
+            totalYen: { type: integer, minimum: 0 }
+        taxTotalYen: { type: integer, minimum: 0 }
+        grandTotalYen: { type: integer, minimum: 0 }
+        compatibility: { type: array, minItems: 5, maxItems: 5, items: { $ref: '#/components/schemas/CompatibilityFinding' } }
     CheckoutStart:
       type: object
       required: [quoteId, userConfirmed]
@@ -403,13 +457,30 @@ components:
       properties: { quoteId: { type: string, format: uuid }, userConfirmed: { type: boolean, const: true } }
     Address:
       type: object
-      description: Domestic address validated by account-address rules; exact field schema remains in detailed address design.
-      additionalProperties: true
+      required: [recipientName, postalCode, prefectureCode, city, street, isDefault]
+      additionalProperties: false
+      properties:
+        recipientName: { type: string, minLength: 1 }
+        postalCode: { type: string, pattern: '^[0-9]{7}$' }
+        prefectureCode: { type: integer, minimum: 1, maximum: 47 }
+        city: { type: string, minLength: 1 }
+        street: { type: string, minLength: 1 }
+        building: { type: [string, 'null'] }
+        isDefault: { type: boolean }
     AddressPatch:
       type: object
       required: [addressId]
-      properties: { addressId: { type: string, format: uuid } }
-      additionalProperties: true
+      properties:
+        addressId: { type: string, format: uuid }
+        recipientName: { type: string, minLength: 1 }
+        postalCode: { type: string, pattern: '^[0-9]{7}$' }
+        prefectureCode: { type: integer, minimum: 1, maximum: 47 }
+        city: { type: string, minLength: 1 }
+        street: { type: string, minLength: 1 }
+        building: { type: [string, 'null'] }
+        isDefault: { type: boolean }
+      additionalProperties: false
+      minProperties: 2
     AccountDelete:
       type: object
       required: [reauthenticated, confirmed]
@@ -419,26 +490,104 @@ components:
       type: object
       required: [purpose, flow]
       additionalProperties: false
-      properties: { purpose: { type: string, enum: [signup, password_reset] }, flow: { type: string } }
+      properties:
+        purpose: { type: string, enum: [signup, password_reset] }
+        flow: { type: string, enum: [signup, password_reset] }
     SmsVerify:
       type: object
       required: [challengeId, code]
       additionalProperties: false
-      properties: { challengeId: { type: string }, code: { type: string, pattern: '^\\d{6}$' } }
+      properties: { challengeId: { type: string }, code: { type: string, pattern: '^[0-9]{6}$' } }
+    SmsChallengeResult:
+      type: object
+      description: Issuance/verification state only; never contains the OTP itself.
+      properties:
+        accepted: { type: boolean }
+        challengeId: { type: string }
+        expiresAt: { type: string, format: date-time }
+        retryAfterSeconds: { type: integer, minimum: 0 }
+        verificationToken: { type: string, description: Short-lived token returned only after successful verification. }
     ReconcileRequest:
       type: object
       additionalProperties: false
       properties: { limit: { type: integer, minimum: 1, maximum: 100 } }
-    AdminMutation:
+    AdminProductFields:
+      type: object
+      properties:
+        categoryId: { type: string, format: uuid }
+        slug: { type: string }
+        sku: { type: string }
+        name: { type: string }
+        brand: { type: string }
+        description: { type: string }
+        beginnerNote: { type: string }
+        priceTaxIncludedYen: { type: integer, minimum: 0 }
+        taxRateBasisPoints: { type: integer, const: 1000 }
+        status: { type: string, enum: [draft, published, hidden] }
+        weightG: { type: integer, minimum: 1 }
+        packLengthMm: { type: integer, minimum: 1 }
+        packWidthMm: { type: integer, minimum: 1 }
+        packHeightMm: { type: integer, minimum: 1 }
+    AdminProductCreate:
+      allOf: [{ $ref: '#/components/schemas/AdminProductFields' }]
+      unevaluatedProperties: false
+      description: Drafts may be incomplete; publication validation is server-side. Category-specific specs and image editing are defined by their feature contract.
+    AdminProductUpdate:
+      allOf:
+        - { $ref: '#/components/schemas/AdminProductFields' }
+        - type: object
+          required: [expectedVersion]
+          properties: { expectedVersion: { type: integer, minimum: 0 } }
+      unevaluatedProperties: false
+    InventoryAdjustment:
+      type: object
+      required: [productId, delta, reason, expectedVersion]
+      additionalProperties: false
+      properties:
+        productId: { type: string, format: uuid }
+        delta: { type: integer }
+        reason: { type: string, minLength: 1 }
+        expectedVersion: { type: integer, minimum: 0 }
+    ShippingSettingsUpdate:
       type: object
       required: [expectedVersion]
-      description: Typed operation-specific fields and version; do not accept client authority or server-calculated totals.
-      properties: { expectedVersion: { type: integer, minimum: 0 } }
-      additionalProperties: true
+      additionalProperties: false
+      properties:
+        expectedVersion: { type: integer, minimum: 0 }
+        originPrefectureCode: { type: integer, minimum: 1, maximum: 47 }
+        baseFeeYen: { type: integer, minimum: 0 }
+        freeThresholdYen: { type: integer, minimum: 0 }
+        heavyThresholdG: { type: integer, minimum: 1 }
+        heavyRuleJson: { type: object, description: Versioned rate table; internal row schema is not defined in the current design. }
+        yamatoSourceUrl: { type: string, format: uri }
+        sourceCheckedAt: { type: string, format: date-time }
+    EmailSettingsUpdate:
+      type: object
+      required: [expectedVersion]
+      additionalProperties: false
+      properties:
+        expectedVersion: { type: integer, minimum: 0 }
+        host: { type: string }
+        port: { type: integer, minimum: 1, maximum: 65535 }
+        tlsMode: { type: string }
+        senderAddress: { type: string, format: email }
+        senderName: { type: string }
+        username: { type: string }
+        secret: { type: string, writeOnly: true, description: Optional replacement secret; never returned. }
   responses:
     GenericSuccess:
       description: Success envelope; operation-specific data; secrets and internal errors excluded.
       content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } }
+    SmsChallenge:
+      description: SMS challenge state only; never returns the OTP.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/SmsChallengeResult' }
     Products:
       description: Public published products, at most 24 per page.
       content:
@@ -466,7 +615,24 @@ components:
                   data: { type: array, minItems: 5, maxItems: 5, items: { $ref: '#/components/schemas/CompatibilityFinding' } }
     Cart:
       description: Current server-priced cart and estimated shipping.
-      content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } }
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/CartProjection' }
+    Quote:
+      description: Recalculated formal quote with quote ID and expiry.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Quote' }
     BadRequest: { description: Invalid input or webhook signature., content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
     Unauthorized: { description: Authentication/signature missing or invalid., content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
     Forbidden: { description: Caller lacks required role., content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
