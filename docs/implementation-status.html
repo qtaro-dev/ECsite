@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>実装進捗 | 自作PCパーツECサイト</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, "Noto Sans JP", sans-serif; color: #172033; background: #F7F9FC; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 1280px; margin: auto; padding: 24px 16px 64px; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 3vw, 2rem); }
+    p { line-height: 1.65; }
+    a { color: #155EEF; }
+    a:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #155EEF; outline-offset: 2px; }
+    .summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+    .summary span { background: #FFFFFF; border: 1px solid #D7DEEA; border-radius: 10px; padding: 10px 14px; font-weight: 700; }
+    .controls { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    label { display: grid; gap: 4px; font-weight: 600; }
+    input, select { min-height: 44px; min-width: 180px; border: 1px solid #8A97AA; border-radius: 8px; background: white; color: #172033; padding: 8px 12px; font: inherit; }
+    .table-wrap { overflow-x: auto; background: #FFFFFF; border: 1px solid #D7DEEA; border-radius: 12px; }
+    table { width: 100%; min-width: 960px; border-collapse: collapse; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid #E4EAF2; text-align: left; vertical-align: top; }
+    thead th { background: #EAF0FA; position: sticky; top: 0; z-index: 1; }
+    tbody tr:last-child th, tbody tr:last-child td { border-bottom: none; }
+    tbody tr[hidden] { display: none; }
+    .status { font-weight: 700; white-space: nowrap; }
+    .status[data-value="完了"] { color: #067647; }
+    .status[data-value="実装中"], .status[data-value="レビュー中"] { color: #155EEF; }
+    .status[data-value="保留"] { color: #B42318; }
+    .note { background: #FFFFFF; border-left: 4px solid #155EEF; padding: 12px 16px; margin-top: 22px; }
+    @media (max-width: 767px) { main { padding: 16px 12px 48px; } .controls > label, input, select { width: 100%; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>実装チケット進捗一覧</h1>
+    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 47件。チケットの仕様と依存は<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件は<a href="multi-agent-execution-plan.md">実行計画</a>を参照してください。</p>
+    <div class="summary" aria-label="進捗件数">
+      <span>全件 <output id="count-all">47</output></span>
+      <span>未実装 <output id="count-not-started">47</output></span>
+      <span>実装中 <output id="count-active">0</output></span>
+      <span>レビュー中 <output id="count-review">0</output></span>
+      <span>完了 <output id="count-done">0</output></span>
+      <span>保留 <output id="count-blocked">0</output></span>
+    </div>
+    <div class="controls">
+      <label>チケット検索<input id="query" type="search" placeholder="番号・名称・依存"></label>
+      <label>担当<select id="owner"><option value="">すべて</option><option>LUNA-A</option><option>LUNA-B</option></select></label>
+      <label>状態<select id="state"><option value="">すべて</option><option>未実装</option><option>実装中</option><option>レビュー中</option><option>完了</option><option>保留</option></select></label>
+    </div>
+    <div class="table-wrap" role="region" aria-label="47件の実装チケット" tabindex="0">
+      <table>
+        <thead><tr><th scope="col">番号</th><th scope="col">チケット</th><th scope="col">フェーズ / Wave</th><th scope="col">担当</th><th scope="col">依存</th><th scope="col">状態</th><th scope="col">根拠 PR / commit</th><th scope="col">更新日</th></tr></thead>
+        <tbody>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T01-github-repository-scaffold.md">T01</a></th>
+            <td>GitHub向けリポジトリとローカル雛形</td><td>F0 / W01</td><td>LUNA-A</td>
+            <td>—</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T02-screen-wireframes.md">T02</a></th>
+            <td>画面ワイヤーと遷移レビュー</td><td>F0 / W02</td><td>LUNA-B</td>
+            <td>T01</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T03-openapi-contract.md">T03</a></th>
+            <td>OpenAPI初版とAPI責務表</td><td>F0 / W03</td><td>LUNA-B</td>
+            <td>T02</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T04-shared-zod-schemas.md">T04</a></th>
+            <td>共通Zodスキーマとエラー型</td><td>F1 / W04</td><td>LUNA-A</td>
+            <td>T03</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T05-ci-baseline.md">T05</a></th>
+            <td>CIの最小ゲート</td><td>F1 / W05</td><td>LUNA-B</td>
+            <td>T01、T03、T04</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T06-member-product-schema.md">T06</a></th>
+            <td>会員・商品スキーマSQL</td><td>F1 / W05</td><td>LUNA-A</td>
+            <td>T01、T04</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T07-inventory-order-payment-schema.md">T07</a></th>
+            <td>在庫・注文・決済スキーマSQL</td><td>F2 / W06</td><td>LUNA-A</td>
+            <td>T06</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T08-settings-notification-audit-schema.md">T08</a></th>
+            <td>設定・通知・監査スキーマSQL</td><td>F2 / W07</td><td>LUNA-A</td>
+            <td>T06、T07</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T09-public-storage-rls.md">T09</a></th>
+            <td>公開データ・StorageのRLS SQL</td><td>F2 / W08</td><td>LUNA-A</td>
+            <td>T06、T07</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T10-member-admin-rls.md">T10</a></th>
+            <td>本人・管理者のRLS SQL</td><td>F2 / W09</td><td>LUNA-A</td>
+            <td>T07、T08、T09</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T11-test-data-fixtures.md">T11</a></th>
+            <td>テストデータ定義と投入</td><td>F2 / W10</td><td>LUNA-B</td>
+            <td>T06、T07、T08、T09、T10</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T12-design-system-shell.md">T12</a></th>
+            <td>デザイントークンと共通シェル</td><td>F1 / W04</td><td>LUNA-B</td>
+            <td>T01、T02</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T13-product-search-api.md">T13</a></th>
+            <td>商品検索サービス/API</td><td>F3 / W11</td><td>LUNA-B</td>
+            <td>T03、T04、T09、T11</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T14-home-category-search-ui.md">T14</a></th>
+            <td>トップ・カテゴリ・検索画面</td><td>F3 / W12</td><td>LUNA-B</td>
+            <td>T12、T13</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T15-product-detail-image.md">T15</a></th>
+            <td>商品詳細・画像配信</td><td>F3 / W13</td><td>LUNA-B</td>
+            <td>T09、T12、T13、T14</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T16-catalog-exceptions.md">T16</a></th>
+            <td>カタログ例外と初期データ検収</td><td>F3 / W14</td><td>LUNA-B</td>
+            <td>T13、T14、T15</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T17-supabase-email-auth.md">T17</a></th>
+            <td>Supabase SSRとメール・パスワード認証</td><td>F4 / W15</td><td>LUNA-B</td>
+            <td>T06、T10、T12</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T18-google-oauth.md">T18</a></th>
+            <td>Google OAuth</td><td>F4 / W16</td><td>LUNA-B</td>
+            <td>T17</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T19-mock-sms-password-reset.md">T19</a></th>
+            <td>模擬SMSと再設定のOTP</td><td>F4 / W18</td><td>LUNA-B</td>
+            <td>T08、T17、T20</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T20-auth-email-hook-smtp.md">T20</a></th>
+            <td>Supabase Send Email HookとSMTP送信</td><td>F4 / W17</td><td>LUNA-B</td>
+            <td>T08、T17</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T21-member-address-ui-api.md">T21</a></th>
+            <td>配送先と会員画面</td><td>F4 / W19</td><td>LUNA-B</td>
+            <td>T10、T12、T17</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T22-account-retention-deletion.md">T22</a></th>
+            <td>アカウント削除と30日消去</td><td>F6 / W27</td><td>LUNA-B</td>
+            <td>T17、T21、T31、T32、T34</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T23-compatibility-engine-api.md">T23</a></th>
+            <td>互換性判定エンジン/API</td><td>F3 / W12</td><td>LUNA-A</td>
+            <td>T06、T09、T11、T13</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T24-pc-build-check-ui.md">T24</a></th>
+            <td>構成確認UI</td><td>F5 / W20</td><td>LUNA-B</td>
+            <td>T12、T15、T23、T25</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T25-anonymous-member-cart-api.md">T25</a></th>
+            <td>匿名・会員カートのサーバー処理</td><td>F4 / W16</td><td>LUNA-A</td>
+            <td>T07、T10、T15、T17</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T26-cart-ui-estimated-shipping.md">T26</a></th>
+            <td>カートUIと概算送料</td><td>F5 / W21</td><td>LUNA-B</td>
+            <td>T12、T25、T27</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T27-shipping-tax-calculator.md">T27</a></th>
+            <td>送料・税計算器</td><td>F3 / W11</td><td>LUNA-A</td>
+            <td>T04、T08、T11</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T28-checkout-quote-review.md">T28</a></th>
+            <td>住所選択・正式見積・注文確認</td><td>F5 / W21</td><td>LUNA-A</td>
+            <td>T21、T23、T25、T27</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T29-atomic-order-stock-allocation.md">T29</a></th>
+            <td>原子的な注文作成・在庫引当</td><td>F5 / W22</td><td>LUNA-A</td>
+            <td>T07、T10、T27、T28</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T30-stripe-test-checkout-session.md">T30</a></th>
+            <td>Stripe CheckoutテストSession</td><td>F5 / W23</td><td>LUNA-A</td>
+            <td>T29</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T31-stripe-webhook-state.md">T31</a></th>
+            <td>Stripe Webhookと決済状態</td><td>F5 / W24</td><td>LUNA-A</td>
+            <td>T29、T30</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T32-payment-expiry-reconciliation.md">T32</a></th>
+            <td>期限切れ照合と補償ジョブ</td><td>F5 / W25</td><td>LUNA-A</td>
+            <td>T31</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T33-checkout-result-order-history.md">T33</a></th>
+            <td>決済結果・注文履歴画面</td><td>F5 / W26</td><td>LUNA-B</td>
+            <td>T12、T17、T31、T32</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T34-order-notification-jobs.md">T34</a></th>
+            <td>注文・認証通知のジョブ</td><td>F5 / W26</td><td>LUNA-A</td>
+            <td>T08、T20、T31</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T35-checkout-integration-acceptance.md">T35</a></th>
+            <td>注文系の統合検収</td><td>F6 / W28</td><td>LUNA-B</td>
+            <td>T26、T28、T29、T30、T31、T32、T33、T34</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T36-admin-auth-shell.md">T36</a></th>
+            <td>管理者判定と管理画面シェル</td><td>F4 / W17</td><td>LUNA-A</td>
+            <td>T10、T12、T17</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T37-admin-products-specs-images.md">T37</a></th>
+            <td>商品・仕様・画像の管理</td><td>F5 / W23</td><td>LUNA-B</td>
+            <td>T06、T09、T15、T36</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T38-admin-inventory-adjustment.md">T38</a></th>
+            <td>在庫調整の管理</td><td>F6 / W29</td><td>LUNA-A</td>
+            <td>T07、T29、T36</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T39-admin-orders-payments-readonly.md">T39</a></th>
+            <td>注文・決済状態の管理閲覧</td><td>F6 / W30</td><td>LUNA-A</td>
+            <td>T31、T32、T33、T34、T36</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T40-admin-shipping-settings.md">T40</a></th>
+            <td>発送元・送料規則の管理</td><td>F4 / W19</td><td>LUNA-A</td>
+            <td>T08、T27、T36</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T41-admin-smtp-settings.md">T41</a></th>
+            <td>SMTP設定の管理</td><td>F6 / W31</td><td>LUNA-B</td>
+            <td>T08、T20、T36</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T42-abnormal-demo-paths.md">T42</a></th>
+            <td>異常系デモの利用者導線</td><td>F6 / W30</td><td>LUNA-B</td>
+            <td>T11、T23、T25、T27、T24、T26、T28、T29、T30、T31、T32、T33、T34、T35</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T43-responsive-accessibility-final.md">T43</a></th>
+            <td>レスポンシブ・アクセシビリティ仕上げ</td><td>F7 / W32</td><td>LUNA-B</td>
+            <td>T14、T15、T16、T21、T24、T26、T28、T33、T36、T37、T38、T39、T40、T41</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T44-security-rls-retention-audit.md">T44</a></th>
+            <td>セキュリティ・RLS・削除の横断検証</td><td>F7 / W32</td><td>LUNA-A</td>
+            <td>T09、T10、T17、T18、T20、T19、T21、T29、T30、T31、T32、T33、T34、T22、T36、T37、T38、T39、T40、T41</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T45-full-e2e-performance.md">T45</a></th>
+            <td>全体E2Eと性能検収</td><td>F7 / W33</td><td>LUNA-B</td>
+            <td>T35、T42、T43、T44</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T46-cicd-vercel-supabase-release.md">T46</a></th>
+            <td>GitHub Actions・Vercel・SupabaseのCI/CD</td><td>F7 / W34</td><td>LUNA-A</td>
+            <td>T05、T45</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T47-public-demo-operations-portfolio.md">T47</a></th>
+            <td>公開・運用・ポートフォリオ説明</td><td>F7 / W35</td><td>LUNA-B</td>
+            <td>T22、T42、T43、T44、T45、T46</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">更新責任者はLUNA-Bです。各WaveのPRマージ後、最新のmainからこのファイルだけを更新し、対象行の状態・根拠・更新日を記入します。LUNA-Aは自分のチケットの結果をPRで報告します。「完了」は実装PRの受け入れ条件、テスト、レビュー、マージを確認した後だけ使います。外部設定待ちや失敗は「保留」として理由をPRに記します。なお、画面上の件数は表の状態から自動集計します。</p>
+  </main>
+  <script>
+    const rows = [...document.querySelectorAll('tbody tr')];
+    const query = document.getElementById('query');
+    const owner = document.getElementById('owner');
+    const state = document.getElementById('state');
+    const ids = {'未実装':'count-not-started','実装中':'count-active','レビュー中':'count-review','完了':'count-done','保留':'count-blocked'};
+    function refresh() {
+      const counts = Object.fromEntries(Object.keys(ids).map(key => [key, 0]));
+      const search = query.value.trim().toLocaleLowerCase('ja');
+      for (const row of rows) {
+        const value = row.querySelector('.status').textContent.trim();
+        row.querySelector('.status').dataset.value = value;
+        if (value in counts) counts[value]++;
+        row.hidden = (owner.value && row.dataset.owner !== owner.value) ||
+          (state.value && value !== state.value) ||
+          (search && !row.textContent.toLocaleLowerCase('ja').includes(search));
+      }
+      document.getElementById('count-all').textContent = rows.length;
+      for (const [key, id] of Object.entries(ids)) document.getElementById(id).textContent = counts[key];
+    }
+    query.addEventListener('input', refresh);
+    owner.addEventListener('change', refresh);
+    state.addEventListener('change', refresh);
+    refresh();
+  </script>
+</body>
+</html>

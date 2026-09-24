@@ -1,0 +1,22 @@
+# Local dependencies, generated output, and tooling caches
+node_modules/
+.next/
+out/
+.vercel/
+.npm-cache/
+*.tsbuildinfo
+next-env.d.ts
+coverage/
+playwright-report/
+test-results/
+supabase/.temp/
+tmp/
+
+# Local configuration and credentials. Keep only the documented template.
+.env*
+!.env.example
+
+# Local logs and operating-system files
+*.log
+.DS_Store
+Thumbs.db
