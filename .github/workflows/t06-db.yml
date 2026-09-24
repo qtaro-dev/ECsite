@@ -6,6 +6,7 @@ on:
       - 'supabase/**'
       - 'tests/database/t06-member-product-schema.sql'
       - 'tests/database/t07-inventory-order-payment.sql'
+      - 'tests/database/t08-settings-notification-audit.sql'
       - '.github/workflows/t06-db.yml'
   push:
     branches: [main]
@@ -13,6 +14,7 @@ on:
       - 'supabase/**'
       - 'tests/database/t06-member-product-schema.sql'
       - 'tests/database/t07-inventory-order-payment.sql'
+      - 'tests/database/t08-settings-notification-audit.sql'
       - '.github/workflows/t06-db.yml'
 
 permissions:
@@ -34,3 +36,5 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t06-member-product-schema.sql
       - name: Check T07 inventory, order, and payment schema
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t07-inventory-order-payment.sql
+      - name: Check T08 settings, notification, and audit schema
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t08-settings-notification-audit.sql
