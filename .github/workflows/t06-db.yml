@@ -1,16 +1,18 @@
-name: T06 database integration
+name: Database integration
 
 on:
   pull_request:
     paths:
       - 'supabase/**'
       - 'tests/database/t06-member-product-schema.sql'
+      - 'tests/database/t07-inventory-order-payment.sql'
       - '.github/workflows/t06-db.yml'
   push:
     branches: [main]
     paths:
       - 'supabase/**'
       - 'tests/database/t06-member-product-schema.sql'
+      - 'tests/database/t07-inventory-order-payment.sql'
       - '.github/workflows/t06-db.yml'
 
 permissions:
@@ -30,3 +32,5 @@ jobs:
         run: supabase db reset --local
       - name: Check T06 constraints and indexes
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t06-member-product-schema.sql
+      - name: Check T07 inventory, order, and payment schema
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t07-inventory-order-payment.sql
