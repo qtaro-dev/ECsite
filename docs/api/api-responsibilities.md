@@ -1,0 +1,41 @@
+# API responsibilities (T03)
+
+Source of truth: detailed design §6 and screens/flows in `docs/wireframes/`. This table covers HTTP operations only. Server Component display reads use the server data layer directly and therefore have no synthetic API endpoint. All successful responses use `{ data, requestId }`; errors use `{ error: { code, message, fieldErrors? }, requestId }`. Mutations validate input on the server, apply Origin checks to browser-authenticated writes, and never trust browser price, shipping, stock, role, or payment state.
+
+| Operation | Caller / authorization | Request and response responsibility | UI mapping | Main failures |
+|---|---|---|---|---|
+| `GET /api/products` | Public | Search published products; q ≤100, category/usage/manufacturer, integer price bounds, specification filters, sort, page; 24/page | S01–S04 | 400 invalid filters; 429; 503 |
+| `POST /api/compatibility` | Public | Category/product IDs (max one per category); five ordered findings `status/reason/comparedValues/matchingUrl` | S05, S13 | 400; 404 unpublished/unknown product; 429; 503 |
+| `GET /api/cart` | Anonymous cart cookie or own member session | Current prices, availability and estimated shipping | S06 | 401; 404; 503 |
+| `PUT /api/cart` | Anonymous cart cookie or own member session | Product ID and quantity 1–10; server recomputes cart projection | S04, S06 | 400; 401; 409 stock/quantity; 429; 503 |
+| `POST /api/cart/merge` | Authenticated member plus anonymous cart cookie | Merge quantities after login, cap to quantity/stock limits and return adjustments | S07–S09 → S12 | 401; 403; 409; 429; 503 |
+| `POST /api/checkout/quote` | Authenticated member | Saved address ID or validated domestic address; recalculate item/stock/compatibility/tax/shipping; return quote ID and expiry | S12–S13 | 400; 401; 403; 404; 409; 429; 503 shipping unavailable |
+| `POST /api/checkout/start` | Authenticated member | Quote ID, explicit confirmation and required `Idempotency-Key`; ignore client totals, revalidate, allocate stock and create Stripe test Checkout | S13 | 400; 401; 403; 404; 409 changed quote/stock; 429; 503 |
+| `GET /api/checkout/status?orderId=` | Owning member only | Payment/order state, guidance and retry eligibility; no success inference from redirect | S14, S17 | 400; 401; 404 other owner/absent; 429; 503 |
+| `POST /api/webhooks/stripe` | Publicly reachable Stripe webhook; verify `Stripe-Signature` | Exact raw body bytes; event dedupe; duplicate acknowledged without reprocessing | S14 state refresh (server side) | 400 invalid signature/payload; 429; 503 |
+| `POST /api/internal/reconcile-payments` | Supabase Cron signed call only; **security contract unresolved** | Bounded target count; Vercel verifies Stripe state and releases only confirmed expired allocations | Background operation | 400; 401; 403; 429; 503. Signature header/algorithm/bytes/replay window await decision; operation must not be deployed yet. |
+| `POST /api/auth/sms/start` | Public registration/reset flow; server rate limited | Purpose and flow; return issuance state only, never OTP | S08–S10 | 400; 429; 503 |
+| `POST /api/auth/sms/verify` | Public registration/reset flow; server rate limited | Challenge and 6-digit code; return verification state and short-lived token, never submitted code | S09–S10 | 400; 404 expired/invalid challenge; 429; 503 |
+| `POST /api/auth/email-hook` | Supabase Auth Hook signed request | Verify signature over raw body, allowlisted template, send result; no secrets in response/log | S08–S10 | 400 malformed; 401 invalid signature; 429; 503 delivery failure |
+| `GET /api/account/addresses` | Authenticated member | Own addresses only | S11–S12 | 401; 429; 503 |
+| `POST /api/account/addresses` | Authenticated member; Origin validated | Create domestic address for current member | S11–S12 | 400; 401; 403; 409; 429; 503 |
+| `PATCH /api/account/addresses` | Authenticated member; Origin validated | Update address identified in payload; non-owned address is indistinguishable from absent (404) | S11 | 400; 401; 404; 409; 503 |
+| `DELETE /api/account/addresses/{id}` | Authenticated member; Origin validated | Delete own address only | S11 | 401; 404; 409; 503 |
+| `POST /api/account/delete` | Authenticated member, reauthentication and explicit confirmation | Safe handling of active payment, then idempotent member/Auth deletion | S15 | 400; 401; 409 active operation; 503 |
+| `GET /api/admin/products` | `admin_memberships` verified server side | Search products including drafts for A02 | A01–A02 | 401; 403; 429; 503 |
+| `POST /api/admin/products` | `admin_memberships`; Origin validated | Create category-typed product; incomplete draft allowed, publish validation enforced; audit ID | A02 | 400; 401; 403; 409; 429; 503 |
+| `PATCH /api/admin/products` | `admin_memberships`; Origin validated | Update typed product with expected version and audit ID | A02 | 400; 401; 403; 404; 409; 503 |
+| `GET /api/admin/inventory` | `admin_memberships` | Read physical, allocated and available quantities | A03 | 401; 403; 429; 503 |
+| `POST /api/admin/inventory` | `admin_memberships`; Origin validated | Quantity adjustment with reason and expected version; atomic result | A03 | 400; 401; 403; 404; 409; 503 |
+| `GET /api/admin/orders` | `admin_memberships` | Read-only orders, payment attempts and audit context | A04 | 401; 403; 429; 503 |
+| `GET/PATCH /api/admin/settings/shipping` | `admin_memberships`; Origin validated for PATCH | Read or versioned update of shipping rules/rate table; audit; unavailable configuration blocks quote | A05 | 400; 401; 403; 409; 503 |
+| `GET/PATCH /api/admin/settings/email` | `admin_memberships`; Origin validated for PATCH | Read safe settings / save SMTP settings; secret is never returned | A06 | 400; 401; 403; 409; 503 |
+| `POST /api/admin/settings/email/test` | `admin_memberships`; Origin validated; rate limited | Test configured connection and return safe diagnostic only | A06 | 401; 403; 429; 503 |
+
+## Security and contract notes
+
+- The session security scheme intentionally describes server-managed cookies without guessing a cookie name. Cookies are `HttpOnly`, `Secure`, `SameSite=Lax`; authenticated writes also require Origin validation.
+- Stripe webhook verification uses the raw request body and Stripe signature header. Supabase email-hook verification uses the provider's signed raw payload. Neither endpoint uses member-cookie authorization.
+- Admin access is checked server-side against `admin_memberships`; hiding admin links is not authorization. Stored SMTP credentials, service-role credentials, OTP values, full addresses, and internal DB errors are not returned or logged.
+- `POST /api/internal/reconcile-payments` remains blocked pending a decision on exact signature header, algorithm, signed bytes and replay protection. OpenAPI deliberately assigns no guessed security scheme.
+- The design's address update route is collection `PATCH /api/account/addresses`; this contract preserves it. Product/admin payload internals not specified by the referenced design remain typed by their operation schemas in implementation, without inventing domain fields here.

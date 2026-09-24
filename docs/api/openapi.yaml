@@ -1,0 +1,479 @@
+openapi: 3.1.0
+info: { title: ECsite application API, version: 1.0.0, license: { name: Proprietary, identifier: LicenseRef-Proprietary }, description: 'Detailed design §6. Browser-facing operations; Server Component reads use the data layer directly and are not API paths.' }
+servers: [{ url: /api }]
+security: []
+paths:
+  /products:
+    get:
+      operationId: get_products
+      summary: Search published products
+      parameters:
+        - { $ref: '#/components/parameters/Q' }
+        - { name: category, in: query, schema: { type: string } }
+        - { name: usage, in: query, schema: { type: string } }
+        - { name: manufacturer, in: query, schema: { type: string } }
+        - { name: minPrice, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: maxPrice, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: sort, in: query, schema: { type: string, enum: [price_asc, price_desc, newest] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        '200': { $ref: '#/components/responses/Products' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /compatibility:
+    post:
+      operationId: post_compatibility
+      summary: Evaluate the five compatibility rules
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CompatibilityRequest' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/Compatibility' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /cart:
+    get:
+      operationId: get_cart
+      summary: Read cart with current price, availability and estimated shipping
+      security: [{ sessionCookies: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/Cart' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    put:
+      operationId: put_cart
+      summary: Set cart item quantity (1–10)
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CartItemInput' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/Cart' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /cart/merge:
+    post:
+      operationId: post_cart_merge
+      summary: Merge anonymous cart after login; cap quantities by limit and stock
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /checkout/quote:
+    post:
+      operationId: post_checkout_quote
+      summary: Recalculate quote from member cart and address
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/QuoteRequest' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /checkout/start:
+    post:
+      operationId: post_checkout_start
+      summary: Revalidate quote and create Stripe test Checkout session
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters:
+        - { $ref: '#/components/parameters/Origin' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CheckoutStart' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /checkout/status:
+    get:
+      operationId: get_checkout_status
+      summary: Read order status for its owner; return URL never establishes success
+      security: [{ sessionCookies: [] }]
+      parameters: [{ name: orderId, in: query, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /webhooks/stripe:
+    post:
+      operationId: post_webhooks_stripe
+      summary: Stripe webhook; verify signature over exact raw bytes
+      security: []
+      parameters: [{ name: Stripe-Signature, in: header, required: true, schema: { type: string } }]
+      requestBody: { required: true, description: Exact unparsed request body, content: { application/json: { schema: { type: string, format: binary } } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /internal/reconcile-payments:
+    post:
+      operationId: post_internal_reconcile-payments
+      summary: Reconcile expired attempts from Supabase Cron
+      description: 'Internal signed call. Header, algorithm, signed bytes and replay window are unresolved; deployment blocked until decided. Do not infer a scheme.'
+      x-design-status: unresolved-security-contract
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReconcileRequest' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /auth/sms/start:
+    post:
+      operationId: post_auth_sms_start
+      summary: Start mock SMS challenge
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SmsStart' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /auth/sms/verify:
+    post:
+      operationId: post_auth_sms_verify
+      summary: Verify challenge; return state/token but never OTP
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SmsVerify' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /auth/email-hook:
+    post:
+      operationId: post_auth_email-hook
+      summary: Verify signed Supabase Auth hook and handle allowlisted template
+      description: Verify the raw body with the Supabase hook signing scheme before processing.
+      security: [{ standardWebhookId: [], standardWebhookTimestamp: [], standardWebhookSignature: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { type: string, format: binary } } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /account/addresses:
+    get:
+      operationId: get_account_addresses
+      summary: List addresses owned by current member
+      security: [{ sessionCookies: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    post:
+      operationId: post_account_addresses
+      summary: Add domestic address to current member account
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Address' } } } }
+      responses:
+        '201': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    patch:
+      operationId: patch_account_addresses
+      summary: Update current member's address; non-owned address is 404
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AddressPatch' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /account/addresses/{id}:
+    delete:
+      operationId: delete_account_addresses_id
+      summary: Delete member-owned address
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters:
+        - { $ref: '#/components/parameters/Origin' }
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /account/delete:
+    post:
+      operationId: post_account_delete
+      summary: Delete account after reauthentication and safe payment handling
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AccountDelete' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /admin/products:
+    get:
+      operationId: get_admin_products
+      summary: List/search products for admin
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '503': { $ref: '#/components/responses/Unavailable' } }
+    post:
+      operationId: post_admin_products
+      summary: Create product (typed fields; draft may be incomplete)
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminMutation' } } } }
+      responses: { '201': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
+    patch:
+      operationId: patch_admin_products
+      summary: Update product with expected version
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminMutation' } } } }
+      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
+  /admin/inventory:
+    get:
+      operationId: get_admin_inventory
+      summary: Read inventory, allocated and available quantities
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '503': { $ref: '#/components/responses/Unavailable' } }
+    post:
+      operationId: post_admin_inventory
+      summary: Adjust inventory with reason and expected version
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminMutation' } } } }
+      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
+  /admin/orders:
+    get:
+      operationId: get_admin_orders
+      summary: Read-only order and payment attempt listing
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '503': { $ref: '#/components/responses/Unavailable' } }
+  /admin/settings/shipping:
+    get:
+      operationId: get_admin_settings_shipping
+      summary: Read shipping settings
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '503': { $ref: '#/components/responses/Unavailable' } }
+    patch:
+      operationId: patch_admin_settings_shipping
+      summary: Update shipping settings with expected version and audit
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminMutation' } } } }
+      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
+  /admin/settings/email:
+    get:
+      operationId: get_admin_settings_email
+      summary: Read email settings with secrets omitted
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '503': { $ref: '#/components/responses/Unavailable' } }
+    patch:
+      operationId: patch_admin_settings_email
+      summary: Save email settings without echoing secret fields
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminMutation' } } } }
+      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
+  /admin/settings/email/test:
+    post:
+      operationId: post_admin_settings_email_test
+      summary: Test configured email connection; do not expose credentials
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '429': { $ref: '#/components/responses/RateLimited' }, '503': { $ref: '#/components/responses/Unavailable' } }
+components:
+  securitySchemes:
+    sessionCookies:
+      type: apiKey
+      in: cookie
+      name: Cookie
+      description: 'Server-managed Supabase SSR session and/or anonymous cart cookie; cookie names are implementation-owned. HttpOnly, Secure, SameSite=Lax.'
+    standardWebhookId: { type: apiKey, in: header, name: webhook-id }
+    standardWebhookTimestamp: { type: apiKey, in: header, name: webhook-timestamp }
+    standardWebhookSignature: { type: apiKey, in: header, name: webhook-signature }
+  parameters:
+    Q: { name: q, in: query, schema: { type: string, maxLength: 100 } }
+    Origin: { name: Origin, in: header, required: true, schema: { type: string, format: uri } }
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 1, maxLength: 255 } }
+  schemas:
+    Envelope:
+      type: object
+      required: [data, requestId]
+      properties: { data: {}, requestId: { type: string } }
+    ErrorEnvelope:
+      type: object
+      required: [error, requestId]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            fieldErrors: { type: object, additionalProperties: { type: array, items: { type: string } } }
+        requestId: { type: string }
+    Product:
+      type: object
+      description: Published product projection; fields follow category schema.
+      additionalProperties: true
+    CompatibilityRequest:
+      type: object
+      required: [products]
+      additionalProperties: false
+      properties:
+        products:
+          type: array
+          maxItems: 8
+          items:
+            type: object
+            required: [category, productId]
+            properties: { category: { type: string }, productId: { type: string, format: uuid } }
+    CompatibilityFinding:
+      type: object
+      required: [status, reason, comparedValues, matchingUrl]
+      properties:
+        status: { type: string, enum: [compatible, incompatible, unknown, not_applicable] }
+        reason: { type: string }
+        comparedValues: { type: object, additionalProperties: true }
+        matchingUrl: { type: [string, 'null'], format: uri-reference }
+    CartItemInput:
+      type: object
+      required: [productId, quantity]
+      additionalProperties: false
+      properties: { productId: { type: string, format: uuid }, quantity: { type: integer, minimum: 1, maximum: 10 } }
+    QuoteRequest:
+      type: object
+      oneOf: [{ required: [addressId] }, { required: [address] }]
+      properties: { addressId: { type: string, format: uuid }, address: { $ref: '#/components/schemas/Address' } }
+    CheckoutStart:
+      type: object
+      required: [quoteId, userConfirmed]
+      additionalProperties: false
+      properties: { quoteId: { type: string, format: uuid }, userConfirmed: { type: boolean, const: true } }
+    Address:
+      type: object
+      description: Domestic address validated by account-address rules; exact field schema remains in detailed address design.
+      additionalProperties: true
+    AddressPatch:
+      type: object
+      required: [addressId]
+      properties: { addressId: { type: string, format: uuid } }
+      additionalProperties: true
+    AccountDelete:
+      type: object
+      required: [reauthenticated, confirmed]
+      additionalProperties: false
+      properties: { reauthenticated: { type: boolean, const: true }, confirmed: { type: boolean, const: true } }
+    SmsStart:
+      type: object
+      required: [purpose, flow]
+      additionalProperties: false
+      properties: { purpose: { type: string, enum: [signup, password_reset] }, flow: { type: string } }
+    SmsVerify:
+      type: object
+      required: [challengeId, code]
+      additionalProperties: false
+      properties: { challengeId: { type: string }, code: { type: string, pattern: '^\\d{6}$' } }
+    ReconcileRequest:
+      type: object
+      additionalProperties: false
+      properties: { limit: { type: integer, minimum: 1, maximum: 100 } }
+    AdminMutation:
+      type: object
+      required: [expectedVersion]
+      description: Typed operation-specific fields and version; do not accept client authority or server-calculated totals.
+      properties: { expectedVersion: { type: integer, minimum: 0 } }
+      additionalProperties: true
+  responses:
+    GenericSuccess:
+      description: Success envelope; operation-specific data; secrets and internal errors excluded.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } }
+    Products:
+      description: Public published products, at most 24 per page.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      items: { type: array, maxItems: 24, items: { $ref: '#/components/schemas/Product' } }
+                      total: { type: integer, minimum: 0 }
+                      page: { type: integer, minimum: 1 }
+    Compatibility:
+      description: Five rule findings in rule order.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties:
+                  data: { type: array, minItems: 5, maxItems: 5, items: { $ref: '#/components/schemas/CompatibilityFinding' } }
+    Cart:
+      description: Current server-priced cart and estimated shipping.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } }
+    BadRequest: { description: Invalid input or webhook signature., content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+    Unauthorized: { description: Authentication/signature missing or invalid., content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+    Forbidden: { description: Caller lacks required role., content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+    NotFound: { description: 'Resource is absent, unpublished or not owned.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+    Conflict: { description: 'State, stock, amount or version changed.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+    RateLimited: { description: Request rate limit exceeded., headers: { Retry-After: { schema: { type: integer, minimum: 0 } } }, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+    Unavailable: { description: Retryable service failure or unavailable shipping quote; do not guess amount., content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+
+
+
