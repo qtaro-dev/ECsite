@@ -1,7 +1,7 @@
-import { cloneElement, type ReactElement } from "react";
+import { cloneElement, type AriaAttributes, type ReactElement } from "react";
 import styles from "./FormField.module.css";
 
-type FormControlProps = { id?: string; "aria-describedby"?: string; "aria-invalid"?: boolean };
+type FormControlProps = Pick<AriaAttributes, "aria-describedby" | "aria-invalid"> & { id?: string };
 type FormFieldProps = { id: string; label: string; hint?: string; error?: string; children: ReactElement<FormControlProps> };
 
 export function FormField({ id, label, hint, error, children }: FormFieldProps) {
