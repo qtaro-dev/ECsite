@@ -640,6 +640,3 @@ components:
     Conflict: { description: 'State, stock, amount or version changed.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
     RateLimited: { description: Request rate limit exceeded., headers: { Retry-After: { schema: { type: integer, minimum: 0 } } }, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
     Unavailable: { description: Retryable service failure or unavailable shipping quote; do not guess amount., content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
-
-
-
