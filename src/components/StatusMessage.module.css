@@ -1,0 +1,7 @@
+.message { display: grid; gap: 0.25rem; padding: 1rem; border: 1px solid currentColor; border-radius: var(--radius-card); line-height: var(--line-height-body); }
+.message p { margin: 0; }
+.label { font-weight: 750; }
+.info { color: var(--color-text); background: var(--color-surface); }
+.warning { color: var(--color-warning); background: var(--color-warning-surface); }
+.error { color: var(--color-danger); background: var(--color-danger-surface); }
+.success { color: var(--color-success); background: var(--color-success-surface); }

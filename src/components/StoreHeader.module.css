@@ -1,0 +1,32 @@
+.header { border-bottom: 1px solid var(--color-border); background: var(--color-surface); }
+.inner { width: min(100% - 2rem, var(--content-max)); margin-inline: auto; }
+.topRow { display: grid; grid-template-columns: auto minmax(16rem, 1fr) auto; align-items: center; gap: var(--space-3); min-height: 5rem; }
+.brand { display: inline-flex; align-items: center; gap: 0.625rem; min-height: 44px; color: var(--color-text); font-size: 1.125rem; font-weight: 750; text-decoration: none; white-space: nowrap; }
+.brandMark { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border-radius: var(--radius-control); background: var(--color-primary); color: var(--color-on-primary); font-size: 0.75rem; }
+.search { display: flex; min-width: 0; }
+.search input { width: 100%; min-width: 0; min-height: 44px; padding: 0.625rem 0.75rem; border: 1px solid var(--color-control-border); border-radius: var(--radius-control) 0 0 var(--radius-control); color: var(--color-text); }
+.search input::placeholder { color: var(--color-muted); opacity: 1; }
+.search button, .utilityNav a { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 0.5rem 1rem; border: 1px solid var(--color-primary); border-radius: 0 var(--radius-control) var(--radius-control) 0; background: var(--color-primary); color: var(--color-on-primary); font-weight: 650; text-decoration: none; white-space: nowrap; }
+.search button:hover, .utilityNav a:hover { background: var(--color-primary-hover); color: var(--color-on-primary); }
+.utilityNav { display: flex; align-items: center; gap: 0.5rem; }
+.utilityNav a { border-radius: var(--radius-control); }
+.utilityNav a:first-child { border-color: var(--color-control-border); background: var(--color-surface); color: var(--color-text); }
+.utilityNav a:first-child:hover { background: var(--color-background); }
+.categoryNav { display: flex; gap: 0.25rem; overflow-x: auto; padding-block: 0.25rem 0.75rem; scrollbar-width: thin; }
+.categoryNav a { display: inline-flex; min-height: 44px; flex: 0 0 auto; align-items: center; padding-inline: 0.75rem; border-radius: var(--radius-control); color: var(--color-text); font-size: var(--font-size-small); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.categoryNav a:hover { background: var(--color-background); color: var(--color-primary); }
+.skipLink, .visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+.skipLink:focus-visible { z-index: 10; top: 0.5rem; left: 0.5rem; width: auto; height: auto; padding: 0.75rem 1rem; clip: auto; clip-path: none; border-radius: var(--radius-control); background: var(--color-surface); box-shadow: var(--focus-ring); }
+@media (max-width: 767px) {
+  .inner { width: min(100% - 1rem, var(--content-max)); }
+  .topRow { grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; padding-block: 0.5rem; }
+  .brand { grid-column: 1; grid-row: 1; font-size: 1rem; }
+  .utilityNav { grid-column: 2; grid-row: 1; gap: 0.25rem; }
+  .utilityNav a { padding-inline: 0.625rem; font-size: var(--font-size-small); }
+  .search { grid-column: 1 / -1; grid-row: 2; }
+  .categoryNav { margin-inline: -0.5rem; padding-inline: 0.5rem; }
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  .topRow { grid-template-columns: auto minmax(12rem, 1fr) auto; gap: var(--space-2); }
+  .brand { font-size: 1rem; }
+}
