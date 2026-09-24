@@ -219,7 +219,7 @@ create trigger product_images_published_guard before delete on public.product_im
 
 create or replace function public.validate_product_for_publish()
 returns trigger language plpgsql set search_path = '' as $$
-declare category_slug text;
+declare category_slug text; has_spec boolean;
 begin
   if new.status <> 'published' then return new; end if;
   select slug into category_slug from public.categories where id = new.category_id;
@@ -232,7 +232,7 @@ begin
   if not exists (select 1 from public.product_images i where i.product_id = new.id) then
     raise exception 'published product requires an image' using errcode = '23514';
   end if;
-  if not case category_slug
+  select case category_slug
     when 'cpu' then exists(select 1 from public.cpu_specs s where s.product_id=new.id)
     when 'gpu' then exists(select 1 from public.gpu_specs s where s.product_id=new.id)
     when 'motherboard' then exists(select 1 from public.motherboard_specs s where s.product_id=new.id)
@@ -241,7 +241,8 @@ begin
     when 'psu' then exists(select 1 from public.psu_specs s where s.product_id=new.id)
     when 'case' then exists(select 1 from public.case_specs s where s.product_id=new.id)
     when 'cooler' then exists(select 1 from public.cooler_specs s where s.product_id=new.id)
-    else false end then
+    else false end into has_spec;
+  if not coalesce(has_spec, false) then
     raise exception 'published product requires its category specification row' using errcode = '23514';
   end if;
   return new;
