@@ -48,7 +48,7 @@ create table public.categories (
 );
 insert into public.categories(slug,name,sort_order) values
   ('cpu','CPU',1),('gpu','GPU',2),('motherboard','マザーボード',3),('memory','メモリ',4),
-  ('ssd','SSD',5),('psu','電源',6),('case','PCケース',7),('cooler','CPUクーラー',8);
+  ('ssd','SSD',5),('power-supply','電源',6),('pc-case','PCケース',7),('cpu-cooler','CPUクーラー',8);
 
 create table public.products (
   id uuid primary key default gen_random_uuid(),
@@ -60,7 +60,7 @@ create table public.products (
   description text not null default '',
   beginner_note text not null default '',
   price_tax_included_yen integer check (price_tax_included_yen >= 0),
-  tax_rate_basis_points smallint not null default 1000 check (tax_rate_basis_points between 0 and 10000),
+  tax_rate_basis_points smallint not null default 1000 check (tax_rate_basis_points = 1000),
   status text not null default 'draft' check (status in ('draft','published','hidden')),
   weight_g integer check (weight_g > 0),
   pack_length_mm integer check (pack_length_mm > 0),
@@ -165,8 +165,8 @@ begin
   target_id := case when tg_op = 'DELETE' then old.product_id else new.product_id end;
   expected_slug := case tg_table_name
     when 'cpu_specs' then 'cpu' when 'gpu_specs' then 'gpu' when 'motherboard_specs' then 'motherboard'
-    when 'memory_specs' then 'memory' when 'ssd_specs' then 'ssd' when 'psu_specs' then 'psu'
-    when 'case_specs' then 'case' when 'cooler_specs' then 'cooler' end;
+    when 'memory_specs' then 'memory' when 'ssd_specs' then 'ssd' when 'psu_specs' then 'power-supply'
+    when 'case_specs' then 'pc-case' when 'cooler_specs' then 'cpu-cooler' end;
   select c.slug into actual_slug from public.products p join public.categories c on c.id=p.category_id where p.id=target_id;
   if actual_slug is distinct from expected_slug then
     raise exception 'specification table does not match product category' using errcode = '23514';
@@ -194,9 +194,9 @@ begin
      (exists(select 1 from public.motherboard_specs where product_id=new.id) and expected_slug <> 'motherboard') or
      (exists(select 1 from public.memory_specs where product_id=new.id) and expected_slug <> 'memory') or
      (exists(select 1 from public.ssd_specs where product_id=new.id) and expected_slug <> 'ssd') or
-     (exists(select 1 from public.psu_specs where product_id=new.id) and expected_slug <> 'psu') or
-     (exists(select 1 from public.case_specs where product_id=new.id) and expected_slug <> 'case') or
-     (exists(select 1 from public.cooler_specs where product_id=new.id) and expected_slug <> 'cooler') then
+     (exists(select 1 from public.psu_specs where product_id=new.id) and expected_slug <> 'power-supply') or
+     (exists(select 1 from public.case_specs where product_id=new.id) and expected_slug <> 'pc-case') or
+     (exists(select 1 from public.cooler_specs where product_id=new.id) and expected_slug <> 'cpu-cooler') then
     raise exception 'product category conflicts with existing specification row' using errcode = '23514';
   end if;
   return new;
@@ -238,9 +238,9 @@ begin
     when 'motherboard' then exists(select 1 from public.motherboard_specs s where s.product_id=new.id)
     when 'memory' then exists(select 1 from public.memory_specs s where s.product_id=new.id)
     when 'ssd' then exists(select 1 from public.ssd_specs s where s.product_id=new.id)
-    when 'psu' then exists(select 1 from public.psu_specs s where s.product_id=new.id)
-    when 'case' then exists(select 1 from public.case_specs s where s.product_id=new.id)
-    when 'cooler' then exists(select 1 from public.cooler_specs s where s.product_id=new.id)
+    when 'power-supply' then exists(select 1 from public.psu_specs s where s.product_id=new.id)
+    when 'pc-case' then exists(select 1 from public.case_specs s where s.product_id=new.id)
+    when 'cpu-cooler' then exists(select 1 from public.cooler_specs s where s.product_id=new.id)
     else false end into has_spec;
   if not coalesce(has_spec, false) then
     raise exception 'published product requires its category specification row' using errcode = '23514';

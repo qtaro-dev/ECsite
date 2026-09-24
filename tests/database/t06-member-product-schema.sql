@@ -23,6 +23,13 @@ do $$ begin
   end;
 
   begin
+    insert into public.products(category_id,slug,sku,name,brand,tax_rate_basis_points)
+    values ((select id from public.categories where slug='cpu'),'wrong-tax','wrong-tax','Tax','Maker',800);
+    raise exception 'expected non-standard tax rate to fail';
+  exception when check_violation then null;
+  end;
+
+  begin
     insert into public.addresses(user_id,recipient_name,postal_code,prefecture_code,city,street)
     values ('00000000-0000-0000-0000-000000000099','No User','1000001',13,'千代田区','千代田1-1');
     raise exception 'expected address owner foreign key to fail';
@@ -77,6 +84,10 @@ do $$ begin
     raise exception 'RLS not enabled for addresses';
   end if;
   if (select count(*) from public.categories) <> 8 then raise exception 'expected eight categories'; end if;
+  if (select array_agg(slug order by sort_order) from public.categories) <>
+     array['cpu','gpu','motherboard','memory','ssd','power-supply','pc-case','cpu-cooler']::text[] then
+    raise exception 'category slugs do not match public routes';
+  end if;
 end $$;
 
 rollback;
