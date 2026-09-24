@@ -64,7 +64,7 @@ paths:
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       responses:
-        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '200': { $ref: '#/components/responses/CartMerge' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
@@ -96,7 +96,7 @@ paths:
         - { $ref: '#/components/parameters/IdempotencyKey' }
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CheckoutStart' } } } }
       responses:
-        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '200': { $ref: '#/components/responses/CheckoutStart' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -111,7 +111,7 @@ paths:
       security: [{ sessionCookies: [] }]
       parameters: [{ name: orderId, in: query, required: true, schema: { type: string, format: uuid } }]
       responses:
-        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '200': { $ref: '#/components/responses/CheckoutStatus' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '503': { $ref: '#/components/responses/Unavailable' }
@@ -455,6 +455,37 @@ components:
       required: [quoteId, userConfirmed]
       additionalProperties: false
       properties: { quoteId: { type: string, format: uuid }, userConfirmed: { type: boolean, const: true } }
+    CheckoutStartResult:
+      type: object
+      required: [orderId, checkoutUrl]
+      additionalProperties: false
+      properties:
+        orderId: { type: string, format: uuid }
+        checkoutUrl: { type: string, format: uri, description: Stripe test Checkout session URL. }
+    CheckoutStatusResult:
+      type: object
+      required: [status, guidance, retryEligible]
+      additionalProperties: false
+      properties:
+        status: { type: string, enum: [payment_pending, paid, payment_failed, expired, review_required] }
+        guidance: { type: string, description: Status-specific user guidance and next action. }
+        retryEligible: { type: boolean }
+    CartMergeResult:
+      type: object
+      required: [cart, adjustments]
+      additionalProperties: false
+      properties:
+        cart: { $ref: '#/components/schemas/CartProjection' }
+        adjustments:
+          type: array
+          description: Entries identify items whose merged quantity was adjusted to the permitted limit or current available stock.
+          items:
+            type: object
+            required: [productId, quantity]
+            additionalProperties: false
+            properties:
+              productId: { type: string, format: uuid }
+              quantity: { type: integer, minimum: 0, maximum: 10, description: Resulting quantity after merge adjustment. }
     Address:
       type: object
       required: [recipientName, postalCode, prefectureCode, city, street, isDefault]
@@ -623,6 +654,36 @@ components:
               - type: object
                 properties:
                   data: { $ref: '#/components/schemas/CartProjection' }
+    CartMerge:
+      description: Merged server-priced cart and adjustment notices.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/CartMergeResult' }
+    CheckoutStart:
+      description: Order created and Stripe test Checkout session URL returned.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/CheckoutStartResult' }
+    CheckoutStatus:
+      description: Current order state and next-action guidance; redirect return alone does not establish success.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/CheckoutStatusResult' }
     Quote:
       description: Recalculated formal quote with quote ID and expiry.
       content:
