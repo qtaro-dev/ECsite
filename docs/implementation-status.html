@@ -38,10 +38,10 @@
     <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 47件。チケットの仕様と依存は<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件は<a href="multi-agent-execution-plan.md">実行計画</a>を参照してください。</p>
     <div class="summary" aria-label="進捗件数">
       <span>全件 <output id="count-all">47</output></span>
-      <span>未実装 <output id="count-not-started">42</output></span>
+      <span>未実装 <output id="count-not-started">40</output></span>
       <span>実装中 <output id="count-active">0</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">5</output></span>
+      <span>完了 <output id="count-done">7</output></span>
       <span>保留 <output id="count-blocked">0</output></span>
     </div>
     <div class="controls">
@@ -76,12 +76,12 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T05-ci-baseline.md">T05</a></th>
             <td>CIの最小ゲート</td><td>F1 / W05</td><td>LUNA-B</td>
-            <td>T01、T03、T04</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T01、T03、T04</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/10">PR #10</a> / <a href="https://github.com/qtaro-dev/ECsite/commit/f64de96ea3ef902e24e89fa17ec6298917a60a82">f64de96</a>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36053432339">CI合格</a>、<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36053328081">意図的な型エラーでCI失敗を確認</a></td><td class="updated">2026-09-25</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T06-member-product-schema.md">T06</a></th>
             <td>会員・商品スキーマSQL</td><td>F1 / W05</td><td>LUNA-A</td>
-            <td>T01、T04</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T01、T04</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/9">PR #9</a> / <a href="https://github.com/qtaro-dev/ECsite/commit/87db140417a41411b3f45064a67c1127275c7317">87db140</a>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36054304908">CI合格</a>、<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36054304920">Supabase DB reset・統合検証合格</a></td><td class="updated">2026-09-25</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T07-inventory-order-payment-schema.md">T07</a></th>
