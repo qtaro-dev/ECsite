@@ -11,10 +11,11 @@ const SearchIntegerSchema = z.preprocess((value) => {
 }, z.number().int().nonnegative());
 
 export const ProductSortSchema = z.enum(['price_asc', 'price_desc', 'newest']);
+export const ProductUseCaseSchema = z.enum(['gaming', 'daily', 'editing']);
 export const SearchQuerySchema = z.object({
   q: z.string().max(100).optional(),
   category: z.string().optional(),
-  usage: z.string().optional(),
+  usage: ProductUseCaseSchema.optional(),
   manufacturer: z.string().optional(),
   minPrice: SearchIntegerSchema.optional(),
   maxPrice: SearchIntegerSchema.optional(),
@@ -79,10 +80,28 @@ export const ApiErrorSchema = z.object({
   requestId: z.string().min(1),
 });
 
+/** Public error codes are an application-owned subset of the OpenAPI string field. */
+export const ApiErrorCodeSchema = z.enum([
+  'BAD_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND', 'CONFLICT', 'RATE_LIMITED', 'UNAVAILABLE',
+]);
+
+const PUBLIC_ERROR_MESSAGES: Record<z.infer<typeof ApiErrorCodeSchema>, string> = {
+  BAD_REQUEST: '入力内容を確認してください。',
+  UNAUTHORIZED: '認証が必要です。',
+  FORBIDDEN: 'この操作を実行する権限がありません。',
+  NOT_FOUND: '対象の情報が見つかりません。',
+  CONFLICT: '状態が更新されています。内容を確認して再度お試しください。',
+  RATE_LIMITED: 'しばらく待ってから再度お試しください。',
+  UNAVAILABLE: '現在サービスを利用できません。時間をおいて再度お試しください。',
+};
+
+const PUBLIC_FIELD_ERROR_MESSAGE = '入力値が正しくありません。';
+
 export type Id = z.infer<typeof IdSchema>;
 export type Yen = z.infer<typeof YenSchema>;
 export type Quantity = z.infer<typeof QuantitySchema>;
 export type SearchQuery = z.infer<typeof SearchQuerySchema>;
+export type ProductUseCase = z.infer<typeof ProductUseCaseSchema>;
 export type Address = z.infer<typeof AddressSchema>;
 export type AddressPatch = z.infer<typeof AddressPatchSchema>;
 export type CartItemInput = z.infer<typeof CartItemInputSchema>;
@@ -92,25 +111,29 @@ export type OrderStatus = z.infer<typeof OrderStatusSchema>;
 export type ProductStatus = z.infer<typeof ProductStatusSchema>;
 export type ApiError = z.infer<typeof ApiErrorSchema>;
 
-/** Converts validation failures to the public error envelope without echoing submitted values. */
+/** Converts validation failures to the public envelope without forwarding Zod messages or values. */
 export function validationErrorResponse(error: z.ZodError, requestId: string): ApiError {
   const fieldErrors = error.issues.reduce<Record<string, string[]>>((result, issue) => {
     const field = issue.path.map(String).join('.') || '_';
-    (result[field] ??= []).push(issue.message);
+    (result[field] ??= []).push(PUBLIC_FIELD_ERROR_MESSAGE);
     return result;
   }, {});
 
   return {
-    error: { code: 'BAD_REQUEST', message: '入力内容を確認してください。', fieldErrors },
+    error: {
+      code: 'BAD_REQUEST',
+      message: PUBLIC_ERROR_MESSAGES.BAD_REQUEST,
+      fieldErrors,
+    },
     requestId,
   };
 }
 
-/** Replaces internal failures with a generic public error; callers supply only a safe code/message. */
+/** Builds a public error using only an allowlisted code and fixed message; cause is never serialized. */
 export function apiErrorResponse(
-  code: string,
-  message: string,
+  code: z.infer<typeof ApiErrorCodeSchema>,
   requestId: string,
+  _cause?: unknown,
 ): ApiError {
-  return { error: { code, message }, requestId };
+  return { error: { code, message: PUBLIC_ERROR_MESSAGES[code] }, requestId };
 }

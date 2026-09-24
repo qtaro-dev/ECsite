@@ -10,7 +10,7 @@ paths:
       parameters:
         - { $ref: '#/components/parameters/Q' }
         - { name: category, in: query, schema: { type: string } }
-        - { name: usage, in: query, schema: { type: string } }
+        - { name: usage, in: query, schema: { type: string, enum: [gaming, daily, editing] } }
         - { name: manufacturer, in: query, schema: { type: string } }
         - { name: minPrice, in: query, schema: { type: integer, minimum: 0 } }
         - { name: maxPrice, in: query, schema: { type: integer, minimum: 0 } }
