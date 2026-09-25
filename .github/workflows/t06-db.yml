@@ -10,6 +10,7 @@ on:
       - 'tests/database/t09-public-storage-rls.sql'
       - 'tests/database/t09-storage-http.py'
       - 'tests/database/t10-member-admin-rls.sql'
+      - 'tests/database/t21-member-address-rls.sql'
       - 'tests/database/t11-test-data.sql'
       - 'tests/database/t11-storage-fixtures.py'
       - 'tests/database/t13-product-search.sql'
@@ -28,6 +29,7 @@ on:
       - 'tests/database/t09-public-storage-rls.sql'
       - 'tests/database/t09-storage-http.py'
       - 'tests/database/t10-member-admin-rls.sql'
+      - 'tests/database/t21-member-address-rls.sql'
       - 'tests/database/t11-test-data.sql'
       - 'tests/database/t11-storage-fixtures.py'
       - 'tests/database/t13-product-search.sql'
@@ -63,6 +65,8 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t09-public-storage-rls.sql
       - name: Check T10 member and administrator RLS
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t10-member-admin-rls.sql
+      - name: Check T21 member address validation, default switching, and ownership RLS
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t21-member-address-rls.sql
       - name: Reapply seed and check T11 fixture cases
         run: |
           psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file supabase/seed.sql

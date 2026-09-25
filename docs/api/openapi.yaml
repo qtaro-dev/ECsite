@@ -277,7 +277,8 @@ paths:
         '503': { $ref: '#/components/responses/Unavailable' }
     post:
       operationId: post_account_addresses
-      summary: Add domestic address to current member account
+      summary: Add domestic address owned by the current member
+      description: Setting a new default address atomically clears the previous default. No default address is required.
       security: [{ sessionCookies: [] }]
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
@@ -291,7 +292,8 @@ paths:
         '503': { $ref: '#/components/responses/Unavailable' }
     patch:
       operationId: patch_account_addresses
-      summary: Update current member's address; non-owned address is 404
+      summary: Update a current member-owned address; a non-owned address is 404
+      description: Setting an address as default atomically clears the previous default. No default address is required.
       security: [{ sessionCookies: [] }]
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
@@ -300,6 +302,7 @@ paths:
         '200': { $ref: '#/components/responses/GenericSuccess' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '503': { $ref: '#/components/responses/Unavailable' }
@@ -315,8 +318,9 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/GenericSuccess' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
         '503': { $ref: '#/components/responses/Unavailable' }
   /account/delete:
     post:
@@ -638,24 +642,24 @@ components:
       required: [recipientName, postalCode, prefectureCode, city, street, isDefault]
       additionalProperties: false
       properties:
-        recipientName: { type: string, minLength: 1 }
+        recipientName: { type: string, minLength: 1, maxLength: 80 }
         postalCode: { type: string, pattern: '^[0-9]{7}$' }
         prefectureCode: { type: integer, minimum: 1, maximum: 47 }
-        city: { type: string, minLength: 1 }
-        street: { type: string, minLength: 1 }
-        building: { type: [string, 'null'] }
+        city: { type: string, minLength: 1, maxLength: 100 }
+        street: { type: string, minLength: 1, maxLength: 150 }
+        building: { type: [string, 'null'], maxLength: 100 }
         isDefault: { type: boolean }
     AddressPatch:
       type: object
       required: [addressId]
       properties:
         addressId: { type: string, format: uuid }
-        recipientName: { type: string, minLength: 1 }
+        recipientName: { type: string, minLength: 1, maxLength: 80 }
         postalCode: { type: string, pattern: '^[0-9]{7}$' }
         prefectureCode: { type: integer, minimum: 1, maximum: 47 }
-        city: { type: string, minLength: 1 }
-        street: { type: string, minLength: 1 }
-        building: { type: [string, 'null'] }
+        city: { type: string, minLength: 1, maxLength: 100 }
+        street: { type: string, minLength: 1, maxLength: 150 }
+        building: { type: [string, 'null'], maxLength: 100 }
         isDefault: { type: boolean }
       additionalProperties: false
       minProperties: 2
