@@ -59,16 +59,19 @@ do $$ begin
   begin delete from public.product_images where storage_path='t09/t09-published.jpg'; raise exception 'member DELETE unexpectedly succeeded'; exception when insufficient_privilege then null; end;
 end $$;
 
--- Admin sees catalog drafts and may manipulate private bucket object metadata.
+-- Admin sees catalog drafts; Storage CRUD is tested through its API in t09-storage-http.py.
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000093',true);
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000093","role":"authenticated"}',true);
-do $$ declare oid uuid; begin
+do $$ begin
   if (select count(*) from public.products where slug like 't09-%') <> 4 then raise exception 'admin cannot read all catalog states'; end if;
   if has_table_privilege(current_user,'public.products','INSERT') or has_table_privilege(current_user,'public.products','UPDATE') or has_table_privilege(current_user,'public.products','DELETE') then raise exception 'admin must use the server catalog write path'; end if;
-  insert into storage.objects(bucket_id,name) values ('product-images','t09/admin-upload.jpg') returning id into oid;
-  if not exists(select 1 from storage.objects where id=oid) then raise exception 'admin cannot read product image object'; end if;
-  update storage.objects set metadata='{"size":1}'::jsonb where id=oid;
-  delete from storage.objects where id=oid;
+  if not private.is_active_admin() then raise exception 'admin membership helper denied active admin'; end if;
+  if not exists(select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='product_images_object_admin_insert') or
+     not exists(select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='product_images_object_admin_read') or
+     not exists(select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='product_images_object_admin_update') or
+     not exists(select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='product_images_object_admin_delete') then
+    raise exception 'missing admin Storage policy';
+  end if;
 end $$;
 reset role;
 
