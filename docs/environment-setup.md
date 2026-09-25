@@ -42,7 +42,13 @@ SupabaseのPRごとのBranchingは有料プランの可能性があるため採�
 
 **メール・パスワード認証（T17）**：Next.js SSRは`NEXT_PUBLIC_SUPABASE_URL`と`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`を使い、`@supabase/ssr`でHTTP-only Cookieのセッションを更新する。開発時はAuth Site URLとRedirect URLsをローカルのWeb URLへ限定する。確認メールはSupabase Authから実送信されるため、Hosted Supabase/SMTPの接続を確認する前に公開環境へ接続済みと扱わない。`AUTH_BYPASS_ENABLED=true`は`NODE_ENV=development|test`のみ許可し、Productionでは起動・ビルドを失敗させる。ローカルE2EはSupabase CLIのメール受信箱を使い、外部メールを送信しない。
 
-**Google**：利用者がGoogle Auth PlatformでWeb OAuthクライアントを環境ごとに作成し、許可するJavaScript originとSupabase Dashboardに表示されるcallback URLを登録する。GoogleのClient ID/Secretを対応するSupabase Provider設定へ入れる。アプリからの戻り先はSupabaseのRedirect URL許可リストに合わせる。スコープは`openid email profile`に限定し、配送先は本サイトで入力する。設定・認証が必要になった時点で、具体的なURL一覧をLUNAが提示する。
+**Google（T18）**：利用者がGoogle Auth PlatformでOAuth consent screenを設定し、Web application型OAuth clientを環境ごとに作成する。Google側のAuthorized JavaScript originsにはサイトoriginのみ（schemeとhost。pathなし）を登録し、Authorized redirect URIsにはSupabase DashboardのGoogle Providerに表示されるcallback URLを登録する。Hosted Supabaseの場合は`https://<project-ref>.supabase.co/auth/v1/callback`、Supabase CLI localの場合は`http://127.0.0.1:54321/auth/v1/callback`。Supabase DashboardのAuthentication → Sign In / Providers → GoogleでClient IDとClient Secretを設定し、callback URLがGoogle側の登録値と一致することを確認する。
+
+Google Authorized JavaScript originsの例はローカルCIが`http://127.0.0.1:4173`、開発サーバーが`http://localhost:3000`、Preview/Productionがそれぞれ`https://<preview-host>`と`https://<public-host>`。Google側には実際に使う各originを登録する。
+
+Supabase AuthのSite URLには当該環境の`NEXT_PUBLIC_SITE_URL`を設定し、Redirect URLsへ同じoriginの`/auth/callback`を追加する。今回のローカルCI URLは`http://127.0.0.1:4173/auth/callback`、開発サーバー標準URLは`http://localhost:3000/auth/callback`。Preview/Productionではそれぞれ`https://<preview-host>/auth/callback`と`https://<public-host>/auth/callback`を登録する。ワイルドカードは使わず、実際に使用するホストだけを許可する。Google Client SecretはSupabase Provider設定にのみ保存し、Next.js環境変数やアプリDBには置かない。アプリ要求スコープは`openid email profile`で、配送先は本サイト内で入力する。
+
+**利用者の設定・認証が必要**：Google Cloudのプロジェクト/OAuthクライアント作成とSupabase Provider設定は利用者本人が行う。OAuthを有効にするためのGoogleアカウントが必要で、料金はGoogle/Supabaseの契約プランと利用条件に従う。設定後、Preview環境でGoogle登録・ログイン、キャンセル・拒否時の回復、同一サイト内の戻り先を確認する。設定前はローカル模擬テストのみ実施し、外部接続済みとは扱わない。
 
 **メール**：利用者が利用するSMTP送信先・送信元ドメイン・認証情報を決める。Supabase Auth Send Email Hookの署名秘密をVercelの環境別秘密設定へ置き、Vercelの送信処理から管理設定のSMTPへ接続する。Previewは許可宛先だけに送る。Productionは実メールを送るが、秘密は画面に再表示しない。設定前に利用料金・送信制限・ドメイン認証要件を確認する。
 
