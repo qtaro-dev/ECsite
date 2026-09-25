@@ -17,11 +17,11 @@ insert into public.product_images(product_id,storage_path,alt_text)
 select id,'t09/'||slug||'.jpg','T09 image' from public.products where slug like 't09-%';
 update public.products set status='published' where slug in ('t09-published','t09-deleted');
 update public.products set status='hidden' where slug='t09-hidden';
-update public.products set deleted_at=now() where slug='t09-deleted';
+update public.products set status='hidden', deleted_at=now() where slug='t09-deleted';
 insert into public.inventory(product_id,on_hand,allocated)
 select id,5,2 from public.products where slug='t09-published';
 
--- Anon sees only active published catalog rows and the deliberately narrow stock projection.
+-- Anon sees only active published catalog rows; deleted fixture is hidden and soft-deleted.
 set local role anon;
 select set_config('request.jwt.claim.role','anon',true);
 do $$ begin
