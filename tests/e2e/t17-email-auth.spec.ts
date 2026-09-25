@@ -11,7 +11,16 @@ test('email registration, confirmation, login, and logout use separate SSR sessi
   await page.getByLabel('パスワード', { exact: true }).fill(password);
   await page.getByLabel('パスワード（確認）').fill(password);
   await page.getByLabel('規約と個人情報の取り扱いを確認しました').check();
+  const registrationResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/api/auth/register') && response.request().method() === 'POST');
   await page.getByRole('button', { name: '確認メールを送る' }).click();
+  const registrationResponse = await registrationResponsePromise;
+  const registrationResult = await registrationResponse.json().catch(() => null) as {
+    error?: { code?: string; message?: string };
+  } | null;
+  expect(registrationResponse.status(),
+    `Registration API returned HTTP ${registrationResponse.status()}${registrationResult?.error?.code ? ` (${registrationResult.error.code})` : ''}: ${registrationResult?.error?.message ?? 'no safe error detail'}`,
+  ).toBe(201);
   await expect(page).toHaveURL(/\/verify\?email=/);
   await expect(page.getByText('登録メールが確認されるまで注文を開始できません。')).toBeVisible();
 
