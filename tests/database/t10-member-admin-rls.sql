@@ -69,6 +69,8 @@ do $$ declare own_order uuid; other_address uuid; table_name text; begin
   if own_order is null or (select count(*) from public.order_items) <> 1 or (select count(*) from public.payment_attempts) <> 1 then raise exception 'order child read failed'; end if;
   select id into other_address from public.addresses where user_id='00000000-0000-0000-0000-000000000102';
   if other_address is not null then raise exception 'member A read member B address'; end if;
+  update public.addresses set city='千代田区二丁目' where user_id='00000000-0000-0000-0000-000000000101';
+  if (select city from public.addresses) <> '千代田区二丁目' then raise exception 'member address update failed'; end if;
   if (select count(*) from public.order_items where order_id='ffffffff-ffff-ffff-ffff-ffffffffffff') <> 0 then raise exception 'guessed foreign child id leaked'; end if;
   update public.profiles set display_name='A updated';
   if (select display_name from public.profiles) <> 'A updated' then raise exception 'profile update failed'; end if;
