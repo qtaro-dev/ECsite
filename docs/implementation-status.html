@@ -38,10 +38,10 @@
     <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 47件。チケットの仕様と依存は<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件は<a href="multi-agent-execution-plan.md">実行計画</a>を参照してください。</p>
     <div class="summary" aria-label="進捗件数">
       <span>全件 <output id="count-all">47</output></span>
-      <span>未実装 <output id="count-not-started">29</output></span>
+      <span>未実装 <output id="count-not-started">28</output></span>
       <span>実装中 <output id="count-active">0</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">18</output></span>
+      <span>完了 <output id="count-done">19</output></span>
       <span>保留 <output id="count-blocked">0</output></span>
     </div>
     <div class="controls">
@@ -136,7 +136,7 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T17-supabase-email-auth.md">T17</a></th>
             <td>Supabase SSRとメール・パスワード認証</td><td>F4 / W15</td><td>LUNA-B</td>
-            <td>T06、T10、T12</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T06、T10、T12</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/33">PR #33</a> / <a href="https://github.com/qtaro-dev/ECsite/commit/e6d39f2bfb85977e6ad7dc6245165847012094dd">e6d39f2</a>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36129908742">CI合格（quality、Chromium認証E2E）</a>、<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36129908824">ローカルSupabase DB検証合格</a>。Hosted Supabase/SMTP接続は外部設定待ちで未確認</td><td class="updated">2026-09-25</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T18-google-oauth.md">T18</a></th>
