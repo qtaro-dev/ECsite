@@ -15,7 +15,7 @@ test("published detail shows image, labeled specifications, availability, and qu
 test("sold out products cannot advance to the cart", async ({ page }) => {
   await page.goto("/products/t11-gpu-300");
   await expect(page.getByRole("heading", { name: "T11 Test GPU 300 mm" })).toBeVisible();
-  await expect(page.getByText("在庫切れ")).toBeVisible();
+  await expect(page.getByRole("status").getByText("在庫切れ", { exact: true })).toBeVisible();
   await expect(page.getByLabel("数量")).toBeDisabled();
   await expect(page.getByRole("link", { name: "カートへ進む" })).toHaveCount(0);
 });
