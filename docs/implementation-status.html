@@ -38,11 +38,11 @@
     <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 47件。チケットの仕様と依存は<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件は<a href="multi-agent-execution-plan.md">実行計画</a>を参照してください。</p>
     <div class="summary" aria-label="進捗件数">
       <span>全件 <output id="count-all">47</output></span>
-      <span>未実装 <output id="count-not-started">28</output></span>
-      <span>実装中 <output id="count-active">0</output></span>
+      <span>未実装 <output id="count-not-started">24</output></span>
+      <span>実装中 <output id="count-active">1</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">19</output></span>
-      <span>保留 <output id="count-blocked">0</output></span>
+      <span>完了 <output id="count-done">20</output></span>
+      <span>保留 <output id="count-blocked">2</output></span>
     </div>
     <div class="controls">
       <label>チケット検索<input id="query" type="search" placeholder="番号・名称・依存"></label>
@@ -141,7 +141,7 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T18-google-oauth.md">T18</a></th>
             <td>Google OAuth</td><td>F4 / W16</td><td>LUNA-B</td>
-            <td>T17</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T17</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/35">Draft PR #35</a>; Google OAuth/Supabase Provider外部接続待ち</td><td class="updated">2026-09-26</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T19-mock-sms-password-reset.md">T19</a></th>
@@ -151,7 +151,7 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T20-auth-email-hook-smtp.md">T20</a></th>
             <td>Supabase Send Email HookとSMTP送信</td><td>F4 / W17</td><td>LUNA-B</td>
-            <td>T08、T17</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T08、T17</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/37">Draft PR #37</a>; Vitest 82件・typecheck合格、quality/browser CI 36158038906 成功、DB CI<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36158038908">失敗</a>（Vault権限テスト要修正）。SMTP外部設定・実送信未確認</td><td class="updated">2026-09-26</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T21-member-address-ui-api.md">T21</a></th>
@@ -176,7 +176,7 @@
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T25-anonymous-member-cart-api.md">T25</a></th>
             <td>匿名・会員カートのサーバー処理</td><td>F4 / W16</td><td>LUNA-A</td>
-            <td>T07、T10、T15、T17</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T07、T10、T15、T17</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/36">PR #36</a> / <a href="https://github.com/qtaro-dev/ECsite/commit/8f0e82aaab86dfaca807ebaa3d41154c5dcfdd4c">8f0e82a</a>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36157309250">CI合格</a>、<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36157309351">DB統合検証合格</a></td><td class="updated">2026-09-26</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T26-cart-ui-estimated-shipping.md">T26</a></th>
@@ -231,7 +231,7 @@
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T36-admin-auth-shell.md">T36</a></th>
             <td>管理者判定と管理画面シェル</td><td>F4 / W17</td><td>LUNA-A</td>
-            <td>T10、T12、T17</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T10、T12、T17</td><td class="status">実装中</td><td class="evidence">依存チケット完了、LUNA-Aが実装中</td><td class="updated">2026-09-26</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T37-admin-products-specs-images.md">T37</a></th>
