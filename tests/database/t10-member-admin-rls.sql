@@ -116,8 +116,12 @@ do $$ begin
   if not private.is_active_admin() then raise exception 'active admin helper denied'; end if;
   if (select count(*) from public.orders) <> 1 or (select count(*) from public.order_items) <> 1 or
      (select count(*) from public.payment_attempts) <> 1 then raise exception 'admin order read failed'; end if;
-  if (select count(*) from public.inventory) <> 1 or (select count(*) from public.stock_allocations) <> 1 or
-     (select count(*) from public.payment_events) <> 1 or (select count(*) from public.inventory_adjustments) <> 1 then raise exception 'admin inventory/payment read failed'; end if;
+  if (select count(*) from public.inventory i join public.products p on p.id=i.product_id where p.slug='t10-product') <> 1 or
+     (select count(*) from public.stock_allocations sa join public.orders o on o.id=sa.order_id
+       where o.checkout_key='00000000-0000-0000-0000-000000000110') <> 1 or
+     (select count(*) from public.payment_events where stripe_event_id='evt_t10') <> 1 or
+     (select count(*) from public.inventory_adjustments ia join public.products p on p.id=ia.product_id
+       where p.slug='t10-product') <> 1 then raise exception 'admin inventory/payment read failed'; end if;
   if (select count(*) from public.smtp_settings) <> 1 or (select count(*) from public.audit_logs) <> 1 or
      (select count(*) from public.shipping_settings where version='initial-v1') <> 1 then raise exception 'admin settings/audit read failed'; end if;
   if has_table_privilege(current_user,'public.admin_memberships','SELECT') then raise exception 'admin has direct membership SELECT'; end if;
