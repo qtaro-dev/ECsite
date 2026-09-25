@@ -104,10 +104,9 @@ insert into public.shipping_settings(version,base_fee_yen,free_threshold_yen,hea
 values ('t11-fixture-only-v1',940,10000,20000,
   '{"fixture_only":true,"sample_fee_yen":1234,"warning":"Never use for quoting or production"}'::jsonb,
   'https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html',false)
-on conflict(version) do update set base_fee_yen=excluded.base_fee_yen,
-  free_threshold_yen=excluded.free_threshold_yen,heavy_threshold_g=excluded.heavy_threshold_g,
-  heavy_rule_json=excluded.heavy_rule_json,yamato_source_url=excluded.yamato_source_url,
-  is_active=false,source_checked_at=null,created_by=null;
+-- T40 makes versions immutable. A repeated development seed must leave the
+-- existing fixture version untouched rather than rewriting historical values.
+on conflict(version) do nothing;
 
 -- Publish only after synthetic specs and image metadata exist. Storage bytes are
 -- uploaded separately by tests/database/t11-storage-fixtures.py after db reset.

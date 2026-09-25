@@ -1,10 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
-async function signIn(page: Page, email: string, password: string) {
-  await page.goto('/login?next=%2Fadmin');
+async function signIn(page: Page, email: string, password: string, destination = '/admin') {
+  await page.goto(`/login?next=${encodeURIComponent(destination)}`);
   await page.getByLabel('メールアドレス').fill(email);
   await page.getByLabel('パスワード').fill(password);
   await page.getByRole('button', { name: 'ログイン' }).click();
+  await expect(page).toHaveURL(destination);
 }
 
 test('only an active administrator can open A01 and its overview API', async ({ page }) => {
@@ -26,7 +27,8 @@ test('only an active administrator can open A01 and its overview API', async ({ 
 test('a regular member receives HTTP 403 for direct A01 and API requests', async ({ page }) => {
   test.skip(!process.env.T36_MEMBER_EMAIL || !process.env.T36_MEMBER_PASSWORD,
     'T36_MEMBER_EMAIL and T36_MEMBER_PASSWORD must identify a locally provisioned regular account');
-  await signIn(page, process.env.T36_MEMBER_EMAIL!, process.env.T36_MEMBER_PASSWORD!);
+  await signIn(page, process.env.T36_MEMBER_EMAIL!, process.env.T36_MEMBER_PASSWORD!, '/account');
+  await expect(page.getByRole('heading', { name: '会員メニュー' })).toBeVisible();
   const response = await page.goto('/admin');
   expect(response?.status()).toBe(403);
   await expect(page.getByRole('heading', { name: '管理画面を利用できません' })).toBeVisible();
