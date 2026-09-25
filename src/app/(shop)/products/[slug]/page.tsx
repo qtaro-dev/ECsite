@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductActions } from "./ProductActions";
+import { ProductImage } from "./ProductImage";
 import styles from "./page.module.css";
 import { getPublishedProductDetail, productImageUrl } from "@/server/catalog/product-detail";
 
@@ -17,6 +18,16 @@ const categoryNames: Record<string, string> = {
   cpu: "CPU", gpu: "グラフィックボード", motherboard: "マザーボード", memory: "メモリ",
   ssd: "SSD", "power-supply": "電源ユニット", "pc-case": "PCケース", "cpu-cooler": "CPUクーラー",
 };
+const categorySpecFields: Record<string, string[]> = {
+  cpu: ["socket_code", "core_count", "base_clock_mhz", "tdp_w"],
+  gpu: ["chipset", "vram_gb", "card_length_mm"],
+  motherboard: ["socket_code", "ddr_generation", "form_factor"],
+  memory: ["ddr_generation", "capacity_gb", "module_count", "speed_mt_s"],
+  ssd: ["capacity_gb", "interface", "form_factor"],
+  "power-supply": ["rated_w", "form_factor", "efficiency_grade"],
+  "pc-case": ["max_gpu_length_mm", "outer_length_mm", "outer_width_mm", "outer_height_mm", "supported_form_factors"],
+  "cpu-cooler": ["supported_socket_codes", "height_mm", "cooling_type"],
+};
 function formatValue(value: unknown): string {
   if (Array.isArray(value)) return value.join("、");
   if (typeof value === "boolean") return value ? "対応" : "非対応";
@@ -30,6 +41,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   const category = categoryNames[product.category] ?? product.category;
   const specifications = Object.entries(product.specifications ?? {}).filter(([, value]) => value !== null);
+  const missingSpecifications = (categorySpecFields[product.category] ?? [])
+    .filter((key) => product.specifications?.[key] == null)
+    .map((key) => labels[key] ?? key);
 
   return <main className={styles.main} id="main-content" tabIndex={-1}>
     <nav className={styles.breadcrumb} aria-label="パンくずリスト">
@@ -39,9 +53,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     <div className={styles.layout}>
       <section className={styles.gallery} aria-label="商品画像">
         {product.images.length > 0 ? product.images.map((image, index) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img key={`${image.path}-${index}`} src={productImageUrl(image.path)} alt={image.altText} />
-        )) : <div className={styles.imagePlaceholder} role="img" aria-label={`${product.name}の商品画像はありません`}>画像準備中</div>}
+          <ProductImage key={`${image.path}-${index}`} src={productImageUrl(image.path)} alt={image.altText} productName={product.name} />
+        )) : <div className={styles.imagePlaceholder} role="img" aria-label={`${product.name}の商品画像はありません`}>商品画像はありません</div>}
       </section>
       <section className={styles.summary}>
         <p className={styles.eyebrow}>{category} ／ {product.brand}</p>
@@ -54,7 +67,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
       <section className={styles.specifications} aria-labelledby="spec-title">
         <h2 id="spec-title">主な仕様</h2>
-        <dl>{specifications.map(([key, value]) => <div key={key}><dt>{labels[key] ?? key}</dt><dd>{formatValue(value)}</dd></div>)}</dl>
+        {specifications.length > 0 && <dl>{specifications.map(([key, value]) => <div key={key}><dt>{labels[key] ?? key}</dt><dd>{formatValue(value)}</dd></div>)}</dl>}
+        {missingSpecifications.length > 0 && <div className={styles.specificationNotice}>
+          <p>次の仕様は登録されていません：{missingSpecifications.join("、")}。</p>
+          <p>不足した仕様を使う互換性は「判定できません」と表示されます。仕様がそろった商品をお探しの場合は<Link href={`/categories/${product.category}`}>同じカテゴリの商品一覧</Link>をご覧ください。</p>
+        </div>}
       </section>
     </div>
   </main>;
