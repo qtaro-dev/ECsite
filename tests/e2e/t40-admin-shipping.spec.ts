@@ -23,13 +23,14 @@ test('administrator can review versioned shipping settings and receive actionabl
   await expect(page.locator('section[aria-label="現在有効な送料規則"] strong')).not.toHaveText(oldVersion ?? '');
   await expect(page.getByText(/監査ID:/)).toBeVisible();
   await page.getByRole('button', { name: '入力した規則で試算' }).click();
-  await expect(page.getByRole('alert')).toContainText('重量物運賃表を読み取れません');
-  await expect(page.getByRole('alert')).toContainText('運賃表を確認して保存してください');
+  const guidance = page.locator('main p[role="alert"]');
+  await expect(guidance).toContainText('重量物運賃表を読み取れません');
+  await expect(guidance).toContainText('運賃表を確認して保存してください');
   await page.getByRole('button', { name: '運賃行を追加' }).click();
   await page.getByLabel('公式情報の確認日').fill('2026-09-25');
   await page.getByRole('button', { name: '入力した規則で試算' }).click();
-  await expect(page.getByRole('alert')).toContainText('運賃行がありません');
-  await expect(page.getByRole('alert')).toContainText('該当する行を追加してください');
+  await expect(guidance).toContainText('運賃行がありません');
+  await expect(guidance).toContainText('該当する行を追加してください');
   const response = await page.request.get('/api/admin/settings/shipping');
   expect(response.status()).toBe(200);
   expect(await response.json()).toMatchObject({ data: { active: { version: expect.any(String) }, history: expect.any(Array), auditId: expect.any(String) } });
