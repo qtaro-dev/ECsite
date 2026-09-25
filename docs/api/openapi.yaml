@@ -14,7 +14,8 @@ paths:
         - { name: manufacturer, in: query, schema: { type: string, maxLength: 100 } }
         - { name: minPrice, in: query, schema: { type: integer, minimum: 0 } }
         - { name: maxPrice, in: query, schema: { type: integer, minimum: 0 } }
-        - { name: spec, in: query, description: 'JSON object of exact category-specific specification matches (up to 8 keys).', schema: { type: string, maxLength: 2048, example: '{"socket_code":"AM5"}' } }
+        - { name: minGpuClearanceMm, in: query, description: 'For category=pc-case, retain cases whose max_gpu_length_mm is greater than or equal to this GPU length.', schema: { type: integer, minimum: 1 } }
+        - { name: spec, in: query, description: 'JSON object of category-specific specification matches (up to 8 keys).', schema: { type: string, maxLength: 2048, example: '{"socket_code":"AM5"}' } }
         - { name: sort, in: query, schema: { type: string, enum: [price_asc, price_desc, newest] } }
         - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
       responses:
@@ -416,11 +417,17 @@ components:
           items:
             type: object
             required: [category, productId]
-            properties: { category: { type: string }, productId: { type: string, format: uuid } }
+            additionalProperties: false
+            properties:
+              category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] }
+              productId: { type: string, format: uuid }
+          description: At most one product per category and product ID.
     CompatibilityFinding:
       type: object
-      required: [status, reason, comparedValues, matchingUrl]
+      required: [rule, status, reason, comparedValues, matchingUrl]
+      additionalProperties: false
       properties:
+        rule: { type: string, enum: [cpu_motherboard_socket, motherboard_memory_ddr, motherboard_case_form_factor, gpu_case_length, cpu_cooler_socket] }
         status: { type: string, enum: [compatible, incompatible, unknown, not_applicable] }
         reason: { type: string }
         comparedValues: { type: object, additionalProperties: true }

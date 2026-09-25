@@ -40,6 +40,7 @@ export async function searchProducts(query: SearchQuery, options: SearchProducts
       search_q: normalizeKeyword(query.q), category_slug: query.category?.trim() || null,
       usage_case: query.usage ?? null, manufacturer: query.manufacturer?.trim() || null,
       min_price: query.minPrice ?? null, max_price: query.maxPrice ?? null,
+      min_gpu_clearance_mm: query.minGpuClearanceMm ?? null,
       spec_filter: query.spec ?? {}, sort_order: query.sort ?? 'newest', page_number: query.page ?? 1,
     }),
     cache: 'no-store',

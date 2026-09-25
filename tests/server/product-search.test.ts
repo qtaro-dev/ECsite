@@ -18,15 +18,26 @@ describe('public product search service', () => {
     expect(url).toBe('https://example.supabase.co/rest/v1/rpc/search_published_products');
     expect(JSON.parse(String(init?.body))).toEqual({
       search_q: 'RTX 5070', category_slug: 'gpu', usage_case: 'gaming', manufacturer: 'Fixture',
-      min_price: 10000, max_price: 20000, spec_filter: { vram_gb: 12 }, sort_order: 'price_asc', page_number: 2,
+      min_price: 10000, max_price: 20000, min_gpu_clearance_mm: null, spec_filter: { vram_gb: 12 }, sort_order: 'price_asc', page_number: 2,
     });
     expect(new Headers(init?.headers).get('apikey')).toBe('public-test-key');
     expect(new Headers(init?.headers).has('authorization')).toBe(false);
   });
 
+  it('passes the minimum GPU clearance filter for PC cases', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([{ items: [], total: 0, page: 1 }])));
+    const query = parseProductSearch({ category: 'pc-case', minGpuClearanceMm: '300' });
+    await searchProducts(query, {
+      env: { NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'public-test-key' }, fetcher,
+    });
+    expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toMatchObject({ category_slug: 'pc-case', min_gpu_clearance_mm: 300 });
+  });
+
   it('rejects invalid price bounds and malformed specification filters before fetching', () => {
     expect(() => parseProductSearch({ minPrice: '200', maxPrice: '100' })).toThrow();
     expect(() => parseProductSearch({ spec: '{invalid' })).toThrow();
+    expect(() => parseProductSearch({ category: 'gpu', minGpuClearanceMm: '300' })).toThrow();
+    expect(() => parseProductSearch({ category: 'pc-case', minGpuClearanceMm: '0' })).toThrow();
     expect(() => parseProductSearch({ unknown: 'x' })).toThrow();
   });
 
