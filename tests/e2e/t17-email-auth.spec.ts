@@ -28,7 +28,7 @@ test('email registration, confirmation, login, and logout use separate SSR sessi
   await page.getByLabel('メールアドレス').fill(email);
   await page.getByLabel('パスワード').fill(password);
   await page.getByRole('button', { name: 'ログイン' }).click();
-  await expect(page.getByRole('alert')).toContainText('メールアドレスまたはパスワードを確認してください');
+  await expect(page.locator('form p[role="alert"]')).toHaveText('メールアドレスまたはパスワードを確認してください。');
 
   const inboxBase = process.env.SUPABASE_INBUCKET_URL || 'http://127.0.0.1:54324';
   let confirmationUrl: string | undefined;
