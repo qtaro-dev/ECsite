@@ -46,6 +46,14 @@ SupabaseのPRごとのBranchingは有料プランの可能性があるため採�
 
 **メール**：利用者が利用するSMTP送信先・送信元ドメイン・認証情報を決める。Supabase Auth Send Email Hookの署名秘密をVercelの環境別秘密設定へ置き、Vercelの送信処理から管理設定のSMTPへ接続する。Previewは許可宛先だけに送る。Productionは実メールを送るが、秘密は画面に再表示しない。設定前に利用料金・送信制限・ドメイン認証要件を確認する。
 
+T20では、`POST /api/auth/email-hook` がSupabase Standard Webhooks形式の署名と時刻を検証し、確認 (`signup`)・再設定 (`recovery`) のみを送信する。SMTP送信はRoute Handler内で完了を待ち、障害時は503を返す。登録・再設定画面の再送操作は、SMTP復旧後にSupabase Authへ新しいメール要求を行う。Hook要求の本文、OTP、受信アドレス、SMTPエラー、秘密はアプリログ・応答に出さない。
+
+`supabase/migrations/20260926010000_t20_smtp_secret_delivery_rpc.sql` はSupabase Vault拡張を有効にし、アクティブなSMTP設定と復号済み資格情報を`service_role`だけに許可したRPCから返す。`smtp_settings.secret_ref` は `vault://<Vault secret UUIDまたは名前>` を参照する。サービスロール鍵はVercelのサーバー環境に置き、ブラウザへ送らない。SMTP設定の登録・更新とVault秘密投入はT41の管理機能が揃ってから行う。
+
+Local/TestとPreviewでは `SMTP_ALLOWED_RECIPIENTS` にカンマ区切りの完全一致メールアドレスを設定する。空欄は送信拒否となる。Previewはテスト担当者が所有する宛先だけを登録する。Productionは空欄で会員への送信を許可し、制限を要する運用では同じ変数に許可先を設定する。Vercel Preview/Productionそれぞれに異なる `AUTH_EMAIL_HOOK_SECRET` を登録し、Supabase Dashboardの各環境Hook設定にも対応する秘密を登録する。PreviewとProductionで送信先・SMTP資格情報・Hook秘密を共有しない。
+
+利用者の外部作業は、SMTP事業者と送信元ドメインの選定、料金・送信上限・認証設定の確認、所有するテスト宛先の用意、Preview/ProductionごとのSupabase Auth HookとVercel秘密変数の登録である。SMTP事業者・有料契約・資格情報は利用者が選定・登録する。T20の実装だけではSMTP接続・実送信の合格を意味しない。
+
 **SMS**：公開Productionは`mock`固定で、電話番号をSMS送信用に収集しない。6桁コードを当該フローのデモ通知で示し、照合は省略しない。所有端末での実SMS試験はDevelopment/Testの別設定でのみ可能にする。ゲートウェイの選定・有料利用は利用者承認後。実端末検証が終わるまで「検証済み」とポートフォリオに記載しない。
 
 ## 5. Stripeテスト決済（T30–T32）
