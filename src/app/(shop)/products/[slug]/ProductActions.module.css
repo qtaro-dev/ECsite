@@ -1,0 +1,12 @@
+.actions { display: grid; gap: 0.75rem; padding: 1.25rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }
+.actions h2 { margin: 0; font-size: 1.25rem; }
+.actions label { font-weight: 650; }
+.actions input { width: 8rem; min-height: 44px; padding: 0.5rem; border: 1px solid var(--color-control-border); border-radius: var(--radius-control); }
+.available, .soldOut { margin: 0; font-weight: 700; }
+.available { color: var(--color-success); }
+.soldOut { color: var(--color-danger); }
+.primaryAction, .secondaryAction, .disabledLink { display: grid; min-height: 48px; place-items: center; padding: 0.75rem; border-radius: var(--radius-control); font-weight: 700; text-align: center; }
+.primaryAction { background: var(--color-primary); color: white; text-decoration: none; }
+.secondaryAction { border: 1px solid var(--color-primary); background: white; text-decoration: none; }
+.disabledLink { background: #e2e8f0; color: #475569; }
+.note { margin: 0; color: var(--color-muted); font-size: var(--font-size-small); }

@@ -30,11 +30,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set up local Supabase
+        uses: supabase/setup-cli@adc7f6c42cdd496c1c01bd3d49bd1c9f7da9630d # main as of 2026-09-24
+        with:
+          version: 2.117.0
+
+      - name: Start and seed local Supabase
+        run: |
+          supabase start
+          supabase db reset --local
+          psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t15-e2e-fixtures.sql
+
+      - name: Export local Supabase credentials
+        run: supabase status --output json | jq -r '"NEXT_PUBLIC_SUPABASE_URL=\(.API_URL)\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\(.ANON_KEY)\nSUPABASE_URL=\(.API_URL)\nSUPABASE_ANON_KEY=\(.ANON_KEY)\nSUPABASE_SERVICE_ROLE_KEY=\(.SERVICE_ROLE_KEY)\nJWT_SECRET=\(.JWT_SECRET)"' >> "$GITHUB_ENV"
+
+      - name: Upload published and hidden image fixtures
+        run: |
+          python3 tests/database/t11-storage-fixtures.py
+          python3 tests/database/t15-storage-fixtures.py
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
       - name: Run catalog UI browser tests
-        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts
+        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts
 
   quality:
     name: Quality gates
