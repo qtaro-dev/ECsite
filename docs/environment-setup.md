@@ -40,6 +40,8 @@ SupabaseのPRごとのBranchingは有料プランの可能性があるため採�
 
 ## 4. Google OAuth、メール、SMS（T18–T20、T41）
 
+**メール・パスワード認証（T17）**：Next.js SSRは`NEXT_PUBLIC_SUPABASE_URL`と`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`を使い、`@supabase/ssr`でHTTP-only Cookieのセッションを更新する。開発時はAuth Site URLとRedirect URLsをローカルのWeb URLへ限定する。確認メールはSupabase Authから実送信されるため、Hosted Supabase/SMTPの接続を確認する前に公開環境へ接続済みと扱わない。`AUTH_BYPASS_ENABLED=true`は`NODE_ENV=development|test`のみ許可し、Productionでは起動・ビルドを失敗させる。ローカルE2EはSupabase CLIのメール受信箱を使い、外部メールを送信しない。
+
 **Google**：利用者がGoogle Auth PlatformでWeb OAuthクライアントを環境ごとに作成し、許可するJavaScript originとSupabase Dashboardに表示されるcallback URLを登録する。GoogleのClient ID/Secretを対応するSupabase Provider設定へ入れる。アプリからの戻り先はSupabaseのRedirect URL許可リストに合わせる。スコープは`openid email profile`に限定し、配送先は本サイトで入力する。設定・認証が必要になった時点で、具体的なURL一覧をLUNAが提示する。
 
 **メール**：利用者が利用するSMTP送信先・送信元ドメイン・認証情報を決める。Supabase Auth Send Email Hookの署名秘密をVercelの環境別秘密設定へ置き、Vercelの送信処理から管理設定のSMTPへ接続する。Previewは許可宛先だけに送る。Productionは実メールを送るが、秘密は画面に再表示しない。設定前に利用料金・送信制限・ドメイン認証要件を確認する。
