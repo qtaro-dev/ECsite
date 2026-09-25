@@ -262,9 +262,10 @@ paths:
       security: [{ standardWebhookId: [], standardWebhookTimestamp: [], standardWebhookSignature: [] }]
       requestBody: { required: true, content: { application/json: { schema: { type: string, format: binary } } } }
       responses:
-        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '200': { description: SMTP delivery completed; response body is empty as required by Supabase Auth. }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '503': { $ref: '#/components/responses/Unavailable' }
   /account/addresses:
     get:
