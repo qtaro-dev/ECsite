@@ -52,11 +52,17 @@ jobs:
           python3 tests/database/t11-storage-fixtures.py
           python3 tests/database/t15-storage-fixtures.py
 
+      - name: Create isolated T36 browser accounts
+        run: node tests/e2e/t36-create-users.mjs
+
+      - name: Grant the T36 admin fixture and verify the regular member stays unprivileged
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t36-admin-fixtures.sql
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run catalog and email authentication browser tests
-        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts tests/e2e/t17-email-auth.spec.ts
+      - name: Run catalog, email authentication, and admin authorization browser tests
+        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts tests/e2e/t17-email-auth.spec.ts tests/e2e/t36-admin-auth.spec.ts
 
   quality:
     name: Quality gates

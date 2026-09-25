@@ -357,6 +357,26 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminProductUpdate' } } } }
       responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
+  /admin/overview:
+    get:
+      operationId: get_admin_overview
+      summary: Read operational counts for A01
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      responses:
+        '200':
+          description: Operational counts only; requestId is the audit correlation identifier.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, requestId]
+                properties:
+                  data: { $ref: '#/components/schemas/AdminOverview' }
+                  requestId: { type: string, format: uuid }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /admin/inventory:
     get:
       operationId: get_admin_inventory
@@ -707,6 +727,15 @@ components:
         packLengthMm: { type: integer, minimum: 1 }
         packWidthMm: { type: integer, minimum: 1 }
         packHeightMm: { type: integer, minimum: 1 }
+    AdminOverview:
+      type: object
+      required: [publishedProducts, outOfStockProducts, orders, notificationFailures]
+      additionalProperties: false
+      properties:
+        publishedProducts: { type: integer, minimum: 0 }
+        outOfStockProducts: { type: integer, minimum: 0 }
+        orders: { type: integer, minimum: 0 }
+        notificationFailures: { type: integer, minimum: 0 }
     AdminProductCreate:
       allOf: [{ $ref: '#/components/schemas/AdminProductFields' }]
       unevaluatedProperties: false
