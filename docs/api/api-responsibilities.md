@@ -28,6 +28,7 @@ Source of truth: detailed design §6 and screens/flows in `docs/wireframes/`. Th
 | `DELETE /api/account/addresses/{id}` | Authenticated member; Origin validated | Delete own address only | S11 | 401; 404; 409; 503 |
 | `POST /api/account/delete` | Authenticated member, reauthentication and explicit confirmation | Safe handling of active payment, then idempotent member/Auth deletion | S15 | 400; 401; 409 active operation; 503 |
 | `GET /api/admin/products` | `admin_memberships` verified server side | Search products including drafts for A02 | A01–A02 | 401; 403; 429; 503 |
+| `GET /api/admin/overview` | `admin_memberships` verified on every request | Published products, out-of-stock inventory, orders, failed notifications; `requestId` is the audit correlation ID | A01 | 401; 403; 503 |
 | `POST /api/admin/products` | `admin_memberships`; Origin validated | Create category-typed product; incomplete draft allowed, publish validation enforced; audit ID | A02 | 400; 401; 403; 409; 429; 503 |
 | `PATCH /api/admin/products` | `admin_memberships`; Origin validated | Update typed product with expected version and audit ID | A02 | 400; 401; 403; 404; 409; 503 |
 | `GET /api/admin/inventory` | `admin_memberships` | Read physical, allocated and available quantities | A03 | 401; 403; 429; 503 |
@@ -44,5 +45,6 @@ Source of truth: detailed design §6 and screens/flows in `docs/wireframes/`. Th
 - Supabase SSR session refresh happens in the Next.js 16 `proxy.ts`; authorization uses server-side `auth.getUser()`. Never trust a decoded browser token or user-editable metadata for owner or checkout decisions.
 - Email registration accounts cannot begin checkout until email confirmation and trusted signup SMS challenge state are both verified. T19 supplies the server-side SMS state lookup; Google OAuth exemption is implemented with T18.
 - Admin access is checked server-side against `admin_memberships`; hiding admin links is not authorization. Stored SMTP credentials, service-role credentials, OTP values, full addresses, and internal DB errors are not returned or logged.
+- T36 checks the SSR user with `auth.getUser()` and then checks the active membership using a server-only service-role client. The service-role key is never imported by a client component. Dashboard output contains only four operational counts and an audit correlation ID.
 - `POST /api/internal/reconcile-payments` uses the approved HMAC contract recorded in OpenAPI. Timestamp freshness limits replay age; already processed reconciliation work must remain idempotent.
 - The design's address update route is collection `PATCH /api/account/addresses`; this contract preserves it. Common product fields and inventory/shipping/email setting fields are typed where the design names them. Category-specific product-spec payloads and the internal heavy-shipping rate-row shape remain unspecified by design and must be fixed before feature implementation needs those schemas.
