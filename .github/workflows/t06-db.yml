@@ -16,6 +16,7 @@ on:
       - 'tests/database/t15-product-detail.sql'
       - 'tests/database/t16-catalog-exceptions.sql'
       - 'tests/database/t25-cart-api.sql'
+      - 'tests/database/t40-admin-shipping-settings.sql'
       - '.github/workflows/t06-db.yml'
   push:
     branches: [main]
@@ -33,6 +34,7 @@ on:
       - 'tests/database/t15-product-detail.sql'
       - 'tests/database/t16-catalog-exceptions.sql'
       - 'tests/database/t25-cart-api.sql'
+      - 'tests/database/t40-admin-shipping-settings.sql'
       - '.github/workflows/t06-db.yml'
 
 permissions:
@@ -73,6 +75,8 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t16-catalog-exceptions.sql
       - name: Check T25 anonymous/member cart RPC ownership and stock bounds
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t25-cart-api.sql
+      - name: Check T40 shipping settings versions, validation, and audit
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t40-admin-shipping-settings.sql
       - name: Export local Supabase API credentials
         run: supabase status --output json | jq -r '"SUPABASE_URL=\(.API_URL)\nSUPABASE_ANON_KEY=\(.ANON_KEY)\nSUPABASE_SERVICE_ROLE_KEY=\(.SERVICE_ROLE_KEY)\nJWT_SECRET=\(.JWT_SECRET)"' >> "$GITHUB_ENV"
       - name: Upload and read T11 image placeholders

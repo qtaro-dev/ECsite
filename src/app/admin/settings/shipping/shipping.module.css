@@ -1,0 +1,56 @@
+.page { max-width: 1100px; margin: 0 auto; color: #172033; }
+.page h1 { margin: 0 0 8px; font-size: 1.75rem; }
+.page h2 { margin: 0 0 12px; font-size: 1.25rem; }
+.lead, .note { color: #4b596e; line-height: 1.5; }
+.current, .form fieldset, .preview, .history, .diff { margin: 20px 0; padding: 20px; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; }
+.current p { margin: 6px 0; }
+.form { display: grid; gap: 16px; }
+.form fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0; }
+.form legend { padding: 0 8px; font-weight: 700; }
+.form fieldset > label, .preview label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+.form input, .form select, .preview input, .preview select { min-height: 44px; min-width: 0; padding: 8px 10px; border: 1px solid #98a2b3; border-radius: 6px; background: white; color: #172033; font: inherit; }
+.form input:focus-visible, .form select:focus-visible, .preview input:focus-visible, .preview select:focus-visible, .form button:focus-visible, .preview button:focus-visible { outline: 2px solid #155eef; outline-offset: 2px; }
+.note { grid-column: 1 / -1; margin: 0; }
+.form fieldset > a { color: #155eef; min-height: 44px; display: inline-flex; align-items: center; }
+.tableWrap { grid-column: 1 / -1; width: 100%; overflow-x: auto; }
+.tableWrap table { width: 100%; border-collapse: collapse; }
+.tableWrap caption { padding: 8px; text-align: left; color: #4b596e; }
+.tableWrap th, .tableWrap td { padding: 8px; border-bottom: 1px solid #d0d5dd; text-align: left; }
+.tableWrap input, .tableWrap select { width: 100%; min-width: 115px; }
+.primary, .secondary, .remove { min-height: 44px; padding: 8px 16px; border-radius: 6px; font: inherit; font-weight: 600; cursor: pointer; }
+.primary { justify-self: start; border: 1px solid #155eef; background: #155eef; color: white; }
+.secondary { border: 1px solid #98a2b3; background: white; color: #172033; }
+.remove { border: 1px solid #b42318; background: #fff; color: #b42318; }
+.primary:disabled, .secondary:disabled { opacity: .55; cursor: not-allowed; }
+.diff h2 { margin-bottom: 8px; }
+.diff ul { padding-inline-start: 24px; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.preview form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.preview button { justify-self: start; }
+.result { margin-top: 18px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.result div { padding: 12px; background: #f7f9fc; border-radius: 6px; }
+.result dt { color: #4b596e; font-size: .875rem; }
+.result dd { margin: 4px 0 0; font-size: 1.125rem; font-weight: 700; }
+.history ol { margin: 0; padding-inline-start: 24px; }
+.history li { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; padding: 12px 0; border-bottom: 1px solid #e4e7ec; }
+.active { justify-self: start; padding: 2px 8px; border-radius: 999px; background: #ecfdf3; color: #067647; font-size: .8125rem; }
+.audit { margin-top: 20px; color: #667085; font-size: .8125rem; overflow-wrap: anywhere; }
+.error, .success, .info { padding: 12px 16px; border-radius: 6px; }
+.error { color: #b42318; background: #fef3f2; }
+.success { color: #067647; background: #ecfdf3; }
+.info { color: #155eef; background: #eff4ff; }
+@media (max-width: 1199px) { .result { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+  .page h1 { font-size: 1.5rem; }
+  .current, .form fieldset, .preview, .history, .diff { padding: 16px; }
+  .form fieldset { grid-template-columns: minmax(0, 1fr); }
+  .note, .tableWrap { grid-column: 1; }
+  .preview form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .result { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .history li { grid-template-columns: minmax(0, 1fr); }
+  .tableWrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  .tableWrap table, .tableWrap tbody, .tableWrap tr, .tableWrap td { display: block; width: 100%; }
+  .tableWrap tr { padding: 10px 0; border-bottom: 1px solid #d0d5dd; }
+  .tableWrap td { display: grid; grid-template-columns: minmax(92px, .35fr) minmax(0, 1fr); gap: 8px; border: 0; }
+  .tableWrap td::before { content: attr(data-label); align-self: center; font-size: .875rem; font-weight: 600; }
+}

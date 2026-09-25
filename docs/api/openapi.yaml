@@ -406,7 +406,7 @@ paths:
       summary: Read shipping settings
       security: [{ sessionCookies: [] }]
       x-admin-membership-required: true
-      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '503': { $ref: '#/components/responses/Unavailable' } }
+      responses: { '200': { description: Active settings and recent immutable versions with audit id, content: { application/json: { schema: { $ref: '#/components/schemas/ShippingSettingsResponse' } } } }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '503': { $ref: '#/components/responses/Unavailable' } }
     patch:
       operationId: patch_admin_settings_shipping
       summary: Update shipping settings with expected version and audit
@@ -415,7 +415,17 @@ paths:
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ShippingSettingsUpdate' } } } }
-      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
+      responses: { '200': { description: 'New active version, history, and audit id', content: { application/json: { schema: { $ref: '#/components/schemas/ShippingSettingsResponse' } } } }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
+  /admin/settings/shipping/preview:
+    post:
+      operationId: preview_admin_shipping_settings
+      summary: Calculate a non-persistent shipping preview using draft settings
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ShippingPreviewRequest' } } } }
+      responses: { '200': { description: Calculated quote, content: { application/json: { schema: { $ref: '#/components/schemas/ShippingPreviewResponse' } } } }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '422': { description: Input or rate-table condition prevents a quote, content: { application/json: { schema: { $ref: '#/components/schemas/ShippingPreviewUnavailable' } } } }, '503': { $ref: '#/components/responses/Unavailable' } }
   /admin/settings/email:
     get:
       operationId: get_admin_settings_email
@@ -758,17 +768,103 @@ components:
         expectedVersion: { type: integer, minimum: 0 }
     ShippingSettingsUpdate:
       type: object
-      required: [expectedVersion]
+      required: [expectedVersion, originPrefectureCode, baseFeeYen, freeThresholdYen, heavyThresholdG, heavyRuleJson, yamatoSourceUrl, sourceCheckedAt]
       additionalProperties: false
       properties:
         expectedVersion: { type: integer, minimum: 0 }
         originPrefectureCode: { type: integer, minimum: 1, maximum: 47 }
         baseFeeYen: { type: integer, minimum: 0 }
         freeThresholdYen: { type: integer, minimum: 0 }
-        heavyThresholdG: { type: integer, minimum: 1 }
-        heavyRuleJson: { type: object, description: Versioned rate table; internal row schema is not defined in the current design. }
-        yamatoSourceUrl: { type: string, format: uri }
-        sourceCheckedAt: { type: string, format: date-time }
+        heavyThresholdG: { type: integer, const: 20000 }
+        heavyRuleJson: { $ref: '#/components/schemas/ShippingRateTable' }
+        yamatoSourceUrl: { type: string, format: uri, pattern: '^https://([a-z0-9-]+\\.)*kuronekoyamato\\.co\\.jp(/|$)' }
+        sourceCheckedAt: { type: [string, 'null'], format: date-time }
+    ShippingSettingsResponse:
+      allOf:
+        - { $ref: '#/components/schemas/Envelope' }
+        - type: object
+          required: [data]
+          properties:
+            data:
+              type: object
+              required: [active, history, auditId]
+              properties:
+                active: { $ref: '#/components/schemas/ShippingSettingsVersion' }
+                history: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/ShippingSettingsVersion' } }
+                auditId: { type: string, format: uuid }
+    ShippingSettingsVersion:
+      allOf:
+        - { $ref: '#/components/schemas/ShippingSettingsUpdate' }
+        - type: object
+          required: [id, activeFrom, isActive]
+          properties:
+            id: { type: string, format: uuid }
+            version: { type: string }
+            originPrefectureCode: { type: integer, minimum: 1, maximum: 47 }
+            baseFeeYen: { type: integer, minimum: 0 }
+            freeThresholdYen: { type: integer, minimum: 0 }
+            heavyThresholdG: { type: integer, const: 20000 }
+            heavyRuleJson: { $ref: '#/components/schemas/ShippingRateTable' }
+            yamatoSourceUrl: { type: string, format: uri }
+            sourceCheckedAt: { type: [string, 'null'], format: date-time }
+            activeFrom: { type: string, format: date-time }
+            isActive: { type: boolean }
+    ShippingRateTable:
+      type: object
+      required: [rates]
+      additionalProperties: false
+      properties:
+        rates: { type: array, maxItems: 17672, items: { type: object, required: [originPrefectureCode, destinationPrefectureCode, sizeCode, feeYen], additionalProperties: false, properties: { originPrefectureCode: { type: integer, minimum: 1, maximum: 47 }, destinationPrefectureCode: { type: integer, minimum: 1, maximum: 47 }, sizeCode: { type: integer, enum: [60, 80, 100, 120, 140, 160, 180, 200] }, feeYen: { type: integer, minimum: 0, maximum: 2147483647 } } } }
+    ShippingPreviewRequest:
+      type: object
+      additionalProperties: false
+      required: [originPrefectureCode, baseFeeYen, freeThresholdYen, heavyThresholdG, heavyRuleJson, yamatoSourceUrl, sourceCheckedAt, destinationPrefectureCode, items]
+      properties:
+            originPrefectureCode: { type: integer, minimum: 1, maximum: 47 }
+            baseFeeYen: { type: integer, minimum: 0 }
+            freeThresholdYen: { type: integer, minimum: 0 }
+            heavyThresholdG: { type: integer, const: 20000 }
+            heavyRuleJson: { $ref: '#/components/schemas/ShippingRateTable' }
+            yamatoSourceUrl: { type: string, format: uri }
+            sourceCheckedAt: { type: [string, 'null'], format: date-time }
+            destinationPrefectureCode: { type: integer, minimum: 1, maximum: 47 }
+            items:
+              type: array
+              minItems: 1
+              maxItems: 20
+              items:
+                type: object
+                required: [unitPriceYen, quantity, weightG, packLengthMm, packWidthMm, packHeightMm]
+                additionalProperties: false
+                properties:
+                  unitPriceYen: { type: integer, minimum: 0 }
+                  quantity: { type: integer, minimum: 1, maximum: 10 }
+                  weightG: { type: integer, minimum: 1, maximum: 30000 }
+                  packLengthMm: { type: [integer, 'null'], minimum: 1, maximum: 1700 }
+                  packWidthMm: { type: [integer, 'null'], minimum: 1, maximum: 1700 }
+                  packHeightMm: { type: [integer, 'null'], minimum: 1, maximum: 1700 }
+    ShippingPreviewResponse:
+      allOf:
+        - { $ref: '#/components/schemas/Envelope' }
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [quote]
+              properties: { quote: { type: object, additionalProperties: true } }
+    ShippingPreviewUnavailable:
+      type: object
+      required: [error, requestId]
+      properties:
+        error:
+          type: object
+          required: [code, reason, message, nextAction]
+          properties:
+            code: { const: SHIPPING_UNAVAILABLE }
+            reason: { type: string }
+            message: { type: string }
+            nextAction: { type: string }
+        requestId: { type: string }
     EmailSettingsUpdate:
       type: object
       required: [expectedVersion]
