@@ -106,7 +106,7 @@ export function CatalogExplorer({ category }: ExplorerProps) {
   }, [requestParams, requestKey]);
 
   const currentCategory = category ?? (categories.some((item) => item.slug === params.get("category")) ? params.get("category") as ProductCategory : undefined);
-  const hasNarrowingFilter = ["q", "usage", "manufacturer", "minPrice", "maxPrice", "minGpuClearanceMm", "spec"]
+  const hasNarrowingFilter = ["q", "category", "usage", "manufacturer", "minPrice", "maxPrice", "minGpuClearanceMm", "spec"]
     .some((key) => Boolean(params.get(key)));
   const fields = currentCategory ? specFields[currentCategory] ?? [] : [];
   const selectedSpec = (() => { try { return JSON.parse(params.get("spec") ?? "{}") as Record<string, string | number | string[]>; } catch { return {}; } })();

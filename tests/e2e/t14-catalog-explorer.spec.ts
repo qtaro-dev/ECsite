@@ -65,6 +65,7 @@ test("mobile filter panel opens, applies specification and price conditions, and
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/search?category=cpu");
   await expect(page.getByRole("heading", { name: "条件に合う商品が見つかりませんでした" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "条件を解除する" })).toHaveAttribute("href", "/search");
   const toggle = page.locator("button[aria-controls='catalog-filters']");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
@@ -94,7 +95,7 @@ test("retry performs another request after a catalog service error", async ({ pa
   const initialAttempts = attempts;
   retryRequested = true;
   await page.getByRole("button", { name: "もう一度試す" }).click();
-  await expect(page.getByRole("heading", { name: "条件に合う商品が見つかりませんでした" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "現在公開中の商品はありません" })).toBeVisible();
   expect(attempts).toBeGreaterThan(initialAttempts);
 });
 

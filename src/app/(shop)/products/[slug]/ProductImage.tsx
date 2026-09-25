@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./page.module.css";
 
 export function ProductImage({ src, alt, productName }: { src: string; alt: string; productName: string }) {
   const [failed, setFailed] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const image = imageRef.current;
+    if (image?.complete && image.naturalWidth === 0) setFailed(true);
+  }, [src]);
 
   if (failed) {
     return <div className={styles.imageFailure} role="img" aria-label={`${productName}の商品画像を読み込めませんでした`}>
@@ -14,5 +20,5 @@ export function ProductImage({ src, alt, productName }: { src: string; alt: stri
   }
 
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={alt} onError={() => setFailed(true)} />;
+  return <img ref={imageRef} src={src} alt={alt} onError={() => setFailed(true)} />;
 }
