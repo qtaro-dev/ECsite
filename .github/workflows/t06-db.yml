@@ -12,6 +12,7 @@ on:
       - 'tests/database/t10-member-admin-rls.sql'
       - 'tests/database/t11-test-data.sql'
       - 'tests/database/t11-storage-fixtures.py'
+      - 'tests/database/t13-product-search.sql'
       - '.github/workflows/t06-db.yml'
   push:
     branches: [main]
@@ -25,6 +26,7 @@ on:
       - 'tests/database/t10-member-admin-rls.sql'
       - 'tests/database/t11-test-data.sql'
       - 'tests/database/t11-storage-fixtures.py'
+      - 'tests/database/t13-product-search.sql'
       - '.github/workflows/t06-db.yml'
 
 permissions:
@@ -57,6 +59,8 @@ jobs:
         run: |
           psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file supabase/seed.sql
           psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t11-test-data.sql
+      - name: Check T13 public product search, stable paging, and RLS
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t13-product-search.sql
       - name: Export local Supabase API credentials
         run: supabase status --output json | jq -r '"SUPABASE_URL=\(.API_URL)\nSUPABASE_ANON_KEY=\(.ANON_KEY)\nSUPABASE_SERVICE_ROLE_KEY=\(.SERVICE_ROLE_KEY)\nJWT_SECRET=\(.JWT_SECRET)"' >> "$GITHUB_ENV"
       - name: Upload and read T11 image placeholders
