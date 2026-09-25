@@ -4,10 +4,39 @@ import type { z } from 'zod';
 
 export function requestId() { return crypto.randomUUID(); }
 
-export function sameOrigin(request: NextRequest): boolean {
+function parseHttpOrigin(value: string): string | null {
+  try {
+    const parsed = new URL(value);
+    if ((parsed.protocol !== 'http:' && parsed.protocol !== 'https:')
+      || parsed.username || parsed.password || parsed.pathname !== '/' || parsed.search || parsed.hash
+      || parsed.origin !== value) return null;
+    return parsed.origin;
+  } catch { return null; }
+}
+
+function configuredSiteOrigin(value: string): string | null {
+  try {
+    const parsed = new URL(value);
+    if ((parsed.protocol !== 'http:' && parsed.protocol !== 'https:') || parsed.username || parsed.password) return null;
+    return parsed.origin;
+  } catch { return null; }
+}
+
+/**
+ * Trust the configured public site origin when present. Next may reconstruct
+ * request.url with an internal host behind a proxy, so it is not an additional
+ * allowed origin. Without configuration, use the request URL for local setups.
+ */
+export function sameOrigin(request: NextRequest, configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL): boolean {
   const origin = request.headers.get('origin');
   if (!origin) return false;
-  try { return new URL(origin).origin === new URL(request.url).origin; } catch { return false; }
+  const requestOrigin = parseHttpOrigin(origin);
+  if (!requestOrigin) return false;
+  if (configuredSiteUrl !== undefined) {
+    const trustedOrigin = configuredSiteOrigin(configuredSiteUrl);
+    return trustedOrigin !== null && requestOrigin === trustedOrigin;
+  }
+  try { return requestOrigin === new URL(request.url).origin; } catch { return false; }
 }
 
 export function authError(status: number, code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'FORBIDDEN' | 'UNAVAILABLE', message: string) {
