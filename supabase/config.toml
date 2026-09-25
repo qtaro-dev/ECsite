@@ -21,4 +21,4 @@ additional_redirect_urls = ["http://localhost:3000"]
 enable_signup = true
 
 [storage]
-enabled = false
+enabled = true
