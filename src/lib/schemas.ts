@@ -131,6 +131,19 @@ export const ProductStatusSchema = z.enum(['draft', 'published', 'hidden']);
 export const SmsPurposeSchema = z.enum(['signup', 'password_reset']);
 export const SmsFlowSchema = z.enum(['signup', 'password_reset']);
 
+export const AuthCredentialsSchema = z.object({
+  email: z.string().trim().email().max(254),
+  password: z.string().min(12).max(128),
+}).strict();
+export const AuthRegistrationSchema = AuthCredentialsSchema.extend({
+  passwordConfirmation: z.string().min(12).max(128),
+  acceptedTerms: z.literal(true),
+}).strict().refine((input) => input.password === input.passwordConfirmation, {
+  path: ['passwordConfirmation'], message: 'Passwords must match',
+});
+export const AuthEmailSchema = z.object({ email: z.string().trim().email().max(254) }).strict();
+export const AuthReturnPathSchema = z.string().max(2048).optional();
+
 export const ApiSuccessSchema = <T extends z.ZodType>(data: T) => z.object({
   data,
   requestId: z.string().min(1),

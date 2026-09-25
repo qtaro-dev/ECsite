@@ -6,6 +6,9 @@ import { describe, expect, it } from 'vitest';
 import {
   AddressPatchSchema,
   AddressSchema,
+  AuthCredentialsSchema,
+  AuthEmailSchema,
+  AuthRegistrationSchema,
   ApiErrorSchema,
   ApiErrorCodeSchema,
   CartItemInputSchema,
@@ -35,6 +38,21 @@ const sortParameter = contract.paths['/products'].get?.parameters?.find((paramet
 const usageParameter = contract.paths['/products'].get?.parameters?.find((parameter) => parameter.name === 'usage');
 
 describe('shared boundary schemas', () => {
+  it('validates email auth inputs and matches the published API contract', () => {
+    const credentials = { email: 'member@example.test', password: 'T17-Test-Password-921!' };
+    expect(AuthCredentialsSchema.safeParse(credentials).success).toBe(true);
+    expect(AuthEmailSchema.safeParse({ email: 'member@example.test' }).success).toBe(true);
+    expect(AuthRegistrationSchema.safeParse({ ...credentials, passwordConfirmation: credentials.password, acceptedTerms: true }).success).toBe(true);
+    expect(AuthRegistrationSchema.safeParse({ ...credentials, passwordConfirmation: 'different-password-9', acceptedTerms: true }).success).toBe(false);
+    expect(AuthRegistrationSchema.safeParse({ ...credentials, passwordConfirmation: credentials.password, acceptedTerms: false }).success).toBe(false);
+    expect(contract.paths['/auth/register']).toBeDefined();
+    expect(contract.paths['/auth/login']).toBeDefined();
+    expect(contract.paths['/auth/logout']).toBeDefined();
+    expect(contract.paths['/auth/verify/resend']).toBeDefined();
+    expect(schemas.AuthRegistration.required).toEqual(['email', 'password', 'passwordConfirmation', 'acceptedTerms']);
+    expect(schemas.AuthRegistration.properties.password.writeOnly).toBe(true);
+  });
+
   it('accepts UUIDs and rejects malformed identifiers', () => {
     expect(IdSchema.safeParse('d2719f8c-2602-4bdb-a5e6-b8919668b3d9').success).toBe(true);
     expect(IdSchema.safeParse('product-1').success).toBe(false);

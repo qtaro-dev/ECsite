@@ -178,6 +178,56 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/Unavailable' }
+  /auth/register:
+    post:
+      operationId: post_auth_register
+      summary: Register with email and password; send confirmation email
+      description: Require terms acknowledgement; never return or log the submitted password. The confirmation link uses a same-site return path.
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AuthRegistration' } } } }
+      responses:
+        '201': { $ref: '#/components/responses/AuthRegistration' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /auth/login:
+    post:
+      operationId: post_auth_login
+      summary: Sign in with email and password
+      description: Return generic credential failures and a validated same-site return path. Session tokens are stored in HTTP-only cookies.
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AuthCredentials' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/AuthLogin' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /auth/logout:
+    post:
+      operationId: post_auth_logout
+      summary: Sign out and clear the Supabase SSR session
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      responses:
+        '200': { $ref: '#/components/responses/AuthLogout' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /auth/verify/resend:
+    post:
+      operationId: post_auth_confirmation_resend
+      summary: Resend the email confirmation link
+      description: Return the same generic response whether the account exists or provider throttling applies.
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AuthEmail' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/AuthConfirmationResend' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /auth/sms/verify:
     post:
       operationId: post_auth_sms_verify
@@ -570,6 +620,37 @@ components:
       required: [challengeId, code]
       additionalProperties: false
       properties: { challengeId: { type: string }, code: { type: string, pattern: '^[0-9]{6}$' } }
+    AuthCredentials:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 12, maxLength: 128, writeOnly: true }
+    AuthRegistration:
+      type: object
+      additionalProperties: false
+      required: [email, password, passwordConfirmation, acceptedTerms]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 12, maxLength: 128, writeOnly: true }
+        passwordConfirmation: { type: string, minLength: 12, maxLength: 128, writeOnly: true }
+        acceptedTerms: { type: boolean, const: true }
+    AuthEmail:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties: { email: { type: string, format: email, maxLength: 254 } }
+    AuthConfirmationMessage:
+      type: object
+      additionalProperties: false
+      required: [message]
+      properties: { message: { type: string } }
+    AuthLoginResult:
+      type: object
+      additionalProperties: false
+      required: [returnTo]
+      properties: { returnTo: { type: string, maxLength: 2048 } }
     SmsChallengeResult:
       type: object
       description: Issuance/verification state only; never contains the OTP itself.
@@ -647,6 +728,42 @@ components:
         username: { type: string }
         secret: { type: string, writeOnly: true, description: Optional replacement secret; never returned. }
   responses:
+    AuthRegistration:
+      description: Registration accepted; a confirmation email is sent when allowed by Supabase Auth.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties: { data: { $ref: '#/components/schemas/AuthConfirmationMessage' } }
+    AuthConfirmationResend:
+      description: Generic confirmation resend result that does not reveal account existence.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties: { data: { $ref: '#/components/schemas/AuthConfirmationMessage' } }
+    AuthLogin:
+      description: Authenticated session stored in HTTP-only cookies; return path is same-site.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties: { data: { $ref: '#/components/schemas/AuthLoginResult' } }
+    AuthLogout:
+      description: Session cleared.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties: { data: { $ref: '#/components/schemas/AuthConfirmationMessage' } }
     GenericSuccess:
       description: Success envelope; operation-specific data; secrets and internal errors excluded.
       content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } }

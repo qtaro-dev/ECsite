@@ -1,0 +1,12 @@
+.form { display: grid; gap: 12px; }
+.form label { color: var(--color-text); font-weight: 600; }
+.form input:not([type="checkbox"]) { min-height: 48px; border: 1px solid #98a2b3; border-radius: 8px; padding: 10px 12px; font: inherit; }
+.form input:focus-visible { outline: 3px solid #84adff; outline-offset: 2px; }
+.form button { min-height: 48px; border: 0; border-radius: 8px; background: var(--color-primary); color: white; font: inherit; font-weight: 700; cursor: pointer; }
+.form button:disabled { opacity: .65; cursor: wait; }
+.logout { min-height: 48px; padding: 0 1rem; border: 1px solid var(--color-control-border); border-radius: 8px; background: var(--color-surface); color: var(--color-text); font: inherit; cursor: pointer; }
+.notice { margin: 4px 0; color: var(--color-muted); line-height: 1.7; }
+.checkbox { display: flex; gap: 10px; align-items: center; min-height: 44px; }
+.checkbox input { width: 20px; height: 20px; }
+.error { margin: 0; color: var(--color-danger); }
+.page { width: min(100% - 2rem, 42rem); margin: 2rem auto; padding: clamp(1.25rem, 4vw, 2rem); border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }

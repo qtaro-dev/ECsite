@@ -42,7 +42,10 @@ jobs:
           psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t15-e2e-fixtures.sql
 
       - name: Export local Supabase credentials
-        run: supabase status --output json | jq -r '"NEXT_PUBLIC_SUPABASE_URL=\(.API_URL)\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\(.ANON_KEY)\nSUPABASE_URL=\(.API_URL)\nSUPABASE_ANON_KEY=\(.ANON_KEY)\nSUPABASE_SERVICE_ROLE_KEY=\(.SERVICE_ROLE_KEY)\nJWT_SECRET=\(.JWT_SECRET)"' >> "$GITHUB_ENV"
+        run: |
+          supabase status --output json | jq -r '"NEXT_PUBLIC_SUPABASE_URL=\(.API_URL)\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\(.ANON_KEY)\nSUPABASE_URL=\(.API_URL)\nSUPABASE_ANON_KEY=\(.ANON_KEY)\nSUPABASE_SERVICE_ROLE_KEY=\(.SERVICE_ROLE_KEY)\nJWT_SECRET=\(.JWT_SECRET)"' >> "$GITHUB_ENV"
+          echo 'NEXT_PUBLIC_SITE_URL=http://127.0.0.1:4173' >> "$GITHUB_ENV"
+          echo 'SUPABASE_INBUCKET_URL=http://127.0.0.1:54324' >> "$GITHUB_ENV"
 
       - name: Upload published and hidden image fixtures
         run: |
@@ -52,8 +55,8 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run catalog UI browser tests
-        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts
+      - name: Run catalog and email authentication browser tests
+        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts tests/e2e/t17-email-auth.spec.ts
 
   quality:
     name: Quality gates
