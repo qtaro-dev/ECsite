@@ -229,22 +229,19 @@ do $$ begin
         'payment_attempts','payment_events','inventory_adjustments') and c.relrowsecurity) <> 9 then
     raise exception 'RLS is not enabled on every T07 table';
   end if;
-  if exists(select 1 from pg_policies where schemaname='public' and tablename in ('inventory','carts','cart_items','orders',
-      'order_items','stock_allocations','payment_attempts','payment_events','inventory_adjustments')) then
-    raise exception 'T07 must leave every new table default-deny for direct access';
-  end if;
 end $$;
 
--- T10 owns member read policies. T07 is deliberately default-deny for both owners.
+-- T10 owns the read policies; owner access and internal inventory denial are
+-- exercised below after all migrations have been applied.
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000071',true);
 do $$ begin
-  if (select count(*) from public.orders) <> 0 then raise exception 'T07 must default-deny direct order reads'; end if;
-  if (select count(*) from public.order_items) <> 0 then raise exception 'T07 must default-deny direct order item reads'; end if;
-  if (select count(*) from public.payment_attempts) <> 0 then raise exception 'T07 must default-deny direct payment reads'; end if;
+  if (select count(*) from public.orders) <> 1 then raise exception 'T10 owner order read failed'; end if;
+  if (select count(*) from public.order_items) <> 1 then raise exception 'T10 owner order item read failed'; end if;
+  if (select count(*) from public.payment_attempts) <> 1 then raise exception 'T10 owner payment read failed'; end if;
   begin
-    if (select count(*) from public.inventory) <> 0 then raise exception 'inventory is directly readable'; end if;
-  exception when insufficient_privilege then null;
+    if (select count(*) from public.inventory) <> 0 then raise exception 'member can read internal inventory'; end if;
+  exception when insufficient_privilege then raise exception 'member must have RLS-scoped inventory SELECT';
   end;
 end $$;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000072',true);
@@ -252,6 +249,7 @@ do $$ begin
   if (select count(*) from public.orders) <> 0 then raise exception 'another member can read the order'; end if;
   if (select count(*) from public.order_items) <> 0 then raise exception 'another member can read the order item'; end if;
   if (select count(*) from public.payment_attempts) <> 0 then raise exception 'another member can read the payment attempt'; end if;
+  if (select count(*) from public.inventory) <> 0 then raise exception 'another member can read internal inventory'; end if;
 end $$;
 
 rollback;

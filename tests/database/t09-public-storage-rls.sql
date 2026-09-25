@@ -35,7 +35,7 @@ do $$ begin
   begin update public.products set name='attacker' where slug='t09-published'; raise exception 'anon UPDATE unexpectedly succeeded'; exception when insufficient_privilege then null; end;
   begin insert into public.products(category_id,slug,sku,name,brand) values ((select id from public.categories where slug='cpu'),'t09-insert','T09-I','x','x'); raise exception 'anon INSERT unexpectedly succeeded'; exception when insufficient_privilege then null; end;
   begin delete from public.product_images where storage_path='t09/t09-published.jpg'; raise exception 'anon DELETE unexpectedly succeeded'; exception when insufficient_privilege then null; end;
-  if has_table_privilege(current_user,'public.inventory','SELECT') then raise exception 'direct inventory SELECT grant exists'; end if;
+  if has_table_privilege(current_user,'public.inventory','SELECT') then raise exception 'anon inventory SELECT grant exists'; end if;
   begin perform on_hand from public.inventory limit 1; raise exception 'inventory internals unexpectedly readable'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
@@ -48,6 +48,7 @@ select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-00000000
 do $$ begin
   if (select count(*) from public.products where slug like 't09-%') <> 1 then raise exception 'member A product filter leaked'; end if;
   if has_table_privilege(current_user,'public.products','INSERT') or has_table_privilege(current_user,'public.products','UPDATE') or has_table_privilege(current_user,'public.products','DELETE') then raise exception 'member A catalog write privilege exists'; end if;
+  if (select count(*) from public.inventory) <> 0 then raise exception 'member A can read internal inventory'; end if;
   begin update public.products set name='attacker' where slug='t09-published'; raise exception 'member UPDATE unexpectedly succeeded'; exception when insufficient_privilege then null; end;
   begin insert into storage.objects(bucket_id,name) values ('product-images','t09/member-upload.jpg'); raise exception 'member Storage INSERT unexpectedly succeeded'; exception when insufficient_privilege then null; end;
 end $$;
@@ -56,6 +57,7 @@ select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-00000000
 do $$ begin
   if (select count(*) from public.products where slug like 't09-%') <> 1 then raise exception 'member B product filter leaked'; end if;
   if has_table_privilege(current_user,'public.products','INSERT') or has_table_privilege(current_user,'public.products','UPDATE') or has_table_privilege(current_user,'public.products','DELETE') then raise exception 'member B catalog write privilege exists'; end if;
+  if (select count(*) from public.inventory) <> 0 then raise exception 'member B can read internal inventory'; end if;
   begin delete from public.product_images where storage_path='t09/t09-published.jpg'; raise exception 'member DELETE unexpectedly succeeded'; exception when insufficient_privilege then null; end;
 end $$;
 
@@ -64,6 +66,7 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000093'
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000093","role":"authenticated"}',true);
 do $$ begin
   if (select count(*) from public.products where slug like 't09-%') <> 4 then raise exception 'admin cannot read all catalog states'; end if;
+  if (select count(*) from public.inventory i join public.products p on p.id=i.product_id where p.slug='t09-published') <> 1 then raise exception 'admin cannot read inventory internals'; end if;
   if has_table_privilege(current_user,'public.products','INSERT') or has_table_privilege(current_user,'public.products','UPDATE') or has_table_privilege(current_user,'public.products','DELETE') then raise exception 'admin must use the server catalog write path'; end if;
   if not private.is_active_admin() then raise exception 'admin membership helper denied active admin'; end if;
   if not exists(select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='product_images_object_admin_insert') or
