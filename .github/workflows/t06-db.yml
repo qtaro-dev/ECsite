@@ -7,6 +7,8 @@ on:
       - 'tests/database/t06-member-product-schema.sql'
       - 'tests/database/t07-inventory-order-payment.sql'
       - 'tests/database/t08-settings-notification-audit.sql'
+      - 'tests/database/t09-public-storage-rls.sql'
+      - 'tests/database/t09-storage-http.py'
       - '.github/workflows/t06-db.yml'
   push:
     branches: [main]
@@ -15,6 +17,8 @@ on:
       - 'tests/database/t06-member-product-schema.sql'
       - 'tests/database/t07-inventory-order-payment.sql'
       - 'tests/database/t08-settings-notification-audit.sql'
+      - 'tests/database/t09-public-storage-rls.sql'
+      - 'tests/database/t09-storage-http.py'
       - '.github/workflows/t06-db.yml'
 
 permissions:
@@ -38,3 +42,10 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t07-inventory-order-payment.sql
       - name: Check T08 settings, notification, and audit schema
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t08-settings-notification-audit.sql
+
+      - name: Check T09 catalog and Storage RLS
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t09-public-storage-rls.sql
+      - name: Export local Supabase API credentials
+        run: supabase status --output json | jq -r '"SUPABASE_URL=\(.API_URL)\nSUPABASE_ANON_KEY=\(.ANON_KEY)\nSUPABASE_SERVICE_ROLE_KEY=\(.SERVICE_ROLE_KEY)"' >> "$GITHUB_ENV"
+      - name: Check T09 private Storage URLs
+        run: python3 tests/database/t09-storage-http.py
