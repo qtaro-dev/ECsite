@@ -38,7 +38,7 @@ declare v_expected text;
 begin
   select version into v_expected from public.shipping_settings where is_active;
   perform public.admin_update_shipping_settings(
-    v_expected,13,950,10000,20000,
+    v_expected,13::smallint,950,10000,20000,
     '{"rates":[{"originPrefectureCode":13,"destinationPrefectureCode":13,"sizeCode":160,"feeYen":2500}]}'::jsonb,
     'https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html',now(),
     '00000000-0000-0000-0000-000000000401','t40-update-001'
@@ -81,39 +81,39 @@ do $$
 declare v_expected text := current_setting('t40.expected_version'); v_actor uuid := '00000000-0000-0000-0000-000000000401'; v_conflicted boolean := false;
 begin
   begin
-    perform public.admin_update_shipping_settings(v_expected,13,951,10000,20000,
+    perform public.admin_update_shipping_settings(v_expected,13::smallint,951,10000,20000,
       '{"rates":[]}'::jsonb,'https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html',null,v_actor,'t40-stale-001');
   exception when sqlstate 'P0001' then v_conflicted := true;
   end;
   if not v_conflicted then raise exception 'stale settings update should conflict'; end if;
   begin
-    perform public.admin_update_shipping_settings(v_expected,13,951,10000,20000,
+    perform public.admin_update_shipping_settings(v_expected,13::smallint,951,10000,20000,
       '{"rates":[]}','https://evil.example/rates',null,v_actor,'t40-url-001');
     raise exception 'non-Yamato source URL should fail';
   exception when sqlstate '22023' then null;
   end;
   begin
-    perform public.admin_update_shipping_settings(v_expected,13,951,10000,20000,
+    perform public.admin_update_shipping_settings(v_expected,13::smallint,951,10000,20000,
       '{"rates":[{"originPrefectureCode":13,"destinationPrefectureCode":13,"sizeCode":999,"feeYen":100}]}'::jsonb,
       'https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html',now(),v_actor,'t40-size-001');
     raise exception 'unsupported Yamato size should fail';
   exception when sqlstate '22023' then null;
   end;
   begin
-    perform public.admin_update_shipping_settings(v_expected,13,951,10000,20000,
+    perform public.admin_update_shipping_settings(v_expected,13::smallint,951,10000,20000,
       '{"rates":[{"originPrefectureCode":13,"destinationPrefectureCode":13,"sizeCode":160,"feeYen":2147483648}]}'::jsonb,
       'https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html',now(),v_actor,'t40-fee-001');
     raise exception 'out-of-range fee should fail';
   exception when sqlstate '22023' then null;
   end;
   begin
-    perform public.admin_update_shipping_settings(v_expected,13,951,10000,19999,'{"rates":[]}'::jsonb,
+    perform public.admin_update_shipping_settings(v_expected,13::smallint,951,10000,19999,'{"rates":[]}'::jsonb,
       'https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html',null,v_actor,'t40-weight-001');
     raise exception 'fixed 20kg threshold should not change';
   exception when sqlstate '22023' then null;
   end;
   begin
-    perform public.admin_update_shipping_settings(v_expected,13,951,10000,20000,'{"rates":[]}'::jsonb,
+    perform public.admin_update_shipping_settings(v_expected,13::smallint,951,10000,20000,'{"rates":[]}'::jsonb,
       'https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html',null,
       '00000000-0000-0000-0000-000000000402','t40-nonadmin-001');
     raise exception 'non-admin actor should fail';

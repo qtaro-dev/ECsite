@@ -1,17 +1,17 @@
 import { expect, test, type Page } from '@playwright/test';
 
-async function signIn(page: Page, email: string, password: string) {
-  await page.goto('/login?next=%2Fadmin%2Fsettings%2Fshipping');
+async function signIn(page: Page, email: string, password: string, destination: string) {
+  await page.goto(`/login?next=${encodeURIComponent(destination)}`);
   await page.getByLabel('メールアドレス').fill(email);
   await page.getByLabel('パスワード').fill(password);
   await page.getByRole('button', { name: 'ログイン' }).click();
+  await expect(page).toHaveURL(destination);
 }
 
 test('administrator can review versioned shipping settings and receive actionable missing-rate feedback', async ({ page }) => {
   test.skip(!process.env.T36_ADMIN_EMAIL || !process.env.T36_ADMIN_PASSWORD,
     'T36 local admin fixture is required');
-  await signIn(page, process.env.T36_ADMIN_EMAIL!, process.env.T36_ADMIN_PASSWORD!);
-  await page.goto('/admin/settings/shipping');
+  await signIn(page, process.env.T36_ADMIN_EMAIL!, process.env.T36_ADMIN_PASSWORD!, '/admin/settings/shipping');
   await expect(page.getByRole('heading', { name: /送料設定/ })).toBeVisible();
   await expect(page.getByText(/設定履歴/)).toBeVisible();
   const oldVersion = await page.locator('section[aria-label="現在有効な送料規則"] strong').textContent();
@@ -32,7 +32,7 @@ test('administrator can review versioned shipping settings and receive actionabl
 test('regular member cannot read shipping admin settings', async ({ page }) => {
   test.skip(!process.env.T36_MEMBER_EMAIL || !process.env.T36_MEMBER_PASSWORD,
     'T36 local member fixture is required');
-  await signIn(page, process.env.T36_MEMBER_EMAIL!, process.env.T36_MEMBER_PASSWORD!);
+  await signIn(page, process.env.T36_MEMBER_EMAIL!, process.env.T36_MEMBER_PASSWORD!, '/account');
   const response = await page.request.get('/api/admin/settings/shipping');
   expect(response.status()).toBe(403);
 });
