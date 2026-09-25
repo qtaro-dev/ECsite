@@ -143,7 +143,7 @@ export function AdminShippingSettingsForm({ settings: initialSettings }: { setti
     try {
       const response = await fetch('/api/admin/settings/shipping/preview', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...valid, ...trial, items: [{
+        body: JSON.stringify({ ...valid, destinationPrefectureCode: trial.destinationPrefectureCode, items: [{
           unitPriceYen: trial.unitPriceYen, quantity: trial.quantity, weightG: trial.weightG,
           packLengthMm: trial.packLengthMm, packWidthMm: trial.packWidthMm, packHeightMm: trial.packHeightMm,
         }] }),

@@ -73,7 +73,7 @@ begin
     raise exception 'shipping settings update must not alter existing order snapshots';
   end if;
   select version into v_expected from public.shipping_settings where version='initial-v1';
-  set_config('t40.expected_version',v_expected,true);
+  perform set_config('t40.expected_version',v_expected,true);
 end $$;
 
 set local role service_role;
