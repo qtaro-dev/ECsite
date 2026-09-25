@@ -20,15 +20,29 @@ begin
   if not has_function_privilege('service_role','public.get_active_smtp_delivery_settings()','EXECUTE') then
     raise exception 'service_role must execute the SMTP secret RPC';
   end if;
+  -- Schema USAGE alone does not reveal data. Require browser roles to have
+  -- no Vault namespace access, and test SELECT on the decrypted view below
+  -- independently for every application role (including service_role).
+  raise notice 'Vault ACL diagnostic: schema USAGE anon=%, authenticated=%, service_role=%; decrypted view SELECT anon=%, authenticated=%, service_role=%',
+    has_schema_privilege('anon','vault','USAGE'),
+    has_schema_privilege('authenticated','vault','USAGE'),
+    has_schema_privilege('service_role','vault','USAGE'),
+    has_table_privilege('anon','vault.decrypted_secrets','SELECT'),
+    has_table_privilege('authenticated','vault.decrypted_secrets','SELECT'),
+    has_table_privilege('service_role','vault.decrypted_secrets','SELECT');
   if has_schema_privilege('anon','vault','USAGE')
-     or has_schema_privilege('authenticated','vault','USAGE')
-     or has_schema_privilege('service_role','vault','USAGE') then
-    raise exception 'only the security-definer RPC owner may access Vault directly';
+     or has_schema_privilege('authenticated','vault','USAGE') then
+    raise exception 'browser roles must not access the Vault schema';
   end if;
   if has_table_privilege('anon','vault.decrypted_secrets','SELECT')
      or has_table_privilege('authenticated','vault.decrypted_secrets','SELECT')
      or has_table_privilege('service_role','vault.decrypted_secrets','SELECT') then
     raise exception 'application roles must not select decrypted Vault secrets directly';
+  end if;
+  if has_column_privilege('anon','vault.decrypted_secrets','decrypted_secret','SELECT')
+     or has_column_privilege('authenticated','vault.decrypted_secrets','decrypted_secret','SELECT')
+     or has_column_privilege('service_role','vault.decrypted_secrets','decrypted_secret','SELECT') then
+    raise exception 'application roles must not select the decrypted_secret column directly';
   end if;
 
   set local role service_role;
