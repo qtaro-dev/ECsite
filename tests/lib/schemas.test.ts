@@ -13,6 +13,7 @@ import {
   IdSchema,
   OrderStatusSchema,
   ProductSortSchema,
+  ProductSpecFilterSchema,
   ProductStatusSchema,
   ProductUseCaseSchema,
   QuantitySchema,
@@ -57,6 +58,15 @@ describe('shared boundary schemas', () => {
     expect(SearchQuerySchema.safeParse({ minPrice: '1.5' }).success).toBe(false);
     expect(SearchQuerySchema.safeParse({ minPrice: 2000, maxPrice: 1000 }).success).toBe(false);
     expect(SearchQuerySchema.safeParse({ unknown: 'ignored?' }).success).toBe(false);
+    expect(SearchQuerySchema.parse({ spec: '{"socket_code":"AM5"}' }).spec).toEqual({ socket_code: 'AM5' });
+    expect(SearchQuerySchema.safeParse({ spec: '{invalid' }).success).toBe(false);
+    expect(SearchQuerySchema.safeParse({ category: 'unknown' }).success).toBe(false);
+    expect(SearchQuerySchema.safeParse({ category: 'gpu', spec: '{"socket_code":"AM5"}' }).success).toBe(false);
+    expect(SearchQuerySchema.safeParse({ category: 'gpu', spec: '{"vram_gb":"12"}' }).success).toBe(false);
+    expect(SearchQuerySchema.safeParse({ category: 'gpu', spec: '{"vram_gb":12}' }).success).toBe(true);
+    expect(ProductSpecFilterSchema.safeParse({ socket_code: 'AM5', core_count: 8 }).success).toBe(true);
+    expect(ProductSpecFilterSchema.safeParse({ ['x'.repeat(65)]: 'value' }).success).toBe(false);
+    expect(ProductSpecFilterSchema.safeParse(Object.fromEntries(Array.from({ length: 9 }, (_, i) => [`filter_${i}`, i]))).success).toBe(false);
   });
 
   it('validates domestic address and partial update boundaries', () => {

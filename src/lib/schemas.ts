@@ -12,13 +12,41 @@ const SearchIntegerSchema = z.preprocess((value) => {
 
 export const ProductSortSchema = z.enum(['price_asc', 'price_desc', 'newest']);
 export const ProductUseCaseSchema = z.enum(['gaming', 'daily', 'editing']);
+export const ProductCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler']);
+const ProductSpecKeysByCategory: Record<z.infer<typeof ProductCategorySchema>, readonly string[]> = {
+  cpu: ['socket_code', 'core_count', 'base_clock_mhz', 'tdp_w'],
+  gpu: ['chipset', 'vram_gb', 'card_length_mm'],
+  motherboard: ['socket_code', 'ddr_generation', 'form_factor'],
+  memory: ['ddr_generation', 'capacity_gb', 'module_count', 'speed_mt_s'],
+  ssd: ['capacity_gb', 'interface', 'form_factor'],
+  'power-supply': ['rated_w', 'form_factor', 'efficiency_grade'],
+  'pc-case': ['max_gpu_length_mm', 'outer_length_mm', 'outer_width_mm', 'outer_height_mm', 'supported_form_factors'],
+  'cpu-cooler': ['supported_socket_codes', 'height_mm', 'cooling_type'],
+};
+const ProductSpecFieldTypes: Record<string, 'text' | 'positiveInteger' | 'textList'> = {
+  socket_code: 'text', core_count: 'positiveInteger', base_clock_mhz: 'positiveInteger', tdp_w: 'positiveInteger',
+  chipset: 'text', vram_gb: 'positiveInteger', card_length_mm: 'positiveInteger', ddr_generation: 'text',
+  form_factor: 'text', capacity_gb: 'positiveInteger', module_count: 'positiveInteger', speed_mt_s: 'positiveInteger',
+  interface: 'text', rated_w: 'positiveInteger', efficiency_grade: 'text', max_gpu_length_mm: 'positiveInteger',
+  outer_length_mm: 'positiveInteger', outer_width_mm: 'positiveInteger', outer_height_mm: 'positiveInteger',
+  supported_form_factors: 'textList', supported_socket_codes: 'textList', height_mm: 'positiveInteger', cooling_type: 'text',
+};
+export const ProductSpecFilterSchema = z.record(
+  z.string().regex(/^[a-z][a-z0-9_]{0,63}$/),
+  z.union([z.string().max(100), z.number().int().safe(), z.array(z.string().max(30)).min(1).max(5)]),
+).refine((value) => Object.keys(value).length <= 8, 'At most 8 specification filters are supported');
 export const SearchQuerySchema = z.object({
   q: z.string().max(100).optional(),
-  category: z.string().optional(),
+  category: ProductCategorySchema.optional(),
   usage: ProductUseCaseSchema.optional(),
-  manufacturer: z.string().optional(),
+  manufacturer: z.string().max(100).optional(),
   minPrice: SearchIntegerSchema.optional(),
   maxPrice: SearchIntegerSchema.optional(),
+  spec: z.preprocess((value) => {
+    if (typeof value !== 'string') return value;
+    if (value.length > 2048) return value;
+    try { return JSON.parse(value); } catch { return value; }
+  }, ProductSpecFilterSchema).optional(),
   sort: ProductSortSchema.optional(),
   page: z.preprocess((value) => {
     if (typeof value === 'string' && /^[0-9]+$/.test(value)) return Number(value);
@@ -27,7 +55,18 @@ export const SearchQuerySchema = z.object({
 }).strict().refine(
   ({ minPrice, maxPrice }) => minPrice === undefined || maxPrice === undefined || minPrice <= maxPrice,
   { path: ['maxPrice'], message: 'maxPrice must be greater than or equal to minPrice' },
-);
+).refine(({ category, spec }) => !spec || Object.entries(spec).every(([key, value]) => {
+  const supported = category
+    ? ProductSpecKeysByCategory[category].includes(key)
+    : Object.values(ProductSpecKeysByCategory).some((keys) => keys.includes(key));
+  const fieldType = ProductSpecFieldTypes[key];
+  const valueTypeMatches = fieldType === 'text' ? typeof value === 'string' && value.length > 0
+    : fieldType === 'positiveInteger' ? typeof value === 'number' && value > 0
+      : fieldType === 'textList' && Array.isArray(value);
+  return supported && valueTypeMatches;
+}), {
+  path: ['spec'], message: 'Specification filters must use fields defined for the selected category',
+});
 
 export const AddressSchema = z.object({
   recipientName: z.string().min(1),
@@ -102,6 +141,8 @@ export type Yen = z.infer<typeof YenSchema>;
 export type Quantity = z.infer<typeof QuantitySchema>;
 export type SearchQuery = z.infer<typeof SearchQuerySchema>;
 export type ProductUseCase = z.infer<typeof ProductUseCaseSchema>;
+export type ProductCategory = z.infer<typeof ProductCategorySchema>;
+export type ProductSpecFilter = z.infer<typeof ProductSpecFilterSchema>;
 export type Address = z.infer<typeof AddressSchema>;
 export type AddressPatch = z.infer<typeof AddressPatchSchema>;
 export type CartItemInput = z.infer<typeof CartItemInputSchema>;

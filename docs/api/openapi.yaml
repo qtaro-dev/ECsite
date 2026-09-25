@@ -9,11 +9,12 @@ paths:
       summary: Search published products
       parameters:
         - { $ref: '#/components/parameters/Q' }
-        - { name: category, in: query, schema: { type: string } }
+        - { name: category, in: query, schema: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] } }
         - { name: usage, in: query, schema: { type: string, enum: [gaming, daily, editing] } }
-        - { name: manufacturer, in: query, schema: { type: string } }
+        - { name: manufacturer, in: query, schema: { type: string, maxLength: 100 } }
         - { name: minPrice, in: query, schema: { type: integer, minimum: 0 } }
         - { name: maxPrice, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: spec, in: query, description: 'JSON object of exact category-specific specification matches (up to 8 keys).', schema: { type: string, maxLength: 2048, example: '{"socket_code":"AM5"}' } }
         - { name: sort, in: query, schema: { type: string, enum: [price_asc, price_desc, newest] } }
         - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
       responses:
@@ -383,7 +384,27 @@ components:
     Product:
       type: object
       description: Published product projection; fields follow category schema.
-      additionalProperties: true
+      required: [id, slug, sku, name, brand, category, description, beginnerNote, priceYen, images, useCases, specifications]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        sku: { type: string }
+        name: { type: string }
+        brand: { type: string }
+        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] }
+        description: { type: string }
+        beginnerNote: { type: string }
+        priceYen: { type: integer, minimum: 0 }
+        images:
+          type: array
+          items:
+            type: object
+            required: [path, altText]
+            additionalProperties: false
+            properties: { path: { type: string }, altText: { type: string } }
+        useCases: { type: array, items: { type: string, enum: [gaming, daily, editing] } }
+        specifications: { type: [object, 'null'], additionalProperties: { type: [string, number, boolean, array] } }
     CompatibilityRequest:
       type: object
       required: [products]
@@ -634,6 +655,7 @@ components:
                       items: { type: array, maxItems: 24, items: { $ref: '#/components/schemas/Product' } }
                       total: { type: integer, minimum: 0 }
                       page: { type: integer, minimum: 1 }
+                      pageSize: { type: integer, const: 24 }
     Compatibility:
       description: Five rule findings in rule order.
       content:
