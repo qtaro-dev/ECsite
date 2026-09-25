@@ -50,39 +50,52 @@ paths:
   /cart:
     get:
       operationId: get_cart
-      summary: Read cart with current price, availability and estimated shipping
-      security: [{ sessionCookies: [] }]
+      summary: Read current-price cart for its anonymous cookie or member session
+      description: Anonymous carts use an HttpOnly, Secure-in-production, SameSite=Lax signed cookie. A heavy-item shipping amount remains null until its destination is known.
+      security: [{ sessionCookies: [] }, {}]
       responses:
         '200': { $ref: '#/components/responses/Cart' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '503': { $ref: '#/components/responses/Unavailable' }
     put:
       operationId: put_cart
       summary: Set cart item quantity (1–10)
-      security: [{ sessionCookies: [] }]
+      security: [{ sessionCookies: [] }, {}]
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CartItemInput' } } } }
       responses:
         '200': { $ref: '#/components/responses/Cart' }
         '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/RateLimited' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/CartConflict' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    delete:
+      operationId: delete_cart_item
+      summary: Remove one item from the caller's cart
+      security: [{ sessionCookies: [] }, {}]
+      x-origin-check: required
+      parameters:
+        - { $ref: '#/components/parameters/Origin' }
+        - { name: productId, in: query, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { $ref: '#/components/responses/Cart' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '503': { $ref: '#/components/responses/Unavailable' }
   /cart/merge:
     post:
       operationId: post_cart_merge
-      summary: Merge anonymous cart after login; cap quantities by limit and stock
+      summary: Merge the signed anonymous cart after login; cap quantities by limit and stock
       security: [{ sessionCookies: [] }]
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       responses:
         '200': { $ref: '#/components/responses/CartMerge' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '409': { $ref: '#/components/responses/Conflict' }
         '503': { $ref: '#/components/responses/Unavailable' }
   /checkout/quote:
     post:
@@ -498,10 +511,11 @@ components:
     CartProjection:
       type: object
       required: [items, goodsTotalYen, estimatedShippingYen]
+      additionalProperties: false
       properties:
         items: { type: array, items: { $ref: '#/components/schemas/CartLine' } }
         goodsTotalYen: { type: integer, minimum: 0 }
-        estimatedShippingYen: { type: integer, minimum: 0 }
+        estimatedShippingYen: { type: [integer, 'null'], minimum: 0, description: Null while a heavy item's destination-specific official rate cannot be determined. }
     CartLine:
       type: object
       required: [productId, quantity, unitPriceYen, lineTotalYen, availableQuantity]
@@ -577,6 +591,18 @@ components:
             properties:
               productId: { type: string, format: uuid }
               quantity: { type: integer, minimum: 0, maximum: 10, description: Resulting quantity after merge adjustment. }
+    CartConflictEnvelope:
+      type: object
+      required: [error, requestId]
+      properties:
+        error:
+          type: object
+          required: [code, message, currentCart]
+          properties:
+            code: { type: string, const: CONFLICT }
+            message: { type: string }
+            currentCart: { $ref: '#/components/schemas/CartProjection' }
+        requestId: { type: string, minLength: 1 }
     Address:
       type: object
       required: [recipientName, postalCode, prefectureCode, city, street, isDefault]
@@ -823,6 +849,9 @@ components:
               - type: object
                 properties:
                   data: { $ref: '#/components/schemas/CartMergeResult' }
+    CartConflict:
+      description: Requested quantity exceeded current available stock; current server cart and availability are returned.
+      content: { application/json: { schema: { $ref: '#/components/schemas/CartConflictEnvelope' } } }
     CheckoutStart:
       description: Order created and Stripe test Checkout session URL returned.
       content:

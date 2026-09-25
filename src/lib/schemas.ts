@@ -98,6 +98,24 @@ export const AddressPatchSchema = z.object({
 });
 
 export const CartItemInputSchema = z.object({ productId: IdSchema, quantity: QuantitySchema }).strict();
+export const CartLineSchema = z.object({
+  productId: IdSchema,
+  quantity: QuantitySchema,
+  unitPriceYen: YenSchema,
+  lineTotalYen: YenSchema,
+  availableQuantity: AvailableQuantitySchema,
+}).strict();
+export const CartProjectionSchema = z.object({
+  items: z.array(CartLineSchema),
+  goodsTotalYen: YenSchema,
+  estimatedShippingYen: YenSchema.nullable(),
+}).strict();
+export const CartAdjustmentSchema = z.object({ productId: IdSchema, quantity: z.number().int().min(0).max(10) }).strict();
+export const CartMergeResultSchema = z.object({ cart: CartProjectionSchema, adjustments: z.array(CartAdjustmentSchema) }).strict();
+export const CartConflictEnvelopeSchema = z.object({
+  error: z.object({ code: z.literal('CONFLICT'), message: z.string(), currentCart: CartProjectionSchema }).strict(),
+  requestId: z.string().min(1),
+}).strict();
 export const QuoteRequestSchema = z.object({
   addressId: IdSchema.optional(),
   address: AddressSchema.optional(),
@@ -185,6 +203,8 @@ export type ProductSpecFilter = z.infer<typeof ProductSpecFilterSchema>;
 export type Address = z.infer<typeof AddressSchema>;
 export type AddressPatch = z.infer<typeof AddressPatchSchema>;
 export type CartItemInput = z.infer<typeof CartItemInputSchema>;
+export type CartProjection = z.infer<typeof CartProjectionSchema>;
+export type CartMergeResult = z.infer<typeof CartMergeResultSchema>;
 export type QuoteRequest = z.infer<typeof QuoteRequestSchema>;
 export type CompatibilityStatus = z.infer<typeof CompatibilityStatusSchema>;
 export type CompatibilityRequest = z.infer<typeof CompatibilityRequestSchema>;
