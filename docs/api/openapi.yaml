@@ -23,6 +23,19 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/Unavailable' }
+  /product-images/{path}:
+    get:
+      operationId: get_published_product_image
+      summary: Stream an image attached to a published product
+      description: The private Storage RLS policy verifies the product publication state. Only image/jpeg, image/png, and image/webp are streamed.
+      parameters:
+        - { name: path, in: path, required: true, allowReserved: true, description: Storage object path from published product image metadata., schema: { type: string, minLength: 1, maxLength: 512 } }
+      responses:
+        '200': { description: Product image bytes, content: { image/jpeg: { schema: { type: string, format: binary } }, image/png: { schema: { type: string, format: binary } }, image/webp: { schema: { type: string, format: binary } } } }
+        '403': { description: Storage RLS denied access because the object is not linked to a published product. }
+        '404': { description: Image path is invalid or does not exist. }
+        '415': { description: Storage returned a non image media type. }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /compatibility:
     post:
       operationId: post_compatibility
