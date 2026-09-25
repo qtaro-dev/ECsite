@@ -106,6 +106,8 @@ export function CatalogExplorer({ category }: ExplorerProps) {
   }, [requestParams, requestKey]);
 
   const currentCategory = category ?? (categories.some((item) => item.slug === params.get("category")) ? params.get("category") as ProductCategory : undefined);
+  const hasNarrowingFilter = ["q", "category", "usage", "manufacturer", "minPrice", "maxPrice", "minGpuClearanceMm", "spec"]
+    .some((key) => Boolean(params.get(key)));
   const fields = currentCategory ? specFields[currentCategory] ?? [] : [];
   const selectedSpec = (() => { try { return JSON.parse(params.get("spec") ?? "{}") as Record<string, string | number | string[]>; } catch { return {}; } })();
 
@@ -172,7 +174,14 @@ export function CatalogExplorer({ category }: ExplorerProps) {
         {loading && <div className={styles.skeletonGrid} aria-busy="true"><Skeleton lines={4} label="商品を読み込み中" /><Skeleton lines={4} label="商品を読み込み中" /><Skeleton lines={4} label="商品を読み込み中" /></div>}
         {error === "invalid" && <StatusMessage kind="error" title="検索条件を確認してください"><p>入力した条件を利用できません。項目の形式や価格の範囲を見直してください。</p>{fieldErrors.length > 0 && <p>確認が必要な項目：{fieldErrors.join("、")}</p>}<Link href={pathname}>このカテゴリの商品を表示</Link></StatusMessage>}
         {error === "unavailable" && <StatusMessage kind="error" title="商品を読み込めませんでした"><p>検索サービスに接続できませんでした。時間をおいて再度お試しください。</p><button className={styles.retry} type="button" onClick={() => setRetryKey((value) => value + 1)}>もう一度試す</button></StatusMessage>}
-        {!loading && !error && result && result.total === 0 && <div className={styles.empty}><p className={styles.emptyMark} aria-hidden="true">0</p><h3>条件に合う商品が見つかりませんでした</h3><p>価格や仕様の条件を広げるか、条件を解除してお試しください。</p><Link href={pathname} className={styles.clear}>条件を解除する</Link><p><Link href="/search">すべての商品を見る</Link></p></div>}
+        {!loading && !error && result && result.total === 0 && <div className={styles.empty}>
+          <p className={styles.emptyMark} aria-hidden="true">0</p>
+          {hasNarrowingFilter
+            ? <><h3>条件に合う商品が見つかりませんでした</h3><p>価格や仕様の条件を広げるか、条件を解除してお試しください。</p><Link href={pathname} className={styles.clear}>条件を解除する</Link></>
+            : <><h3>{currentCategory ? `${categoryNames[currentCategory]}に公開中の商品はありません` : "現在公開中の商品はありません"}</h3><p>商品が公開されるまで、別のカテゴリをご覧ください。</p></>}
+          <p><Link href="/search">すべての商品を見る</Link></p>
+          {currentCategory && <p><Link href="/">カテゴリを選び直す</Link></p>}
+        </div>}
         {!loading && !error && result && result.total > 0 && <>
           <div className={styles.productGrid}>{result.items.map((item) => <ProductCard key={item.id} product={item} />)}</div>
           {result.total > result.pageSize && <nav className={styles.pagination} aria-label="検索結果ページ"><button type="button" disabled={result.page <= 1} onClick={() => goToPage(result.page - 1)}>前のページ</button><span>{result.page} / {Math.ceil(result.total / result.pageSize)}ページ</span><button type="button" disabled={result.page >= Math.ceil(result.total / result.pageSize)} onClick={() => goToPage(result.page + 1)}>次のページ</button></nav>}

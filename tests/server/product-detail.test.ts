@@ -21,6 +21,18 @@ describe('published product detail service', () => {
     await expect(getPublishedProductDetail('cpu-one', { env, fetcher })).rejects.toThrow('status 500');
   });
 
+  it('does not cache detail reads across a price change or publication change', async () => {
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ...product, priceYen: 9999 })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ...product, priceYen: 12999 })))
+      .mockResolvedValueOnce(new Response('null'));
+
+    await expect(getPublishedProductDetail('cpu-one', { env, fetcher })).resolves.toMatchObject({ priceYen: 9999 });
+    await expect(getPublishedProductDetail('cpu-one', { env, fetcher })).resolves.toMatchObject({ priceYen: 12999 });
+    await expect(getPublishedProductDetail('cpu-one', { env, fetcher })).resolves.toBeNull();
+    expect(fetcher.mock.calls.map(([, init]) => init?.cache)).toEqual(['no-store', 'no-store', 'no-store']);
+  });
+
   it('builds the private authenticated Storage delivery URL and safely encodes path segments', () => {
     expect(productImageUrl('folder/a b#.webp')).toBe('/api/product-images/folder/a%20b%23.webp');
   });

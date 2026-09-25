@@ -20,6 +20,14 @@ test("sold out products cannot advance to the cart", async ({ page }) => {
   await expect(page.getByRole("link", { name: "カートへ進む" })).toHaveCount(0);
 });
 
+test("missing specification values and failed image delivery explain the issue and recovery path", async ({ page }) => {
+  await page.route("**/api/product-images/**", async (route) => route.fulfill({ status: 404 }));
+  await page.goto("/products/t11-cpu-unknown");
+  await expect(page.getByRole("img", { name: "T11 Test CPU Unknown Socketの商品画像を読み込めませんでした" })).toBeVisible();
+  await expect(page.getByText("次の仕様は登録されていません：ソケット。", { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: "同じカテゴリの商品一覧" })).toHaveAttribute("href", "/categories/cpu");
+});
+
 test("hidden and missing products return an HTTP 404", async ({ request }) => {
   const hidden = await request.get("/products/t15-hidden");
   const missing = await request.get("/products/does-not-exist");
