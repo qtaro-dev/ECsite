@@ -117,10 +117,12 @@ do $$ declare sid uuid; aid uuid; begin
   if (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
       where n.nspname='public' and c.relname in ('sms_challenges','shipping_settings','smtp_settings','notification_jobs','audit_logs')
       and c.relrowsecurity) <> 5 then raise exception 'RLS is not enabled on each T08 table'; end if;
-  if exists(select 1 from pg_policies where schemaname='public' and tablename in
-      ('sms_challenges','shipping_settings','smtp_settings','notification_jobs','audit_logs')) then
-    raise exception 'T08 tables must remain default-deny until T10';
+  if (select count(*) from pg_policies where schemaname='public' and tablename in
+      ('shipping_settings','smtp_settings','audit_logs') and policyname like '%admin_read') <> 3 then
+    raise exception 'T10 administrator settings/audit read policies are missing';
   end if;
+  if exists(select 1 from pg_policies where schemaname='public' and tablename in
+      ('sms_challenges','notification_jobs')) then raise exception 'server-only T08 tables must not have client policies'; end if;
 end $$;
 
 set local role authenticated;
