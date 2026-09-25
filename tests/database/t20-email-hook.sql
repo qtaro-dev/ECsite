@@ -5,6 +5,12 @@ do $$
 declare
   secret_id uuid;
   returned_password text;
+  vault_owner text;
+  vault_acl text;
+  vault_acl_grants text;
+  service_role_memberships text;
+  current_user_is_superuser boolean;
+  current_user_can_assume_vault_owner boolean;
 begin
   -- Local/CI-only dummy secret; never use a real credential in this test.
   select vault.create_secret('t20-test-smtp-password', 't20-test-smtp-secret') into secret_id;
@@ -23,7 +29,33 @@ begin
   -- Schema USAGE alone does not reveal data. Require browser roles to have
   -- no Vault namespace access, and test SELECT on the decrypted view below
   -- independently for every application role (including service_role).
-  raise notice 'Vault ACL diagnostic: schema USAGE anon=%, authenticated=%, service_role=%; decrypted view SELECT anon=%, authenticated=%, service_role=%',
+  select c.relowner::regrole::text, coalesce(c.relacl::text, '<NULL>')
+    into vault_owner, vault_acl
+  from pg_class as c
+  join pg_namespace as n on n.oid = c.relnamespace
+  where n.nspname = 'vault' and c.relname = 'decrypted_secrets';
+  select string_agg(
+      format('grantee=%s grantor=%s privilege=%s grantable=%s',
+        case when a.grantee = 0 then 'PUBLIC' else a.grantee::regrole::text end,
+        a.grantor::regrole::text, a.privilege_type, a.is_grantable),
+      '; ' order by a.grantee, a.privilege_type)
+    into vault_acl_grants
+  from pg_class as c
+  join pg_namespace as n on n.oid = c.relnamespace
+  cross join lateral aclexplode(c.relacl) as a
+  where n.nspname = 'vault' and c.relname = 'decrypted_secrets';
+  select string_agg(r.rolname, ', ' order by r.rolname)
+    into service_role_memberships
+  from pg_roles as r
+  where pg_has_role('service_role', r.oid, 'USAGE');
+  select r.rolsuper into current_user_is_superuser
+  from pg_roles as r where r.rolname = current_user;
+  select pg_has_role(current_user, vault_owner, 'USAGE')
+    into current_user_can_assume_vault_owner;
+  raise notice 'Vault ACL diagnostic: current_user=%, superuser=%, can_assume_view_owner=%, view_owner=%, relacl=%, grants=%; service_role effective memberships=%; schema USAGE anon=%, authenticated=%, service_role=%; decrypted view SELECT anon=%, authenticated=%, service_role=%',
+    current_user, current_user_is_superuser, current_user_can_assume_vault_owner,
+    vault_owner, vault_acl, coalesce(vault_acl_grants, '<none>'),
+    coalesce(service_role_memberships, '<none>'),
     has_schema_privilege('anon','vault','USAGE'),
     has_schema_privilege('authenticated','vault','USAGE'),
     has_schema_privilege('service_role','vault','USAGE'),
