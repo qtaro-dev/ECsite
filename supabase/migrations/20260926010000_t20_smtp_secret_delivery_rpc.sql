@@ -2,8 +2,11 @@
 -- server-only RPC. The service-role key is used only by the email Hook route.
 create extension if not exists supabase_vault with schema vault;
 
-revoke all on schema vault from public, anon, authenticated, service_role;
-revoke all on table vault.decrypted_secrets from public, anon, authenticated, service_role;
+-- Browser roles cannot read Vault, but preserve Supabase's standard
+-- service_role access to the decrypted view. The server-only service role key
+-- is restricted to trusted server runtime configuration.
+revoke all on schema vault from public, anon, authenticated;
+revoke all on table vault.decrypted_secrets from public, anon, authenticated;
 
 create or replace function public.get_active_smtp_delivery_settings()
 returns table (

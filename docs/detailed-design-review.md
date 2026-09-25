@@ -132,7 +132,7 @@ PostgreSQLを使用。主キーは`uuid`、日時は`timestamp with time zone`�
 | `notification_jobs` | `id uuid PK`, `kind text`, `recipient_hash text`, `payload_ref text`, `state text`, `attempt_count smallint`, `next_attempt_at timestamptz`, `created_at/updated_at`。 | `(state,next_attempt_at)`。メール本文・宛先の長期保存を避ける。 |
 | `audit_logs` | `id uuid PK`, `actor_id uuid null`, `action text`, `entity_type text`, `entity_id uuid null`, `change_summary jsonb`, `request_id text`, `created_at`。 | `(entity_type,entity_id,created_at desc)`, `(actor_id,created_at desc)`。秘密・認証コード・住所本文を記録しない。 |
 
-SMTP接続先を管理画面から変更する要件のため、設定値と秘密参照を分ける。Vercelの環境変数は固定のHook署名・Vault接続などに限定し、SMTP認証情報は管理者が更新できる保護領域に保存する。Vaultの復号権限は送信処理に限定する。設定の投入・変更は監査ログ対象である。
+SMTP接続先を管理画面から変更する要件のため、設定値と秘密参照を分ける。Vercelの環境変数は固定のHook署名・Vault接続などに限定し、SMTP認証情報は管理者が更新できる保護領域に保存する。anonとauthenticatedにはVault schemaと復号viewの権限を与えない。2026-09-26、利用者はSupabase標準のservice_roleによる`vault.decrypted_secrets`読取を受容し、service_role鍵を信頼されたサーバー環境だけに置く運用を承認した。アプリは送信処理から限定RPCを呼び、鍵をブラウザ、ログ、テスト出力へ出さない。設定の投入・変更は監査ログ対象である。
 
 ## 5. Supabase RLS・DB権限
 
