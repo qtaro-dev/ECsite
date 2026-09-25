@@ -11,6 +11,7 @@ export default async function AccountPage() {
     <h1>会員メニュー</h1>
     <p>ログイン中のメールアドレス: {user.email}</p>
     <p>注文を開始するにはメール確認と登録時のSMSコード照合が必要です。</p>
+    <p>GoogleログインではSMS確認は不要です。配送先住所はこのサイト内で入力・登録してください。</p>
     <LogoutButton />
   </AuthPage>;
 }
