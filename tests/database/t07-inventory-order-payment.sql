@@ -242,7 +242,10 @@ do $$ begin
   if (select count(*) from public.orders) <> 0 then raise exception 'T07 must default-deny direct order reads'; end if;
   if (select count(*) from public.order_items) <> 0 then raise exception 'T07 must default-deny direct order item reads'; end if;
   if (select count(*) from public.payment_attempts) <> 0 then raise exception 'T07 must default-deny direct payment reads'; end if;
-  if (select count(*) from public.inventory) <> 0 then raise exception 'inventory is directly readable'; end if;
+  begin
+    if (select count(*) from public.inventory) <> 0 then raise exception 'inventory is directly readable'; end if;
+  exception when insufficient_privilege then null;
+  end;
 end $$;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000072',true);
 do $$ begin
