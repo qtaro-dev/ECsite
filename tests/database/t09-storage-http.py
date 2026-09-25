@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import subprocess
 import time
 import urllib.error
@@ -62,6 +63,15 @@ def request(
             return response.status, response.read()
     except urllib.error.HTTPError as error:
         return error.code, error.read()
+
+
+def safe_error(status: int, body: bytes) -> str:
+    message = body.decode("utf-8", errors="replace")
+    for secret in (anon_key, jwt_secret.decode(), admin_jwt):
+        message = message.replace(secret, "[redacted]")
+    message = re.sub(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b", "[redacted JWT]", message)
+    message = re.sub(r"(?i)bearer\s+[^\s,\"']+", "Bearer [redacted]", message)
+    return f"HTTP {status}; response={message[:1200]!r}"
 
 
 setup = f"""
@@ -148,7 +158,7 @@ try:
     download = f"/storage/v1/object/authenticated/product-images/{object_path}"
     status, content = request("GET", download, anon_key)
     if status != 200 or content != png:
-        raise RuntimeError(f"Published anonymous Storage download failed: HTTP {status}")
+        raise RuntimeError(f"Published anonymous Storage download failed: {safe_error(status, content)}")
     _, listing = request(
         "POST",
         "/storage/v1/object/list/product-images",

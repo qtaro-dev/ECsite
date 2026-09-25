@@ -71,7 +71,7 @@ on conflict(id) do update set public=false,file_size_limit=excluded.file_size_li
 create policy product_images_object_read_published on storage.objects for select to anon, authenticated
 using(bucket_id='product-images' and storage.allow_any_operation(array['object.get_authenticated_info','object.get_authenticated']) and exists(
   select 1 from public.product_images i join public.products p on p.id=i.product_id
-  where i.storage_path=name and p.status='published' and p.deleted_at is null));
+  where i.storage_path=storage.objects.name and p.status='published' and p.deleted_at is null));
 create policy product_images_object_admin_read on storage.objects for select to authenticated
 using(bucket_id='product-images' and private.is_active_admin());
 create policy product_images_object_admin_insert on storage.objects for insert to authenticated
