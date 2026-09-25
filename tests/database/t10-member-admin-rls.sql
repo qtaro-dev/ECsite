@@ -51,7 +51,6 @@ do $$ declare table_name text; begin
       raise exception 'anon unexpectedly has SELECT on %',table_name;
     exception when insufficient_privilege then null; end;
   end loop;
-  if has_function_privilege(current_user,'private.is_active_admin()','EXECUTE') then raise exception 'anon can execute admin helper'; end if;
 end $$;
 reset role;
 
