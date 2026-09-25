@@ -42,6 +42,10 @@ export const SearchQuerySchema = z.object({
   manufacturer: z.string().max(100).optional(),
   minPrice: SearchIntegerSchema.optional(),
   maxPrice: SearchIntegerSchema.optional(),
+  minGpuClearanceMm: z.preprocess((value) => {
+    if (typeof value === 'string' && /^[0-9]+$/.test(value)) return Number(value);
+    return value;
+  }, z.number().int().positive()).optional(),
   spec: z.preprocess((value) => {
     if (typeof value !== 'string') return value;
     if (value.length > 2048) return value;
@@ -66,6 +70,8 @@ export const SearchQuerySchema = z.object({
   return supported && valueTypeMatches;
 }), {
   path: ['spec'], message: 'Specification filters must use fields defined for the selected category',
+}).refine(({ category, minGpuClearanceMm }) => minGpuClearanceMm === undefined || category === 'pc-case', {
+  path: ['minGpuClearanceMm'], message: 'GPU clearance can only filter PC cases',
 });
 
 export const AddressSchema = z.object({
@@ -100,6 +106,26 @@ export const QuoteRequestSchema = z.object({
 });
 
 export const CompatibilityStatusSchema = z.enum(['compatible', 'incompatible', 'unknown', 'not_applicable']);
+export const CompatibilityCategorySchema = ProductCategorySchema;
+export const CompatibilityRequestSchema = z.object({
+  products: z.array(z.object({ category: CompatibilityCategorySchema, productId: IdSchema }).strict()).max(8),
+}).strict().superRefine(({ products }, context) => {
+  const seen = new Set<string>();
+  products.forEach((item, index) => {
+    if (seen.has(item.category)) context.addIssue({ code: 'custom', path: ['products', index, 'category'], message: 'Category may appear once' });
+    seen.add(item.category);
+    if (products.some((other, otherIndex) => otherIndex !== index && other.productId === item.productId)) {
+      context.addIssue({ code: 'custom', path: ['products', index, 'productId'], message: 'Product may appear once' });
+    }
+  });
+});
+export const CompatibilityFindingSchema = z.object({
+  rule: z.enum(['cpu_motherboard_socket', 'motherboard_memory_ddr', 'motherboard_case_form_factor', 'gpu_case_length', 'cpu_cooler_socket']),
+  status: CompatibilityStatusSchema,
+  reason: z.string(),
+  comparedValues: z.record(z.string(), z.unknown()),
+  matchingUrl: z.string().nullable(),
+}).strict();
 export const OrderStatusSchema = z.enum(['payment_pending', 'paid', 'payment_failed', 'expired', 'review_required']);
 export const ProductStatusSchema = z.enum(['draft', 'published', 'hidden']);
 export const SmsPurposeSchema = z.enum(['signup', 'password_reset']);
@@ -148,6 +174,8 @@ export type AddressPatch = z.infer<typeof AddressPatchSchema>;
 export type CartItemInput = z.infer<typeof CartItemInputSchema>;
 export type QuoteRequest = z.infer<typeof QuoteRequestSchema>;
 export type CompatibilityStatus = z.infer<typeof CompatibilityStatusSchema>;
+export type CompatibilityRequest = z.infer<typeof CompatibilityRequestSchema>;
+export type CompatibilityFinding = z.infer<typeof CompatibilityFindingSchema>;
 export type OrderStatus = z.infer<typeof OrderStatusSchema>;
 export type ProductStatus = z.infer<typeof ProductStatusSchema>;
 export type ApiError = z.infer<typeof ApiErrorSchema>;

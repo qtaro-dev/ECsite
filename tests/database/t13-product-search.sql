@@ -31,6 +31,13 @@ do $$ declare result record; first_page jsonb; begin
   if result.items->0->>'slug' <> 't11-cpu-am5' or result.items->0->'specifications'->>'socket_code' <> 'AM5' then
     raise exception 'T13 product projection or exact spec filter is incorrect';
   end if;
+  select * into result from public.search_published_products(category_slug => 'pc-case', min_gpu_clearance_mm => 300);
+  if result.total <> 3 or exists(select 1 from jsonb_array_elements(result.items) i(item)
+      where (i.item->'specifications'->>'max_gpu_length_mm')::integer < 300) then
+    raise exception 'T23 minimum GPU clearance filter must return only cases with enough GPU clearance';
+  end if;
+  select * into result from public.search_published_products(category_slug => 'pc-case', min_gpu_clearance_mm => 321);
+  if result.total <> 0 then raise exception 'T23 minimum GPU clearance filter admitted an undersized case'; end if;
   select * into result from public.search_published_products(search_q => 'no-such-product');
   if result.total <> 0 or result.items <> '[]'::jsonb then raise exception 'T13 empty result must be represented as zero items and total'; end if;
   select * into result from public.search_published_products(search_q => 'T13 page', sort_order => 'price_asc', page_number => 1);
@@ -54,7 +61,7 @@ do $$ declare result record; begin
     raise exception 'T13 anon search did not expose exactly the 18 published fixtures';
   end if;
   if not has_function_privilege(current_user,
-      'public.search_published_products(text,text,text,text,integer,integer,jsonb,text,integer)', 'EXECUTE') then
+      'public.search_published_products(text,text,text,text,integer,integer,integer,jsonb,text,integer)', 'EXECUTE') then
     raise exception 'T13 anon role cannot execute public product search';
   end if;
 end $$;

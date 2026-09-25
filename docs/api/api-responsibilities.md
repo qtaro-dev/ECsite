@@ -4,8 +4,8 @@ Source of truth: detailed design §6 and screens/flows in `docs/wireframes/`. Th
 
 | Operation | Caller / authorization | Request and response responsibility | UI mapping | Main failures |
 |---|---|---|---|---|
-| `GET /api/products` | Public | Search published products; q ≤100, category/usage/manufacturer, integer price bounds, specification filters, sort, page; 24/page | S01–S04 | 400 invalid filters; 429; 503 |
-| `POST /api/compatibility` | Public | Category/product IDs (max one per category); five ordered findings `status/reason/comparedValues/matchingUrl` | S05, S13 | 400; 404 unpublished/unknown product; 429; 503 |
+| `GET /api/products` | Public | Search published products; q ≤100, category/usage/manufacturer, integer price bounds, category specifications, PC-case `minGpuClearanceMm`, sort, page; 24/page | S01–S04 | 400 invalid filters; 429; 503 |
+| `POST /api/compatibility` | Public | Category/product IDs (max one per category); five ordered findings `rule/status/reason/comparedValues/matchingUrl`; incompatibility links use `/search` filters including minimum GPU clearance | S05, S13 | 400; 404 unpublished/unknown product; 429; 503 |
 | `GET /api/cart` | Anonymous cart cookie or own member session | Current prices, availability and estimated shipping | S06 | 401; 404; 503 |
 | `PUT /api/cart` | Anonymous cart cookie or own member session | Product ID and quantity 1–10; server recomputes cart projection | S04, S06 | 400; 401; 409 stock/quantity; 429; 503 |
 | `POST /api/cart/merge` | Authenticated member plus anonymous cart cookie | Return current cart plus per-product resulting quantity for entries adjusted to the quantity/stock limit | S07–S09 → S12 | 401; 403; 409; 429; 503 |
