@@ -75,17 +75,25 @@ reset role;
 
 -- Unpublished/deleted products remain visible only in the owner cart projection
 -- as unavailable, with no stale price presented as current.
-update public.products set status='draft' where slug='t26-reference-product';
+update public.products set status='draft',name='Private Admin Notes',brand='Private Brand',sku='PRIVATE-SKU'
+where slug='t26-reference-product';
 set local role authenticated;
 select set_config('request.jwt.claim.role','authenticated',true);
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000261',true);
 select set_config('request.jwt.claims','{"sub":"00000000-0000-4000-8000-000000000261","role":"authenticated"}',true);
 do $$ declare current_cart jsonb; begin
   current_cart := public.cart_get(null);
-  if current_cart#>>'{items,0,availabilityState}' <> 'unavailable' or
-     current_cart#>'{items,0,unitPriceYen}' <> 'null'::jsonb or
-     current_cart#>'{items,0,lineTotalYen}' <> 'null'::jsonb then
-    raise exception 'unavailable product was dropped or reported with a current price';
+  if current_cart#>>'{items,0,availabilityState}' is distinct from 'unavailable' or
+     current_cart#>>'{items,0,name}' is distinct from '販売終了した商品' or
+     current_cart#>'{items,0,slug}' is distinct from 'null'::jsonb or
+     current_cart#>'{items,0,brand}' is distinct from 'null'::jsonb or
+     current_cart#>'{items,0,sku}' is distinct from 'null'::jsonb or
+     current_cart#>'{items,0,imagePath}' is distinct from 'null'::jsonb or
+     current_cart#>'{items,0,unitPriceAtAddYen}' is distinct from 'null'::jsonb or
+     current_cart#>'{items,0,unitPriceYen}' is distinct from 'null'::jsonb or
+     current_cart#>'{items,0,lineTotalYen}' is distinct from 'null'::jsonb or
+     (current_cart#>>'{items,0,availableQuantity}')::integer <> 0 then
+    raise exception 'unavailable product leaked private metadata or was not shown generically';
   end if;
 end $$;
 reset role;

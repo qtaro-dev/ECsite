@@ -92,13 +92,13 @@ test('stock conflicts and unavailable items are shown per line and can be correc
     availableQuantity: 1, name: 'Fixture CPU', slug: 'fixture-cpu', brand: 'Fixture Works', sku: 'CPU-261',
     imagePath: null, unitPriceAtAddYen: 1000, availabilityState: 'available' };
   const endedItem: CartItem = { productId: '00000000-0000-4000-8000-000000000262', quantity: 1, unitPriceYen: null, lineTotalYen: null,
-    availableQuantity: 0, name: 'Fixture Discontinued SSD', slug: null, brand: null, sku: 'SSD-262', imagePath: null,
+    availableQuantity: 0, name: '販売終了した商品', slug: null, brand: null, sku: null, imagePath: null,
     unitPriceAtAddYen: null, availabilityState: 'unavailable' };
   setCartRoutes(page, { items: [stockItem, endedItem], goodsTotalYen: 1780, estimatedShippingYen: null });
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/cart');
   const stockRow = page.locator('article').filter({ hasText: 'Fixture CPU' });
-  const endedRow = page.locator('article').filter({ hasText: 'Fixture Discontinued SSD' });
+  const endedRow = page.locator('article').filter({ hasText: '販売終了した商品' });
   await expect(stockRow.getByText('数量を確認してください')).toBeVisible();
   await expect(endedRow.getByText('販売終了')).toBeVisible();
   await expect(page.getByText('送料概算を表示できません')).toBeVisible();

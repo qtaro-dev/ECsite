@@ -13,12 +13,17 @@ security definer
 set search_path = ''
 as $$
   with line_rows as (
-    select ci.product_id, ci.quantity, ci.unit_price_at_add_yen,
+    select ci.product_id, ci.quantity,
+      case when p.status='published' and p.deleted_at is null then ci.unit_price_at_add_yen end as unit_price_at_add_yen,
       case when p.status='published' and p.deleted_at is null then p.price_tax_included_yen end as unit_price_yen,
-      coalesce(ai.available_quantity, 0)::integer as available_quantity,
+      case when p.status='published' and p.deleted_at is null then coalesce(ai.available_quantity,0)::integer else 0 end as available_quantity,
       p.weight_g, p.pack_length_mm, p.pack_width_mm, p.pack_height_mm,
-      p.name, p.slug, p.brand, p.sku,
-      (select i.storage_path from public.product_images i where i.product_id=p.id order by i.sort_order,i.id limit 1) as image_path,
+      case when p.status='published' and p.deleted_at is null then p.name else '販売終了した商品' end as name,
+      case when p.status='published' and p.deleted_at is null then p.slug end as slug,
+      case when p.status='published' and p.deleted_at is null then p.brand end as brand,
+      case when p.status='published' and p.deleted_at is null then p.sku end as sku,
+      (select i.storage_path from public.product_images i where i.product_id=p.id
+        and p.status='published' and p.deleted_at is null order by i.sort_order,i.id limit 1) as image_path,
       case when p.id is null or p.status<>'published' or p.deleted_at is not null then 'unavailable'
         when coalesce(ai.available_quantity,0)<=0 then 'sold_out' else 'available' end as availability_state,
       case when p.status='published' and p.deleted_at is null and p.price_tax_included_yen is not null
