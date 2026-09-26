@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import { describe, expect, it, vi } from 'vitest';
+import { ADMIN_PRODUCT_IMAGE_MAX_BYTES } from '../../src/lib/admin-product-image-limits';
 
 vi.mock('server-only', () => ({}));
 import { assertProductImageSize, assertSinglePageProductImage, inspectAndSanitizeProductImage, ProductImageValidationError } from '../../src/server/admin/product-images';
@@ -45,9 +46,10 @@ describe('admin product image validation and sanitization', () => {
     expect(() => assertSinglePageProductImage(12)).toThrowError(ProductImageValidationError);
   });
 
-  it('rejects a re-encoded output that exceeds the Storage bucket byte limit', () => {
-    expect(() => assertProductImageSize(10 * 1024 * 1024)).not.toThrow();
-    expect(() => assertProductImageSize(10 * 1024 * 1024 + 1)).toThrowError(ProductImageValidationError);
+  it('enforces the approved four-million-byte limit on input and re-encoded output', () => {
+    expect(ADMIN_PRODUCT_IMAGE_MAX_BYTES).toBe(4_000_000);
+    expect(() => assertProductImageSize(4_000_000)).not.toThrow();
+    expect(() => assertProductImageSize(4_000_001)).toThrowError(ProductImageValidationError);
   });
 
   it('re-encodes without carrying EXIF metadata', async () => {

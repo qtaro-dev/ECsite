@@ -37,3 +37,15 @@ test('A02 creates a draft, edits it, and remains usable on desktop and mobile', 
   await expect(page.getByRole('status')).toContainText('商品を保存しました');
   await expect(page.getByText(/編集版: \d+/)).toBeVisible();
 });
+
+test('A02 rejects an image above the approved four-million-byte cap in the browser', async ({ page }) => {
+  test.skip(!process.env.T36_ADMIN_EMAIL || !process.env.T36_ADMIN_PASSWORD,
+    'T36_ADMIN_EMAIL and T36_ADMIN_PASSWORD must identify a locally provisioned admin account');
+  await signInAsAdmin(page);
+  await page.getByRole('link', { name: '新規商品' }).click();
+  await page.getByLabel('画像を選択').setInputFiles({
+    name: 'over-limit.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(4_000_001),
+  });
+  await expect(page.getByRole('alert')).toContainText('4,000,000 bytes');
+  await expect(page.getByLabel('画像を選択')).toHaveValue('');
+});

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { apiErrorResponse, validationErrorResponse } from '@/lib/schemas';
-import { AdminProductCreateSchema, AdminProductImageInputSchema, AdminProductSaveFormSchema, AdminProductUpdateSchema } from '@/lib/admin-product-schemas';
+import { AdminProductCreateSchema, AdminProductImageFileSchema, AdminProductImageInputSchema, AdminProductSaveFormSchema, AdminProductUpdateSchema } from '@/lib/admin-product-schemas';
 import { adminError, adminSuccess, authorizeAdminApi } from '@/server/admin/http';
 import { getAdminProducts } from '@/server/admin/products';
 import { ProductSaveError, saveAdminProduct } from '@/server/admin/save-product';
+import { ADMIN_PRODUCT_MULTIPART_MAX_BYTES } from '@/lib/admin-product-image-limits';
 
 const QuerySchema = z.object({ q: z.string().max(100).optional() }).strict();
 
@@ -27,8 +28,23 @@ export async function GET(request: NextRequest) {
 async function saveProductRequest(request: NextRequest, update: boolean) {
   const authorization = await authorizeAdminApi(request, true);
   if ('response' in authorization) return authorization.response;
+  const tooLarge = () => NextResponse.json(apiErrorResponse('BAD_REQUEST', authorization.requestId), {
+    status: 413, headers: { 'Cache-Control': 'no-store' },
+  });
+  const declaredLength = request.headers.get('content-length');
+  if (declaredLength && /^\d+$/.test(declaredLength) && Number(declaredLength) > ADMIN_PRODUCT_MULTIPART_MAX_BYTES) {
+    return tooLarge();
+  }
   let form: FormData;
-  try { form = await request.formData(); }
+  try {
+    const body = await request.arrayBuffer();
+    if (body.byteLength > ADMIN_PRODUCT_MULTIPART_MAX_BYTES) return tooLarge();
+    const contentType = request.headers.get('content-type');
+    if (!contentType?.toLowerCase().startsWith('multipart/form-data;')) {
+      return NextResponse.json(apiErrorResponse('BAD_REQUEST', authorization.requestId), { status: 400, headers: { 'Cache-Control': 'no-store' } });
+    }
+    form = await new Response(body, { headers: { 'content-type': contentType } }).formData();
+  }
   catch { return NextResponse.json(apiErrorResponse('BAD_REQUEST', authorization.requestId), { status: 400, headers: { 'Cache-Control': 'no-store' } }); }
   const payloadText = form.get('payload');
   let payloadJson: unknown;
@@ -47,9 +63,17 @@ async function saveProductRequest(request: NextRequest, update: boolean) {
   }
   const image = form.get('image');
   if (image !== null && !(image instanceof File)) return NextResponse.json(apiErrorResponse('BAD_REQUEST', authorization.requestId), { status: 400, headers: { 'Cache-Control': 'no-store' } });
+  const parsedImage = image === null ? null : AdminProductImageFileSchema.safeParse({ image });
+  if (parsedImage && !parsedImage.success) {
+    const message = parsedImage.error.issues.some((issue) => issue.code === 'too_big')
+      ? '画像は4,000,000 bytes（約4MB）以下にしてください。'
+      : 'JPEG、PNG、WebP形式の画像を選択してください。';
+    const body = apiErrorResponse('BAD_REQUEST', authorization.requestId);
+    return NextResponse.json({ ...body, error: { ...body.error, fieldErrors: { image: [message] } } }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
+  }
   try {
     const data = await saveAdminProduct({ ...(update ? { productId: payload.data.productId } : {}), fields: fields.data, images: images.data, imageAltText: payload.data.imageAltText,
-      ...(image instanceof File ? { imageFile: image } : {}), actorId: authorization.access.userId, requestId: authorization.requestId });
+      ...(parsedImage && parsedImage.success ? { imageFile: parsedImage.data.image } : {}), actorId: authorization.access.userId, requestId: authorization.requestId });
     return update ? adminSuccess(data, authorization.requestId)
       : NextResponse.json({ data, requestId: authorization.requestId }, { status: 201, headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {

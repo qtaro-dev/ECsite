@@ -24,7 +24,7 @@ export class ProductSaveError extends Error {
 
 function imageValidationMessage(reason: ProductImageValidationError['reason']) {
   if (reason === 'type') return 'JPEG、PNG、WebP形式の画像を選択してください。';
-  if (reason === 'size') return '画像は10MiB以下にしてください。';
+  if (reason === 'size') return '画像は4,000,000 bytes（約4MB）以下にしてください。';
   if (reason === 'dimensions') return '画像は各辺8,000px以下、総画素2,400万以下にしてください。';
   if (reason === 'animated') return 'アニメーションや複数ページ画像は登録できません。';
   return '画像データを読み取れません。対応形式の画像を選び直してください。';

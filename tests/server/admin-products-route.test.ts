@@ -17,6 +17,7 @@ vi.mock('../../src/server/admin/save-product', () => ({
 }));
 import { PATCH, POST } from '../../src/app/api/admin/products/route';
 import { ProductSaveError } from '../../src/server/admin/save-product';
+import { ADMIN_PRODUCT_MULTIPART_MAX_BYTES } from '../../src/lib/admin-product-image-limits';
 
 const productId = '77777777-7777-4777-8777-777777777777';
 const userId = '88888888-8888-4888-8888-888888888888';
@@ -73,5 +74,49 @@ describe('/api/admin/products mutation contract', () => {
     const body = await response.json();
     expect(response.status).toBe(400);
     expect(body.error).toMatchObject({ code: 'BAD_REQUEST', fieldErrors: { image: ['アニメーション画像は登録できません。'] } });
+  });
+
+  it('rejects a declared multipart body over the limit before parsing', async () => {
+    const form = new FormData();
+    form.set('payload', JSON.stringify({ fields: base, images: [], imageAltText: 'image' }));
+    const request = new NextRequest('https://shop.example/api/admin/products', {
+      method: 'POST', body: form,
+      headers: { origin: 'https://shop.example', 'content-length': String(ADMIN_PRODUCT_MULTIPART_MAX_BYTES + 1) },
+    });
+    const response = await POST(request);
+    expect(response).toBeDefined();
+    if (!response) return;
+    expect(response.status).toBe(413);
+    expect(saveAdminProduct).not.toHaveBeenCalled();
+  });
+
+  it('checks received bytes when Content-Length is absent', async () => {
+    const form = new FormData();
+    form.set('payload', JSON.stringify({ fields: base, images: [], imageAltText: 'image' }));
+    form.set('image', new File([new Uint8Array(ADMIN_PRODUCT_MULTIPART_MAX_BYTES)], 'large.jpg', { type: 'image/jpeg' }));
+    const request = new NextRequest('https://shop.example/api/admin/products', {
+      method: 'POST', body: form, headers: { origin: 'https://shop.example' },
+    });
+    expect(request.headers.get('content-length')).toBeNull();
+    const response = await POST(request);
+    expect(response).toBeDefined();
+    if (!response) return;
+    expect(response.status).toBe(413);
+    expect(saveAdminProduct).not.toHaveBeenCalled();
+  });
+
+  it('returns a field error when the image file exceeds 4,000,000 bytes', async () => {
+    const form = new FormData();
+    form.set('payload', JSON.stringify({ fields: base, images: [], imageAltText: 'image' }));
+    form.set('image', new File([new Uint8Array(4_000_001)], 'too-large.jpg', { type: 'image/jpeg' }));
+    const response = await POST(new NextRequest('https://shop.example/api/admin/products', {
+      method: 'POST', body: form, headers: { origin: 'https://shop.example' },
+    }));
+    expect(response).toBeDefined();
+    if (!response) return;
+    const body = await response.json();
+    expect(response.status).toBe(400);
+    expect(body.error.fieldErrors.image).toContain('画像は4,000,000 bytes（約4MB）以下にしてください。');
+    expect(saveAdminProduct).not.toHaveBeenCalled();
   });
 });

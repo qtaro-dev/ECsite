@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ADMIN_PRODUCT_IMAGE_MAX_BYTES } from '@/lib/admin-product-image-limits';
 
 const optionalText = (max: number) => z.string().max(max).optional().default('');
 const optionalInt = () => z.number().int().positive().max(2_147_483_647).nullable().optional();
@@ -119,6 +120,9 @@ function validateShippingLimits(value: z.infer<z.ZodObject<typeof ProductFields>
 export const AdminProductImageSchema = z.object({
   id: z.uuid(), storagePath: z.string().min(1).max(512), altText: z.string().min(1).max(240), sortOrder: z.number().int().min(0),
 }).strict();
+export const AdminProductImageFileSchema = z.object({ image: z.file()
+  .max(ADMIN_PRODUCT_IMAGE_MAX_BYTES, '画像は4,000,000 bytes（約4MB）以下にしてください。')
+  .mime(['image/jpeg', 'image/png', 'image/webp'], { error: 'JPEG、PNG、WebP形式の画像を選択してください。' }) }).strict();
 export const AdminProductImageInputSchema = AdminProductImageSchema.omit({ id: true });
 export const AdminProductSaveFormSchema = z.object({
   productId: z.uuid().optional(),

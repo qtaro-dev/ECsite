@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { ADMIN_PRODUCT_IMAGE_MAX_BYTES, ADMIN_PRODUCT_IMAGE_MAX_PIXELS, ADMIN_PRODUCT_IMAGE_MAX_SIDE } from '@/lib/admin-product-image-limits';
+import { ADMIN_PRODUCT_IMAGE_MAX_BYTES, ADMIN_PRODUCT_IMAGE_MAX_PIXELS, ADMIN_PRODUCT_IMAGE_MAX_SIDE, ADMIN_PRODUCT_MULTIPART_MAX_BYTES } from '@/lib/admin-product-image-limits';
 import {
   AdminProductCreateSchema,
   AdminProductUpdateSchema,
@@ -100,7 +100,7 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
     setImageError('');
     if (!file) return;
     if (!allowedImageTypes.has(file.type)) { setImageError('JPEG、PNG、WebP形式の画像を選択してください。'); if (imageInputRef.current) imageInputRef.current.value = ''; return; }
-    if (file.size > ADMIN_PRODUCT_IMAGE_MAX_BYTES) { setImageError('画像は10MiB以下にしてください。'); if (imageInputRef.current) imageInputRef.current.value = ''; return; }
+    if (file.size > ADMIN_PRODUCT_IMAGE_MAX_BYTES) { setImageError('画像は4,000,000 bytes（約4MB）以下にしてください。'); if (imageInputRef.current) imageInputRef.current.value = ''; return; }
     try {
       const image = await createImageBitmap(file);
       const { width, height } = image;
@@ -176,12 +176,18 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
     setBusy(true);
     try {
       const formData = new FormData();
-      formData.set('payload', JSON.stringify({
+      const serializedPayload = JSON.stringify({
         ...(initial ? { productId: initial.id } : {}),
         fields: parsed.data,
         images: retainedImages.map((image, index) => ({ storagePath: image.storagePath, altText: image.altText, sortOrder: index })),
         imageAltText: imageAltText.trim() || `${fields.name || fields.sku}の商品画像`,
-      }));
+      });
+      const estimatedRequestBytes = new TextEncoder().encode(serializedPayload).byteLength + (imageFile?.size ?? 0) + 2_048;
+      if (estimatedRequestBytes > ADMIN_PRODUCT_MULTIPART_MAX_BYTES) {
+        setMessage('画像と入力内容を合わせた送信データが4,300,000 bytesを超えます。画像サイズまたは入力内容を減らしてください。');
+        return;
+      }
+      formData.set('payload', serializedPayload);
       if (imageFile) formData.set('image', imageFile, imageFile.name);
       const response = await fetch('/api/admin/products', {
         method: initial ? 'PATCH' : 'POST', body: formData,
@@ -189,7 +195,8 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
       const result = await response.json() as { data?: { productId?: string; version?: number; images?: Array<{ storagePath: string; altText: string }>; cleanupPending?: boolean }; error?: { fieldErrors?: Record<string, string[]> } };
       if (!response.ok || !result.data?.productId) {
         setErrors(result.error?.fieldErrors ?? {});
-        setMessage(response.status === 409 ? '別の管理者が先に更新しました。最新内容を読み込み直してください。'
+        setMessage(response.status === 413 ? '画像と入力内容を合わせた送信データは4,300,000 bytes以下にしてください。'
+          : response.status === 409 ? '別の管理者が先に更新しました。最新内容を読み込み直してください。'
           : response.status === 400 ? '入力内容を確認してください。'
             : '保存できませんでした。入力を保持したまま再度お試しください。');
         return;
@@ -273,7 +280,7 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
           </div>;
         })}
         <div className={styles.field}><label htmlFor="product-image">画像を選択</label><input ref={imageInputRef} id="product-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void chooseImage(event.target.files?.[0])} aria-invalid={Boolean(imageError)} aria-describedby={imageError ? 'image-error' : undefined} />
-          <small>静止画のJPEG・PNG・WebP、10MiB以下。各辺8,000px以下・総画素2,400万以下です。</small>
+          <small>静止画のJPEG・PNG・WebP、4,000,000 bytes（約4MB）以下。各辺8,000px以下・総画素2,400万以下です。</small>
           {imageError && <p className={styles.error} id="image-error" role="alert">{imageError}</p>}
           {imageFile && <><label htmlFor="new-image-alt">新しい画像の代替テキスト</label><input id="new-image-alt" maxLength={240} value={imageAltText} onChange={(event) => setImageAltText(event.target.value)} /></>}
           {[...fieldErrors('images'), ...fieldErrors('image')].map((error, index) => <p className={styles.error} key={`${error}-${index}`}>{error}</p>)}
