@@ -1,0 +1,69 @@
+.page { width: min(100% - 2rem, var(--content-max)); min-height: 55vh; flex: 1; margin-inline: auto; padding-block: 1rem 4rem; }
+.breadcrumb { display: flex; align-items: center; gap: .625rem; min-height: 44px; color: var(--color-muted); font-size: var(--font-size-small); }
+.breadcrumb a { display: inline-flex; min-height: 44px; align-items: center; }
+.header { margin-block: 1.5rem; }
+.header h1 { margin: 0; font-size: var(--font-size-heading); line-height: 1.3; }
+.header > p:last-child { max-width: 58rem; margin: .5rem 0 0; color: var(--color-muted); }
+.eyebrow { margin: 0 0 .25rem; color: var(--color-primary); font-size: .75rem; font-weight: 750; letter-spacing: .12em; }
+.loading { display: grid; gap: 1rem; }
+.loading span { display: block; height: 9rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: linear-gradient(90deg, #f1f4f8 25%, #fff 45%, #f1f4f8 65%); background-size: 250% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+@keyframes shimmer { to { background-position-x: -250%; } }
+.empty { margin-block: 2rem; padding: 2rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); text-align: center; }
+.empty h2 { margin: 0; }
+.emptyLinks { display: flex; justify-content: center; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+.emptyLinks a { display: inline-flex; min-height: 44px; align-items: center; padding-inline: 1rem; border: 1px solid var(--color-primary); border-radius: var(--radius-control); font-weight: 650; }
+.cartLayout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 1.5rem; margin-top: 1.5rem; }
+.items { min-width: 0; }
+.items > h2 { margin: 0 0 1rem; font-size: 1.25rem; }
+.line { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; min-width: 0; margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }
+.imageLink { display: block; width: min(100%, 9rem); height: auto; }
+.imageLink img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: contain; border-radius: var(--radius-control); background: #f5f7fa; }
+.itemMain { min-width: 0; }
+.itemMain h3 { margin: 0; font-size: 1.05rem; overflow-wrap: anywhere; }
+.itemSub, .muted { color: var(--color-muted); font-size: var(--font-size-small); }
+.stock { margin-block: .35rem; color: var(--color-success); font-size: var(--font-size-small); font-weight: 650; }
+.soldOut { margin-block: .35rem; color: var(--color-danger); font-weight: 750; }
+.priceRow, .lineTotal { display: flex; align-items: baseline; gap: .75rem; margin-top: .65rem; }
+.priceRow > span:first-child, .lineTotal > span:first-child { color: var(--color-muted); font-size: var(--font-size-small); }
+.priceRow strong, .lineTotal strong { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.lineTotal { justify-content: flex-end; margin-top: .15rem; }
+.priceChanged { padding: .15rem .45rem; border-radius: 99px; background: #fff4d6; color: var(--color-warning); font-size: var(--font-size-small); font-weight: 750; }
+.rowError { padding: .6rem .75rem; border-inline-start: 3px solid var(--color-danger); background: #fff3f2; color: var(--color-danger); }
+.rowActions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.rowActions label { font-size: var(--font-size-small); font-weight: 650; }
+.rowActions input { width: 5rem; min-height: 44px; padding: .4rem .5rem; border: 1px solid var(--color-control-border); border-radius: var(--radius-control); }
+.rowActions button { min-height: 44px; }
+.summary { min-width: 0; padding: 1.25rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }
+.summary h2 { margin: 0 0 1rem; font-size: 1.2rem; }
+.summary dl { margin: 0; }
+.summary dl > div { display: flex; justify-content: space-between; gap: 1rem; padding-block: .65rem; border-bottom: 1px solid var(--color-border); }
+.summary dt { color: var(--color-muted); }
+.summary dd { margin: 0; text-align: right; font-weight: 650; font-variant-numeric: tabular-nums; }
+.summary .grandTotal { padding-block: 1rem; font-size: 1.125rem; }
+.grandTotal dt, .grandTotal dd { color: var(--color-text); font-weight: 750; }
+.estimateNote { color: var(--color-muted); font-size: var(--font-size-small); }
+.checkoutBlocked { padding: .65rem .75rem; border-inline-start: 3px solid var(--color-danger); background: #fff3f2; color: var(--color-danger); font-size: var(--font-size-small); }
+.checkoutButton { display: flex; min-height: 48px; justify-content: center; align-items: center; margin-block: 1rem .5rem; padding: .6rem 1rem; border: 1px solid var(--color-primary); border-radius: var(--radius-control); background: var(--color-primary); color: #fff; font-weight: 700; text-align: center; }
+.checkoutButton[aria-disabled="true"] { border-color: var(--color-control-border); background: #e5e8ef; color: #505b6d; }
+.registerLink, .continueShopping { display: block; text-align: center; font-size: var(--font-size-small); }
+.continueShopping { min-height: 44px; margin-top: .5rem; padding-top: .65rem; }
+.visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+@media (min-width: 768px) {
+  .page { padding-block: 1.25rem 4rem; }
+  .cartLayout { grid-template-columns: minmax(0, 1fr) minmax(18rem, 20rem); gap: 1.75rem; }
+  .line { grid-template-columns: 8rem minmax(0, 1fr); }
+  .imageLink { width: 8rem; }
+}
+@media (min-width: 1200px) {
+  .cartLayout { grid-template-columns: minmax(0, 1fr) 21rem; gap: 2rem; }
+  .summary { position: sticky; top: 1rem; }
+}
+@media (max-width: 767px) {
+  .page { width: min(100% - 1rem, var(--content-max)); padding-top: .5rem; }
+  .header { margin-block: 1rem; }
+  .line { grid-template-columns: 5.5rem minmax(0, 1fr); gap: .75rem; padding: .75rem; }
+  .imageLink { width: 5.5rem; }
+  .rowActions { gap: .4rem; }
+  .rowActions label { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .loading span { animation: none; } }

@@ -50,8 +50,8 @@ paths:
   /cart:
     get:
       operationId: get_cart
-      summary: Read current-price cart for its anonymous cookie or member session
-      description: Anonymous carts use an HttpOnly, Secure-in-production, SameSite=Lax signed cookie. A heavy-item shipping amount remains null until its destination is known.
+      summary: Read the current-price cart and its server-recorded add-time reference prices
+      description: Add-time prices are informational comparison values only. Checkout re-reads current prices. Anonymous carts use an HttpOnly, Secure-in-production, SameSite=Lax signed cookie. A heavy-item shipping amount remains null until its destination is known.
       security: [{ sessionCookies: [] }, {}]
       responses:
         '200': { $ref: '#/components/responses/Cart' }
@@ -552,13 +552,21 @@ components:
         estimatedShippingYen: { type: [integer, 'null'], minimum: 0, description: Null while a heavy item's destination-specific official rate cannot be determined. }
     CartLine:
       type: object
-      required: [productId, quantity, unitPriceYen, lineTotalYen, availableQuantity]
+      required: [productId, quantity, unitPriceYen, lineTotalYen, availableQuantity, unitPriceAtAddYen, name, slug, brand, sku, imagePath, availabilityState]
+      additionalProperties: false
       properties:
         productId: { type: string, format: uuid }
         quantity: { type: integer, minimum: 1, maximum: 10 }
-        unitPriceYen: { type: integer, minimum: 0 }
-        lineTotalYen: { type: integer, minimum: 0 }
-        availableQuantity: { type: integer, minimum: 0 }
+        unitPriceYen: { type: [integer, 'null'], minimum: 0, description: Current server-observed unit price; null for unavailable products. }
+        lineTotalYen: { type: [integer, 'null'], minimum: 0, description: Current-price line total; null for unavailable products. }
+        availableQuantity: { type: integer, minimum: 0, description: Zero for unavailable products. }
+        unitPriceAtAddYen: { type: [integer, 'null'], minimum: 0, description: Informational reference only. Checkout always re-reads current prices. Null for unavailable products or lines predating T26. }
+        name: { type: [string, 'null'], description: Generic label for unavailable products; private catalog metadata is omitted. }
+        slug: { type: [string, 'null'], description: Null for unavailable products. }
+        brand: { type: [string, 'null'], description: Null for unavailable products. }
+        sku: { type: [string, 'null'], description: Null for unavailable products. }
+        imagePath: { type: [string, 'null'], description: Null for unavailable products. }
+        availabilityState: { type: string, enum: [available, sold_out, unavailable] }
     CartItemInput:
       type: object
       required: [productId, quantity]

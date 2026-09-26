@@ -30,7 +30,3 @@ export async function getPublishedProductDetail(slug: string, options: ProductDe
   }
   return product as ProductDetail;
 }
-
-export function productImageUrl(path: string): string {
-  return `/api/product-images/${path.split('/').map(encodeURIComponent).join('/')}`;
-}

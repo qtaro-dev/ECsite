@@ -101,9 +101,16 @@ export const CartItemInputSchema = z.object({ productId: IdSchema, quantity: Qua
 export const CartLineSchema = z.object({
   productId: IdSchema,
   quantity: QuantitySchema,
-  unitPriceYen: YenSchema,
-  lineTotalYen: YenSchema,
+  unitPriceYen: YenSchema.nullable(),
+  lineTotalYen: YenSchema.nullable(),
   availableQuantity: AvailableQuantitySchema,
+  unitPriceAtAddYen: YenSchema.nullable(),
+  name: z.string().min(1).nullable(),
+  slug: z.string().min(1).nullable(),
+  brand: z.string().min(1).nullable(),
+  sku: z.string().min(1).nullable(),
+  imagePath: z.string().min(1).nullable(),
+  availabilityState: z.enum(['available', 'sold_out', 'unavailable']),
 }).strict();
 export const CartProjectionSchema = z.object({
   items: z.array(CartLineSchema),

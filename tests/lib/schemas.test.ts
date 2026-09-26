@@ -12,6 +12,7 @@ import {
   ApiErrorSchema,
   ApiErrorCodeSchema,
   CartItemInputSchema,
+  CartProjectionSchema,
   CompatibilityStatusSchema,
   IdSchema,
   OrderStatusSchema,
@@ -115,6 +116,16 @@ describe('shared boundary schemas', () => {
     expect(QuoteRequestSchema.safeParse({ address, addressId: 'd2719f8c-2602-4bdb-a5e6-b8919668b3d9' }).success).toBe(false);
     expect(CartItemInputSchema.safeParse({ productId: 'd2719f8c-2602-4bdb-a5e6-b8919668b3d9', quantity: 10 }).success).toBe(true);
     expect(CartItemInputSchema.safeParse({ productId: 'd2719f8c-2602-4bdb-a5e6-b8919668b3d9', quantity: 11 }).success).toBe(false);
+  });
+
+  it('accepts server-only add-price references and unavailable cart lines without current prices', () => {
+    const base = { productId: 'd2719f8c-2602-4bdb-a5e6-b8919668b3d9', quantity: 1,
+      availableQuantity: 0, name: 'Retired product', slug: null, brand: null, sku: null,
+      imagePath: null, availabilityState: 'unavailable' as const };
+    expect(CartProjectionSchema.safeParse({ items: [{ ...base, unitPriceYen: null, lineTotalYen: null, unitPriceAtAddYen: 1299 }],
+      goodsTotalYen: 0, estimatedShippingYen: 0 }).success).toBe(true);
+    expect(CartProjectionSchema.safeParse({ items: [{ ...base, unitPriceYen: 1400, lineTotalYen: 1400, unitPriceAtAddYen: null,
+      availabilityState: 'available', availableQuantity: 3 }], goodsTotalYen: 1400, estimatedShippingYen: 940 }).success).toBe(true);
   });
 
   it('uses the OpenAPI enum values and required fields', () => {
