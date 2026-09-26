@@ -92,17 +92,17 @@ begin
     if v_category_id<>(select c.id from public.categories c where c.slug=p_fields->>'category_slug') then
       raise exception 'category cannot be changed after creation' using errcode='22023';
     end if;
-    update public.products set status='draft' where id=p_product_id;
+    update public.products as product set status='draft' where product.id=p_product_id;
     select coalesce(jsonb_agg(jsonb_build_object('storage_path',i.storage_path,'alt_text',i.alt_text,'sort_order',i.sort_order)
       order by i.sort_order,i.storage_path),'[]'::jsonb) into v_old_images
       from public.product_images i where i.product_id=p_product_id;
-    update public.products set slug=p_fields->>'slug',sku=p_fields->>'sku',
+    update public.products as product set slug=p_fields->>'slug',sku=p_fields->>'sku',
       name=coalesce(p_fields->>'name',''),brand=coalesce(p_fields->>'brand',''),
       description=coalesce(p_fields->>'description',''),beginner_note=coalesce(p_fields->>'beginner_note',''),
       price_tax_included_yen=nullif(p_fields->>'price_tax_included_yen','')::integer,
       weight_g=nullif(p_fields->>'weight_g','')::integer,pack_length_mm=nullif(p_fields->>'pack_length_mm','')::integer,
       pack_width_mm=nullif(p_fields->>'pack_width_mm','')::integer,pack_height_mm=nullif(p_fields->>'pack_height_mm','')::integer,
-      version=version+1 where id=p_product_id;
+      version=product.version+1 where product.id=p_product_id;
   end if;
 
   execute format('select exists(select 1 from public.%I s where s.product_id=$1)',v_spec_table)
@@ -124,7 +124,7 @@ begin
       v_spec_table,v_spec_table,v_assignments)
       using coalesce(p_specifications,'{}'::jsonb),v_id;
   end if;
-  delete from public.product_use_cases where product_id=v_id;
+  delete from public.product_use_cases as product_use_case where product_use_case.product_id=v_id;
   insert into public.product_use_cases(product_id,use_case)
     select v_id,u from unnest(coalesce(p_use_cases,array[]::text[])) u;
 
@@ -147,11 +147,11 @@ begin
     raise exception 'image path is already associated with another product' using errcode='23505';
   end if;
   if exists(select 1 from public.products where id=v_id and status='published') then
-    update public.products set status='draft' where id=v_id;
+    update public.products as product set status='draft' where product.id=v_id;
   end if;
-  delete from public.product_images i where i.product_id=v_id and not exists(
+  delete from public.product_images as product_image where product_image.product_id=v_id and not exists(
     select 1 from jsonb_to_recordset(coalesce(p_images,'[]'::jsonb)) as submitted(storage_path text)
-      where submitted.storage_path=i.storage_path);
+      where submitted.storage_path=product_image.storage_path);
   insert into public.product_images(product_id,storage_path,alt_text,sort_order)
     select v_id,i.storage_path,i.alt_text,i.sort_order
     from jsonb_to_recordset(coalesce(p_images,'[]'::jsonb)) as i(storage_path text,alt_text text,sort_order smallint)
@@ -175,7 +175,7 @@ begin
     or coalesce(nullif(p_fields->>'pack_height_mm','')::integer>1700,false)) then
     raise exception 'Yamato handling limit exceeded' using errcode='23514';
   end if;
-  update public.products set status=v_status where id=v_id;
+  update public.products as product set status=v_status where product.id=v_id;
   select coalesce(jsonb_agg(jsonb_build_object('storage_path',i.storage_path,'alt_text',i.alt_text,'sort_order',i.sort_order)
     order by i.sort_order,i.storage_path),'[]'::jsonb) into v_new_images
     from jsonb_to_recordset(coalesce(p_images,'[]'::jsonb)) as i(storage_path text,alt_text text,sort_order smallint);
