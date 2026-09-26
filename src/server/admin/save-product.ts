@@ -102,7 +102,11 @@ export async function saveAdminProduct(input: SaveProductInput) {
     p_fields: productFieldsForDatabase(fields),
     p_specifications: fields.specifications,
     p_use_cases: fields.useCases,
-    p_images: imageRows,
+    p_images: imageRows.map(({ storagePath, altText, sortOrder }) => ({
+      storage_path: storagePath,
+      alt_text: altText,
+      sort_order: sortOrder,
+    })),
     p_actor_id: input.actorId,
     p_request_id: input.requestId,
   });

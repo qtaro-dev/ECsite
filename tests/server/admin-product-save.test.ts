@@ -76,7 +76,11 @@ describe('admin product save service', () => {
     expect(inspect).toHaveBeenCalledWith('image/jpeg', 2, new Uint8Array([8, 9]));
     expect(upload).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`^${result.productId}/[0-9a-f-]{36}\\.jpg$`, 'i')),
       new Uint8Array([1, 2, 3]), { contentType: 'image/jpeg', upsert: false, cacheControl: '3600' });
-    expect(rpc.mock.calls[0][1].p_images).toEqual([expect.objectContaining({ altText: 'front view', sortOrder: 0 })]);
+    expect(rpc.mock.calls[0][1].p_images).toEqual([{
+      storage_path: expect.stringMatching(new RegExp(`^${result.productId}/[0-9a-f-]{36}\\.jpg$`, 'i')),
+      alt_text: 'front view',
+      sort_order: 0,
+    }]);
   });
 
   it('maps stale version and unclaimed-id conflicts without exposing database details', async () => {
