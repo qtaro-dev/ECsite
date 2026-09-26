@@ -1,6 +1,6 @@
-# T37 DB migration proposal (not applied)
+# T37 DB migration design and verification
 
-This is a review proposal only. The user approved a new migration after the prior audit findings are addressed. It has not been applied or tested against a database. Migration authoring/application is paused while T28 owns the shared migration sequence.
+The user approved a new migration after the prior audit findings were addressed. The implementation is in [`20260926160000_admin_products.sql`](../supabase/migrations/20260926160000_admin_products.sql). It is designed to be applied from a clean local/CI database; database integration and concurrency tests are registered in `.github/workflows/t06-db.yml` and must pass before the ticket is considered complete. No production database is changed by this patch.
 
 ## Intended changes
 
@@ -14,7 +14,9 @@ This is a review proposal only. The user approved a new migration after the prio
 - The draft schema tables have different nullability. If a new draft lacks any NOT NULL specification field for its category (`gpu`, `ssd`, `power-supply`, `pc-case`, `cpu-cooler`), it creates no spec row; draft publication is allowed to remain incomplete. For an existing spec row, omitted fields preserve their stored value, nullable columns accept explicit `null`, and a NOT NULL field cannot be cleared. An existing row is never deleted. Once complete, the upsert records the changed fields. CPU, motherboard, and memory spec tables allow all fields to be null and may retain a row with missing compatibility values.
 - Append one `audit_logs` row with actor, product id, request id, and `reason_code: product_change`. Keep the existing audit validator unchanged. Populate `changed_fields` from the actual diff, limited to its existing allowlist values `price_tax_included_yen`, `status`, and `product_image`.
 
-## SQL draft
+## Migration source
+
+The migration file linked above is authoritative. The SQL sketch that follows is historical review material and must not be applied; use the migration file as the source of truth. CI database verification remains pending.
 
 The endpoint translates its camel-case contract to these database field names before calling the function. `p_fields.category_slug` is one of the eight fixed category slugs. `p_specifications` uses only the selected table's existing column names.
 
@@ -202,7 +204,7 @@ grant execute on function public.admin_save_product(uuid,integer,jsonb,jsonb,tex
   to service_role;
 ```
 
-The exact draft is still unexecuted. It needs parser/runtime review and local DB verification before a migration is authored or applied.
+The migration file linked above is authoritative. It incorporates the review fixes: exact pre-generated product UUID, service-role-only execution, active administrator actor validation, strict create/update version branching, category-key validation, all-category spec-row rules, atomic image metadata publication ordering, and actual-diff audit fields. The SQL test also covers the T29 order snapshot boundary, public catalog/search projection, RLS, Storage ownership, and actor revocation.
 
 ## Side effects, failure behavior, and rollback
 

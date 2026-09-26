@@ -29,8 +29,8 @@ Source of truth: detailed design §6 and screens/flows in `docs/wireframes/`. Th
 | `POST /api/account/delete` | Authenticated member, reauthentication and explicit confirmation | Safe handling of active payment, then idempotent member/Auth deletion | S15 | 400; 401; 409 active operation; 503 |
 | `GET /api/admin/products` | `admin_memberships` verified server side | Search products including drafts for A02 | A01–A02 | 401; 403; 429; 503 |
 | `GET /api/admin/overview` | `admin_memberships` verified on every request | Published products, out-of-stock inventory, orders, failed notifications; `requestId` is the audit correlation ID | A01 | 401; 403; 503 |
-| `POST /api/admin/products` | `admin_memberships`; Origin validated | Create category-typed product; incomplete draft allowed, publish validation enforced; audit ID | A02 | 400; 401; 403; 409; 429; 503 |
-| `PATCH /api/admin/products` | `admin_memberships`; Origin validated | Update typed product with expected version and audit ID | A02 | 400; 401; 403; 404; 409; 503 |
+| `POST /api/admin/products` | `admin_memberships`; Origin validated | Multipart create of category-typed product; incomplete draft allowed, publish validation enforced; optional image max 4,000,000 bytes; total body max 4,300,000 bytes; audit ID | A02 | 400; 401; 403; 409; 413 (BAD_REQUEST envelope); 503 |
+| `PATCH /api/admin/products` | `admin_memberships`; Origin validated | Multipart update of typed product with expected version and audit ID; optional image max 4,000,000 bytes; total body max 4,300,000 bytes | A02 | 400; 401; 403; 404; 409; 413 (BAD_REQUEST envelope); 503 |
 | `GET /api/admin/inventory` | `admin_memberships` | Read physical, allocated and available quantities | A03 | 401; 403; 429; 503 |
 | `POST /api/admin/inventory` | `admin_memberships`; Origin validated | Quantity adjustment with reason and expected version; atomic result | A03 | 400; 401; 403; 404; 409; 503 |
 | `GET /api/admin/orders` | `admin_memberships` | Read-only orders, payment attempts and audit context | A04 | 401; 403; 429; 503 |

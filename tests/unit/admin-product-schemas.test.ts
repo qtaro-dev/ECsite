@@ -40,6 +40,16 @@ describe('admin product input', () => {
     expect(AdminProductCreateSchema.safeParse({ ...draft, category: 'gpu', specifications: {} }).success).toBe(true);
   });
 
+  it('rejects blank whitespace in required published text specifications', () => {
+    const result = AdminProductCreateSchema.safeParse({
+      ...draft, category: 'gpu', status: 'published', name: 'GPU', brand: 'Maker', description: 'Description', beginnerNote: 'Guide',
+      priceTaxIncludedYen: 1000, weightG: 500, packLengthMm: 100, packWidthMm: 100, packHeightMm: 50,
+      specifications: { chipset: '   ', vram_gb: 8 },
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues.map((issue) => issue.path.join('.'))).toContain('specifications.chipset');
+  });
+
   it('rejects duplicate retained image paths in an admin save request', () => {
     const image = { storagePath: '12345678-1234-4234-8234-123456789012/a.jpg', altText: 'front', sortOrder: 0 };
     const result = AdminProductSaveFormSchema.safeParse({ fields: draft, images: [image, image], imageAltText: 'new image' });

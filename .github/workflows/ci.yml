@@ -68,7 +68,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run catalog, authentication, member, checkout, and admin browser tests
-        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts tests/e2e/t17-email-auth.spec.ts tests/e2e/t21-member-address.spec.ts tests/e2e/t24-build-check.spec.ts tests/e2e/t26-cart.spec.ts tests/e2e/t28-checkout-quote.spec.ts tests/e2e/t36-admin-auth.spec.ts tests/e2e/t40-admin-shipping.spec.ts
+        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts tests/e2e/t17-email-auth.spec.ts tests/e2e/t21-member-address.spec.ts tests/e2e/t24-build-check.spec.ts tests/e2e/t26-cart.spec.ts tests/e2e/t28-checkout-quote.spec.ts tests/e2e/t36-admin-auth.spec.ts tests/e2e/t37-admin-products.spec.ts tests/e2e/t40-admin-shipping.spec.ts
 
   quality:
     name: Quality gates

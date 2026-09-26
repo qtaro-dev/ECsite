@@ -51,7 +51,7 @@ export function productFieldsForDatabase(fields: AdminProductCreate | AdminProdu
 function mapRpcError(error: RpcError): ProductSaveError {
   if (error.code === 'P0001' || error.code === '23505') return new ProductSaveError('CONFLICT');
   if (error.code === 'P0002') return new ProductSaveError('NOT_FOUND');
-  if (error.code === '22023' || error.code === '23514') return new ProductSaveError('BAD_REQUEST');
+  if (error.code?.startsWith('22') || error.code === '23502' || error.code === '23514') return new ProductSaveError('BAD_REQUEST');
   if (error.code === '42501') return new ProductSaveError('FORBIDDEN');
   return new ProductSaveError('UNAVAILABLE');
 }

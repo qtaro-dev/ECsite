@@ -78,7 +78,7 @@ function validateSpecifications(value: z.infer<z.ZodObject<typeof ProductFields>
   if (value.status === 'published') {
     for (const field of requiredSpecFieldsByCategory[value.category] ?? []) {
       const fieldValue = value.specifications[field];
-      if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+      if (fieldValue === undefined || fieldValue === null || (typeof fieldValue === 'string' && !fieldValue.trim())) {
         context.addIssue({ code: 'custom', path: ['specifications', field], message: '公開にはこの仕様が必要です。' });
       }
     }

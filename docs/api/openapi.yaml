@@ -356,8 +356,20 @@ paths:
       x-admin-membership-required: true
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminProductCreate' } } } }
-      responses: { '201': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
+      requestBody:
+        required: true
+        description: Multipart fields contain a JSON-encoded payload string and an optional image. The complete request is limited to 4,300,000 bytes; an image is limited to 4,000,000 bytes.
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/AdminProductCreateMultipart' }
+      responses:
+        '201': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { description: 'HTTP 413 with the standard BAD_REQUEST error envelope when the total multipart body exceeds 4,300,000 bytes.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+        '503': { $ref: '#/components/responses/Unavailable' }
     patch:
       operationId: patch_admin_products
       summary: Update product with expected version
@@ -365,31 +377,20 @@ paths:
       x-admin-membership-required: true
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminProductUpdate' } } } }
-      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
-  /admin/products/{productId}/images:
-    post:
-      operationId: post_admin_product_image
-      summary: Upload and associate a validated product image
-      security: [{ sessionCookies: [] }]
-      x-admin-membership-required: true
-      x-origin-check: required
-      parameters:
-        - { name: productId, in: path, required: true, schema: { type: string, format: uuid } }
-        - { $ref: '#/components/parameters/Origin' }
       requestBody:
         required: true
+        description: Multipart fields contain a JSON-encoded payload string and an optional image. The complete request is limited to 4,300,000 bytes; an image is limited to 4,000,000 bytes.
         content:
           multipart/form-data:
-            schema: { $ref: '#/components/schemas/AdminProductImageUpload' }
+            schema: { $ref: '#/components/schemas/AdminProductUpdateMultipart' }
       responses:
-        '201': { description: Image uploaded and associated, content: { application/json: { schema: { $ref: '#/components/schemas/AdminProductImage' } } } }
+        '200': { $ref: '#/components/responses/GenericSuccess' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '413': { description: Image is larger than 10 MiB }
-        '415': { description: Unsupported image type or invalid image bytes }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { description: 'HTTP 413 with the standard BAD_REQUEST error envelope when the total multipart body exceeds 4,300,000 bytes.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
         '503': { $ref: '#/components/responses/Unavailable' }
   /admin/overview:
     get:
@@ -953,22 +954,45 @@ components:
         supported_socket_codes: { type: [array, 'null'], maxItems: 5, items: { type: string, maxLength: 32 } }
         height_mm: { type: integer, minimum: 1 }
         cooling_type: { type: string, maxLength: 120 }
-    AdminProductImage:
+    AdminProductImageInput:
       type: object
-      required: [id, storagePath, altText, sortOrder]
+      required: [storagePath, altText, sortOrder]
       additionalProperties: false
       properties:
-        id: { type: string, format: uuid }
         storagePath: { type: string, minLength: 1, maxLength: 512 }
         altText: { type: string, minLength: 1, maxLength: 240 }
         sortOrder: { type: integer, minimum: 0 }
-    AdminProductImageUpload:
+    AdminProductCreateMultipart:
       type: object
-      required: [file, altText]
+      required: [payload]
       additionalProperties: false
       properties:
-        file: { type: string, format: binary, description: 'JPEG, PNG, or WebP; maximum 10 MiB; dimensions are checked server-side.' }
-        altText: { type: string, minLength: 1, maxLength: 240 }
+        payload: { type: string, contentMediaType: application/json, contentSchema: { $ref: '#/components/schemas/AdminProductCreateMultipartPayload' }, description: 'JSON-encoded form payload.' }
+        image: { type: string, format: binary, description: 'Optional image, maximum 4,000,000 bytes.' }
+    AdminProductCreateMultipartPayload:
+      type: object
+      required: [fields, images, imageAltText]
+      additionalProperties: false
+      properties:
+        fields: { $ref: '#/components/schemas/AdminProductCreate' }
+        images: { type: array, items: { $ref: '#/components/schemas/AdminProductImageInput' } }
+        imageAltText: { type: string, minLength: 1, maxLength: 240 }
+    AdminProductUpdateMultipart:
+      type: object
+      required: [payload]
+      additionalProperties: false
+      properties:
+        payload: { type: string, contentMediaType: application/json, contentSchema: { $ref: '#/components/schemas/AdminProductUpdateMultipartPayload' }, description: 'JSON-encoded form payload.' }
+        image: { type: string, format: binary, description: 'Optional image, maximum 4,000,000 bytes.' }
+    AdminProductUpdateMultipartPayload:
+      type: object
+      required: [productId, fields, images, imageAltText]
+      additionalProperties: false
+      properties:
+        productId: { type: string, format: uuid }
+        fields: { $ref: '#/components/schemas/AdminProductUpdate' }
+        images: { type: array, items: { $ref: '#/components/schemas/AdminProductImageInput' } }
+        imageAltText: { type: string, minLength: 1, maxLength: 240 }
     AdminProductListResponse:
       type: object
       required: [data, requestId]
