@@ -38,10 +38,10 @@
     <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 47件。チケットの仕様と依存は<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件は<a href="multi-agent-execution-plan.md">実行計画</a>を参照してください。</p>
     <div class="summary" aria-label="進捗件数">
       <span>全件 <output id="count-all">47</output></span>
-      <span>未実装 <output id="count-not-started">23</output></span>
+      <span>未実装 <output id="count-not-started">21</output></span>
       <span>実装中 <output id="count-active">1</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">21</output></span>
+      <span>完了 <output id="count-done">23</output></span>
       <span>保留 <output id="count-blocked">2</output></span>
     </div>
     <div class="controls">
@@ -151,12 +151,12 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T20-auth-email-hook-smtp.md">T20</a></th>
             <td>Supabase Send Email HookとSMTP送信</td><td>F4 / W17</td><td>LUNA-B</td>
-            <td>T08、T17</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/37">Draft PR #37</a>; Vitest 82件・typecheck合格、quality/browser CI 36158038906 成功、DB CI<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36158038908">失敗</a>（Vault権限テスト要修正）。SMTP外部設定・実送信未確認</td><td class="updated">2026-09-26</td>
+            <td>T08、T17</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/37">Draft PR #37</a>; Vitest 82件・typecheck合格、<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36192291101">CI 36192291101</a>・<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36192291059">DB CI 36192291059</a>成功。SMTP外部設定・実送信未確認</td><td class="updated">2026-09-26</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T21-member-address-ui-api.md">T21</a></th>
             <td>配送先と会員画面</td><td>F4 / W19</td><td>LUNA-B</td>
-            <td>T10、T12、T17</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T10、T12、T17</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/42">PR #42</a> / <a href="https://github.com/qtaro-dev/ECsite/commit/c6406fe2f07cfd7e43c214402c415714b2886830">c6406fe</a>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36210754215">CI合格</a>、<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36210754208">DB統合検証合格</a></td><td class="updated">2026-09-26</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T22-account-retention-deletion.md">T22</a></th>
@@ -251,7 +251,7 @@
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T40-admin-shipping-settings.md">T40</a></th>
             <td>発送元・送料規則の管理</td><td>F4 / W19</td><td>LUNA-A</td>
-            <td>T08、T27、T36</td><td class="status">実装中</td><td class="evidence">LUNA-Aが別worktreeで正本・既存設計を確認中</td><td class="updated">2026-09-26</td>
+            <td>T08、T27、T36</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/41">PR #41</a> / <a href="https://github.com/qtaro-dev/ECsite/commit/efd94b9347256d7bdd0926a0428ab8020ab74403">efd94b9</a>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36191961969">CI合格</a>、<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36191962000">DB統合検証合格</a></td><td class="updated">2026-09-26</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T41-admin-smtp-settings.md">T41</a></th>
