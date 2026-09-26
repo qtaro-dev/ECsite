@@ -5,6 +5,8 @@ export type StripeCheckoutSessionInput = {
   attemptId: string;
   amountYen: number;
   allocationExpiresAt: string;
+  /** Frozen by checkout_session_prepare before the first Stripe call. */
+  expiresAtEpochSeconds?: number;
   siteOrigin: string;
 };
 
@@ -81,7 +83,12 @@ export function buildStripeCheckoutSessionParams(input: StripeCheckoutSessionInp
   if (!['http:', 'https:'].includes(origin.protocol) || origin.username || origin.password || origin.pathname !== '/' || origin.search || origin.hash) {
     throw new StripeCheckoutError('configuration', 'CONFIGURATION');
   }
-  const expiresAtEpochSeconds = sessionExpiryEpochSeconds(input.allocationExpiresAt, nowMilliseconds);
+  const expiresAtEpochSeconds = input.expiresAtEpochSeconds ?? sessionExpiryEpochSeconds(input.allocationExpiresAt, nowMilliseconds);
+  if (!Number.isSafeInteger(expiresAtEpochSeconds)
+    || expiresAtEpochSeconds * 1000 <= nowMilliseconds
+    || expiresAtEpochSeconds > Math.floor(Date.parse(input.allocationExpiresAt) / 1000)) {
+    throw new StripeCheckoutError('definitive_failure', 'ALLOCATION_WINDOW_ELAPSED');
+  }
   const metadata = { order_id: input.orderId, attempt_id: input.attemptId };
   return {
     mode: 'payment',
@@ -114,6 +121,15 @@ function validSessionId(value: unknown): value is string {
   return typeof value === 'string' && /^cs_test_[A-Za-z0-9_]+$/.test(value);
 }
 
+function validCheckoutUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname === 'checkout.stripe.com'
+      && !url.username && !url.password && !url.port;
+  } catch { return false; }
+}
+
 async function expireCreatedSession(sdk: StripeCheckoutSdk, sessionId: string): Promise<void> {
   try {
     const expired = await sdk.checkout.sessions.expire(sessionId);
@@ -144,8 +160,11 @@ export function createStripeCheckoutGateway(sdk: StripeCheckoutSdk) {
       }
       if (typeof response !== 'object' || response === null) throw new StripeCheckoutError('uncertain');
       const session = response as Record<string, unknown>;
-      if (session.livemode !== false || !validSessionId(session.id)
-        || typeof session.url !== 'string' || !session.url.startsWith('https://checkout.stripe.com/')) {
+      if (session.livemode !== false || !validSessionId(session.id) || !validCheckoutUrl(session.url)) {
+        throw new StripeCheckoutError('uncertain', 'RESPONSE_UNCERTAIN');
+      }
+      if (session.status !== 'open') {
+        if (session.status === 'expired') throw new StripeCheckoutError('definitive_failure', 'ALLOCATION_WINDOW_ELAPSED');
         throw new StripeCheckoutError('uncertain', 'RESPONSE_UNCERTAIN');
       }
       if (!Number.isSafeInteger(session.created) || !Number.isSafeInteger(session.expires_at)

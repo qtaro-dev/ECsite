@@ -22,6 +22,7 @@ on:
       - 'tests/database/t28-rate-limit-concurrency.py'
       - 'tests/database/t29-atomic-checkout-order.sql'
       - 'tests/database/t29-order-concurrency.py'
+      - 'tests/database/t30-stripe-checkout.sql'
       - 'tests/database/t40-admin-shipping-settings.sql'
       - 'tests/database/t37-admin-products.sql'
       - 'tests/database/t37-storage-fixtures.py'
@@ -51,6 +52,7 @@ on:
       - 'tests/database/t28-rate-limit-concurrency.py'
       - 'tests/database/t29-atomic-checkout-order.sql'
       - 'tests/database/t29-order-concurrency.py'
+      - 'tests/database/t30-stripe-checkout.sql'
       - 'tests/database/t40-admin-shipping-settings.sql'
       - 'tests/database/t37-admin-products.sql'
       - 'tests/database/t37-storage-fixtures.py'
@@ -109,6 +111,8 @@ jobs:
         run: python3 tests/database/t28-rate-limit-concurrency.py
       - name: Check T29 atomic checkout RPC permissions and invariants
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t29-atomic-checkout-order.sql
+      - name: Check T30 Stripe Session persistence, compensation, and service-only RPCs
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t30-stripe-checkout.sql
       - name: Check T29 checkout and stock concurrency
         run: python3 tests/database/t29-order-concurrency.py
       - name: Check T40 shipping settings versions, validation, and audit

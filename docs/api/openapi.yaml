@@ -117,7 +117,8 @@ paths:
   /checkout/start:
     post:
       operationId: post_checkout_start
-      summary: Revalidate quote and create Stripe test Checkout session
+      summary: Revalidate quote and create a 30-minute Stripe test Checkout session
+      description: Creates the order and 35-minute stock allocation atomically, then opens a test-mode Checkout Session with the server-confirmed JPY amount. Same-key retries resume the existing order; uncertain Stripe or database results retain the allocation for safe recovery.
       security: [{ sessionCookies: [] }]
       x-origin-check: required
       parameters:

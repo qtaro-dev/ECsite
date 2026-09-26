@@ -57,7 +57,7 @@ describe('Stripe Checkout test gateway', () => {
     vi.setSystemTime(now);
     const create = vi.fn().mockResolvedValue({
       id: 'cs_test_abc123', url: 'https://checkout.stripe.com/c/pay/cs_test_abc123',
-      livemode: false, created: now / 1000, expires_at: now / 1000 + 1810,
+      livemode: false, status: 'open', created: now / 1000, expires_at: now / 1000 + 1810,
     });
     const gateway = createStripeCheckoutGateway({ checkout: { sessions: { create, expire: vi.fn() } } });
     const session = await gateway.createSession(input, '2f8c342f-18f2-4f50-b0f3-832c7ca9547c');
@@ -97,10 +97,20 @@ describe('Stripe Checkout test gateway', () => {
   });
 
   it('never accepts an invalid or live Checkout Session response as usable', async () => {
-    const create = vi.fn().mockResolvedValue({ id: 'cs_live_abc', url: 'https://checkout.stripe.com/c/pay/cs_live_abc', livemode: true, created: 100, expires_at: 100 });
+    const create = vi.fn().mockResolvedValue({ id: 'cs_live_abc', url: 'https://checkout.stripe.com/c/pay/cs_live_abc', livemode: true, status: 'open', created: 100, expires_at: 100 });
     const gateway = createStripeCheckoutGateway({ checkout: { sessions: { create, expire: vi.fn() } } });
     await expect(gateway.createSession(input, '2f8c342f-18f2-4f50-b0f3-832c7ca9547c'))
       .rejects.toMatchObject({ kind: 'uncertain' });
+  });
+
+  it('rejects lookalike Checkout hosts by parsed hostname', async () => {
+    const create = vi.fn().mockResolvedValue({
+      id: 'cs_test_abc123', url: 'https://checkout.stripe.com.attacker.test/c/pay/cs_test_abc123',
+      livemode: false, status: 'open', created: now / 1000, expires_at: now / 1000 + 1810,
+    });
+    const gateway = createStripeCheckoutGateway({ checkout: { sessions: { create, expire: vi.fn() } } });
+    await expect(gateway.createSession(input, '2f8c342f-18f2-4f50-b0f3-832c7ca9547c'))
+      .rejects.toMatchObject({ kind: 'uncertain', code: 'RESPONSE_UNCERTAIN' });
   });
 
   it('expires a created Session and only reports a definite failure when the remaining allocation cannot cover 30 minutes', async () => {
@@ -108,7 +118,7 @@ describe('Stripe Checkout test gateway', () => {
     vi.setSystemTime(now);
     const create = vi.fn().mockResolvedValue({
       id: 'cs_test_abc123', url: 'https://checkout.stripe.com/c/pay/cs_test_abc123',
-      livemode: false, created: now / 1000 + 5 * 60, expires_at: now / 1000 + 1810,
+      livemode: false, status: 'open', created: now / 1000 + 5 * 60, expires_at: now / 1000 + 1810,
     });
     const expire = vi.fn().mockResolvedValue({ id: 'cs_test_abc123', status: 'expired' });
     const gateway = createStripeCheckoutGateway({ checkout: { sessions: { create, expire } } });
@@ -122,7 +132,7 @@ describe('Stripe Checkout test gateway', () => {
     vi.setSystemTime(now);
     const create = vi.fn().mockResolvedValue({
       id: 'cs_test_abc123', url: 'https://checkout.stripe.com/c/pay/cs_test_abc123',
-      livemode: false, created: now / 1000 + 5 * 60, expires_at: now / 1000 + 1810,
+      livemode: false, status: 'open', created: now / 1000 + 5 * 60, expires_at: now / 1000 + 1810,
     });
     const expire = vi.fn().mockRejectedValue(new Error('expire failed'));
     const gateway = createStripeCheckoutGateway({ checkout: { sessions: { create, expire } } });

@@ -63,7 +63,7 @@ async function sessionResponse(input: {
     siteOrigin: process.env.NEXT_PUBLIC_SITE_URL ?? new URL(input.request.url).origin,
   });
   if (result.ok) return authSuccess({ orderId: input.orderId, checkoutUrl: result.session.url });
-  if (result.reason === 'allocation_window_elapsed') return conflict('QUOTE_EXPIRED', 'create_new_quote');
+  if (result.reason === 'allocation_window_elapsed' || result.reason === 'session_expired') return conflict('QUOTE_EXPIRED', 'create_new_quote');
   return authError(503, 'UNAVAILABLE', unavailableMessage);
 }
 

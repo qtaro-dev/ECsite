@@ -90,7 +90,7 @@ do $$ begin
   end if;
 end $$;
 select set_config('t29.fail_payment_attempt','off',true);
-do $$ declare r jsonb; replay jsonb; different_key jsonb; begin
+do $$ declare r jsonb; replay jsonb; different_key jsonb; v_hold_expiry timestamptz; begin
   r := public.create_checkout_order(
     '00000000-0000-4000-8000-000000000291','00000000-0000-4000-8000-000000000296',
     '00000000-0000-4000-8000-000000000298',
@@ -98,12 +98,15 @@ do $$ declare r jsonb; replay jsonb; different_key jsonb; begin
   if r->>'status' <> 'created' or (r->>'amountYen')::integer <> 9940 then
     raise exception 'valid checkout was not atomically created: %',r;
   end if;
+  select pa.expires_at into v_hold_expiry from public.payment_attempts pa where pa.order_id=(r->>'orderId')::uuid;
   if (select unit_price_yen from public.order_items where order_id=(r->>'orderId')::uuid) <> 9000
      or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000295') <> 1
      or (select amount_yen from public.payment_attempts where order_id=(r->>'orderId')::uuid) <> 9940
-     or not exists(select 1 from public.stock_allocations where order_id=(r->>'orderId')::uuid
-       and state='active' and expires_at between now()+interval '29 minutes' and now()+interval '31 minutes') then
-    raise exception 'current-price snapshot, payment amount, or 30-minute stock allocation was incorrect';
+     or v_hold_expiry is distinct from (select created_at+interval '35 minutes' from public.orders where id=(r->>'orderId')::uuid)
+     or (r->>'expiresAt')::timestamptz is distinct from v_hold_expiry
+     or (select count(*) from public.stock_allocations where order_id=(r->>'orderId')::uuid
+       and state='active' and expires_at=v_hold_expiry) <> 1 then
+    raise exception 'current-price snapshot, payment amount, or 35-minute stock allocation was incorrect';
   end if;
   if (select spec_snapshot->>'core_count' from public.order_items where order_id=(r->>'orderId')::uuid) <> '8' then
     raise exception 'full current product specification was not snapshotted';

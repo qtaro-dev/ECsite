@@ -70,9 +70,11 @@ function queryClient() {
       };
       return query;
     }),
-    rpc: vi.fn(async (name: string) => name === 'checkout_session_record'
-      ? { data: { status: 'stored' }, error: null }
-      : { data: { status: 'released' }, error: null }),
+    rpc: vi.fn(async (name: string) => name === 'checkout_session_prepare'
+      ? { data: { status: 'prepared', expiresAtEpochSeconds: Math.floor(Date.now() / 1000) + 1810, siteOrigin: 'http://localhost:3000' }, error: null }
+      : name === 'checkout_session_record'
+        ? { data: { status: 'stored' }, error: null }
+        : { data: { status: 'released' }, error: null }),
   };
 }
 
@@ -132,7 +134,8 @@ describe('POST /api/checkout/start', () => {
   it('retains the allocation on an uncertain Stripe response and compensates only a definitive rejection', async () => {
     createSession.mockRejectedValueOnce(new StripeCheckoutError('uncertain', 'RESPONSE_UNCERTAIN'));
     expect((await POST(request())).status).toBe(503);
-    expect(serviceClient.rpc).not.toHaveBeenCalled();
+    expect(serviceClient.rpc).toHaveBeenCalledTimes(1);
+    expect(serviceClient.rpc).toHaveBeenCalledWith('checkout_session_prepare', expect.any(Object));
 
     createSession.mockRejectedValueOnce(new StripeCheckoutError('definitive_failure', 'STRIPE_FAILURE'));
     expect((await POST(request())).status).toBe(503);
@@ -140,10 +143,22 @@ describe('POST /api/checkout/start', () => {
   });
 
   it('keeps the result ambiguous when recording the Stripe Session id has an unknown DB outcome', async () => {
-    serviceClient.rpc.mockResolvedValueOnce({ data: null, error: { message: 'connection lost' } } as never);
+    serviceClient.rpc.mockImplementation((async (name: string) => name === 'checkout_session_record'
+      ? { data: null, error: { message: 'connection lost' } }
+      : name === 'checkout_session_prepare'
+        ? { data: { status: 'prepared', expiresAtEpochSeconds: Math.floor(Date.now() / 1000) + 1810, siteOrigin: 'http://localhost:3000' }, error: null }
+        : { data: { status: 'released' }, error: null }) as never);
     const response = await POST(request());
     expect(response.status).toBe(503);
-    expect(serviceClient.rpc).toHaveBeenCalledTimes(1);
+    expect(serviceClient.rpc).toHaveBeenCalledTimes(2);
     expect(serviceClient.rpc).toHaveBeenCalledWith('checkout_session_record', expect.objectContaining({ p_session_id: 'cs_test_example' }));
+  });
+
+  it('does not return a Session URL after its frozen Stripe expiry', async () => {
+    serviceClient.rpc.mockResolvedValueOnce({ data: { status: 'session_expired' }, error: null } as never);
+    const response = await POST(request());
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ error: { code: 'QUOTE_EXPIRED' } });
+    expect(createSession).not.toHaveBeenCalled();
   });
 });
