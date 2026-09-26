@@ -100,7 +100,7 @@ test('stock conflicts and unavailable items are shown per line and can be correc
   const stockRow = page.locator('article').filter({ hasText: 'Fixture CPU' });
   const endedRow = page.locator('article').filter({ hasText: '販売終了した商品' });
   await expect(stockRow.getByText('数量を確認してください')).toBeVisible();
-  await expect(endedRow.getByText('販売終了')).toBeVisible();
+  await expect(endedRow.getByText('販売終了', { exact: true })).toBeVisible();
   await expect(page.getByText('送料概算を表示できません')).toBeVisible();
   await expect(page.getByText('税込合計見込み')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'ログインして購入手続きへ' })).toHaveAttribute('aria-disabled', 'true');
