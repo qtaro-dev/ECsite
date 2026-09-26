@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { ApiErrorSchema, validationErrorResponse } from '@/lib/schemas';
+import { ApiErrorCodeSchema, ApiErrorSchema, validationErrorResponse } from '@/lib/schemas';
 import type { z } from 'zod';
 
 export function requestId() { return crypto.randomUUID(); }
@@ -39,7 +39,7 @@ export function sameOrigin(request: NextRequest, configuredSiteUrl = process.env
   try { return requestOrigin === new URL(request.url).origin; } catch { return false; }
 }
 
-export function authError(status: number, code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'FORBIDDEN' | 'UNAVAILABLE', message: string) {
+export function authError(status: number, code: z.infer<typeof ApiErrorCodeSchema>, message: string) {
   const body = { error: { code, message }, requestId: requestId() };
   return NextResponse.json(ApiErrorSchema.parse(body), { status, headers: { 'Cache-Control': 'no-store' } });
 }

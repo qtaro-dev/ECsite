@@ -95,6 +95,11 @@ describe('shared boundary schemas', () => {
     expect(AddressSchema.safeParse(address).success).toBe(true);
     expect(AddressSchema.safeParse({ ...address, postalCode: '100-0001' }).success).toBe(false);
     expect(AddressSchema.safeParse({ ...address, prefectureCode: 48 }).success).toBe(false);
+    expect(AddressSchema.safeParse({ ...address, recipientName: ` ${'A'.repeat(81)} ` }).success).toBe(false);
+    expect(AddressSchema.safeParse({ ...address, city: '   ' }).success).toBe(false);
+    expect(AddressSchema.safeParse({ ...address, street: 'x'.repeat(151) }).success).toBe(false);
+    expect(AddressSchema.safeParse({ ...address, building: 'x'.repeat(101) }).success).toBe(false);
+    expect(AddressSchema.safeParse({ ...address, building: '  3F  ' }).data?.building).toBe('3F');
     expect(AddressPatchSchema.safeParse({ addressId: 'd2719f8c-2602-4bdb-a5e6-b8919668b3d9' }).success).toBe(false);
     expect(AddressPatchSchema.safeParse({ addressId: 'd2719f8c-2602-4bdb-a5e6-b8919668b3d9', city: '港区' }).success).toBe(true);
   });

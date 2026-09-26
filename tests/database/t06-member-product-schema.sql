@@ -8,12 +8,13 @@ insert into public.addresses(user_id,recipient_name,postal_code,prefecture_code,
 values ('00000000-0000-0000-0000-000000000061','Test User','1000001',13,'千代田区','千代田1-1',true);
 
 do $$ begin
-  begin
-    insert into public.addresses(user_id,recipient_name,postal_code,prefecture_code,city,street,is_default)
-    values ('00000000-0000-0000-0000-000000000061','Second','1000001',13,'千代田区','千代田1-2',true);
-    raise exception 'expected duplicate default address to fail';
-  exception when unique_violation then null;
-  end;
+  insert into public.addresses(user_id,recipient_name,postal_code,prefecture_code,city,street,is_default)
+  values ('00000000-0000-0000-0000-000000000061','Second','1000001',13,'千代田区','千代田1-2',true);
+  if (select count(*) from public.addresses where user_id='00000000-0000-0000-0000-000000000061' and is_default) <> 1
+     or not exists(select 1 from public.addresses where user_id='00000000-0000-0000-0000-000000000061' and recipient_name='Second' and is_default)
+     or exists(select 1 from public.addresses where user_id='00000000-0000-0000-0000-000000000061' and recipient_name='Test User' and is_default) then
+    raise exception 'new default address was not selected atomically';
+  end if;
 
   begin
     insert into public.products(category_id,slug,sku,name,brand,price_tax_included_yen)

@@ -75,23 +75,23 @@ export const SearchQuerySchema = z.object({
 });
 
 export const AddressSchema = z.object({
-  recipientName: z.string().min(1),
+  recipientName: z.string().trim().min(1).max(80),
   postalCode: z.string().regex(/^[0-9]{7}$/),
   prefectureCode: z.number().int().min(1).max(47),
-  city: z.string().min(1),
-  street: z.string().min(1),
-  building: z.string().nullable().optional(),
+  city: z.string().trim().min(1).max(100),
+  street: z.string().trim().min(1).max(150),
+  building: z.string().trim().max(100).nullable().optional(),
   isDefault: z.boolean(),
 }).strict();
 
 export const AddressPatchSchema = z.object({
   addressId: IdSchema,
-  recipientName: z.string().min(1).optional(),
+  recipientName: z.string().trim().min(1).max(80).optional(),
   postalCode: z.string().regex(/^[0-9]{7}$/).optional(),
   prefectureCode: z.number().int().min(1).max(47).optional(),
-  city: z.string().min(1).optional(),
-  street: z.string().min(1).optional(),
-  building: z.string().nullable().optional(),
+  city: z.string().trim().min(1).max(100).optional(),
+  street: z.string().trim().min(1).max(150).optional(),
+  building: z.string().trim().max(100).nullable().optional(),
   isDefault: z.boolean().optional(),
 }).strict().refine((value) => Object.keys(value).length >= 2, {
   message: 'At least one address field must be provided',
