@@ -63,7 +63,7 @@ test('member can create and review a 15-minute formal quote with current shippin
   expect(JSON.stringify(data)).not.toContain('addressId');
   await expect(page).toHaveURL('/checkout/review');
   await expect(page.getByRole('heading', { name: '注文内容の確認' })).toBeVisible();
-  await expect(page.getByText('正式な金額')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '正式な金額' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 });
 
@@ -86,7 +86,7 @@ test('review shows price changes and compatibility warnings while requiring expl
   await page.addInitScript((storedQuote) => window.sessionStorage.setItem('checkoutQuote', JSON.stringify(storedQuote)), quote);
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto('/checkout/review');
-  await expect(page.getByText('カート表示時 9,000円 → 10,000円')).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'Fixture CPU: 9,000円 → 10,000円' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'カート表示後に価格が変わりました' })).toBeVisible();
   await expect(page.getByRole('heading', { name: '構成の互換性について' })).toBeVisible();
   await expect(page.getByText('警告のみで、購入は妨げません。')).toBeVisible();
