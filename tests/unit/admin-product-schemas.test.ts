@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AdminProductCreateSchema } from '@/lib/admin-product-schemas';
+import { AdminProductCreateSchema, AdminProductSaveFormSchema } from '@/lib/admin-product-schemas';
 
 const draft = {
   category: 'cpu' as const,
@@ -38,5 +38,12 @@ describe('admin product input', () => {
 
   it('accepts an incomplete GPU draft without a spec row', () => {
     expect(AdminProductCreateSchema.safeParse({ ...draft, category: 'gpu', specifications: {} }).success).toBe(true);
+  });
+
+  it('rejects duplicate retained image paths in an admin save request', () => {
+    const image = { storagePath: '12345678-1234-4234-8234-123456789012/a.jpg', altText: 'front', sortOrder: 0 };
+    const result = AdminProductSaveFormSchema.safeParse({ fields: draft, images: [image, image], imageAltText: 'new image' });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].path).toEqual(['images']);
   });
 });

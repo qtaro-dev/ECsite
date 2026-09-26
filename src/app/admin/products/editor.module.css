@@ -21,9 +21,16 @@
 .alert { color: #b42318; background: #fef3f2; }
 .success { color: #067647; background: #ecfdf3; }
 .audit { overflow-wrap: anywhere; }
+.imageRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; margin: 12px 0; padding: 12px; border: 1px solid #d0d5dd; border-radius: 6px; }
+.imageRow label, .imageRow small { grid-column: 1 / -1; }
+.imageRow input { width: 100%; min-height: 44px; padding: 9px 11px; border: 1px solid #98a2b3; border-radius: 6px; color: #172033; font: inherit; }
+.imageRemove { min-height: 44px; padding: 8px 12px; border: 1px solid #b42318; border-radius: 6px; background: #fff; color: #b42318; font: inherit; cursor: pointer; }
+.imageRemove[aria-pressed="true"] { background: #fef3f2; }
 @media(max-width: 767px) {
   .section { padding: 16px; }
   .grid { grid-template-columns: minmax(0, 1fr); }
   .actions { flex-direction: column; }
   .actions button { width: 100%; }
+  .imageRow { grid-template-columns: minmax(0, 1fr); }
+  .imageRemove { width: 100%; }
 }

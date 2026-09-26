@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { ADMIN_PRODUCT_IMAGE_MAX_BYTES, ADMIN_PRODUCT_IMAGE_MAX_PIXELS, ADMIN_PRODUCT_IMAGE_MAX_SIDE } from '@/lib/admin-product-image-limits';
 import {
   AdminProductCreateSchema,
   AdminProductUpdateSchema,
@@ -69,16 +70,20 @@ const initialText: Omit<ExistingProduct, 'id' | 'version' | 'images' | 'specific
   priceTaxIncludedYen: null, status: 'draft', weightG: null, packLengthMm: null, packWidthMm: null,
   packHeightMm: null, useCases: [],
 };
-const imageMaxBytes = 10 * 1024 * 1024;
 const allowedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 export function AdminProductEditor({ initial }: ProductEditorProps) {
   const router = useRouter();
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [fields, setFields] = useState({ ...initialText, ...initial });
+  const [version, setVersion] = useState(initial?.version ?? 0);
   const [specValues, setSpecValues] = useState<Record<string, unknown>>(initial?.specifications ?? {});
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [imageError, setImageError] = useState('');
+  const [imageAltText, setImageAltText] = useState(initial ? `${initial.name || initial.sku}の商品画像` : '新商品の画像');
+  const [images, setImages] = useState(initial?.images ?? []);
+  const [removedImages, setRemovedImages] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -94,20 +99,23 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
     setImageDimensions(null);
     setImageError('');
     if (!file) return;
-    if (!allowedImageTypes.has(file.type)) { setImageError('JPEG、PNG、WebP形式の画像を選択してください。'); return; }
-    if (file.size > imageMaxBytes) { setImageError('画像は10MiB以下にしてください。'); return; }
+    if (!allowedImageTypes.has(file.type)) { setImageError('JPEG、PNG、WebP形式の画像を選択してください。'); if (imageInputRef.current) imageInputRef.current.value = ''; return; }
+    if (file.size > ADMIN_PRODUCT_IMAGE_MAX_BYTES) { setImageError('画像は10MiB以下にしてください。'); if (imageInputRef.current) imageInputRef.current.value = ''; return; }
     try {
       const image = await createImageBitmap(file);
       const { width, height } = image;
       image.close();
-      if (width < 1 || height < 1) {
-        setImageError('画像の寸法を読み取れません。別の画像を選択してください。');
+      if (width < 1 || height < 1 || width > ADMIN_PRODUCT_IMAGE_MAX_SIDE || height > ADMIN_PRODUCT_IMAGE_MAX_SIDE
+        || width * height > ADMIN_PRODUCT_IMAGE_MAX_PIXELS) {
+        setImageError('画像の寸法は各辺8,000px以下、総画素2,400万以下にしてください。');
+        if (imageInputRef.current) imageInputRef.current.value = '';
         return;
       }
       setImageFile(file);
       setImageDimensions({ width, height });
     } catch {
       setImageError('画像データを読み取れません。別の画像を選択してください。');
+      if (imageInputRef.current) imageInputRef.current.value = '';
     }
   }
 
@@ -145,7 +153,7 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
       packHeightMm: numeric(String(fields.packHeightMm ?? '')),
       useCases: fields.useCases,
       specifications: specValues,
-      ...(initial ? { expectedVersion: initial.version } : {}),
+      ...(initial ? { expectedVersion: version } : {}),
     };
     const parsed = initial ? AdminProductUpdateSchema.safeParse(payload) : AdminProductCreateSchema.safeParse(payload);
     if (!parsed.success) {
@@ -158,7 +166,8 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
       setMessage('入力内容を確認してください。');
       return;
     }
-    if (fields.status === 'published' && !initial?.images.length && !imageFile) {
+    const retainedImages = images.filter((image) => !removedImages.includes(image.storagePath));
+    if (fields.status === 'published' && retainedImages.length === 0 && !imageFile) {
       setErrors({ images: ['公開には少なくとも1枚の商品画像が必要です。'] });
       setMessage('入力内容を確認してください。');
       return;
@@ -166,8 +175,37 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
     setErrors({});
     setBusy(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      setMessage('入力検証に成功しました。保存API接続はDB変更の承認後に有効になります。');
+      const formData = new FormData();
+      formData.set('payload', JSON.stringify({
+        ...(initial ? { productId: initial.id } : {}),
+        fields: parsed.data,
+        images: retainedImages.map((image, index) => ({ storagePath: image.storagePath, altText: image.altText, sortOrder: index })),
+        imageAltText: imageAltText.trim() || `${fields.name || fields.sku}の商品画像`,
+      }));
+      if (imageFile) formData.set('image', imageFile, imageFile.name);
+      const response = await fetch('/api/admin/products', {
+        method: initial ? 'PATCH' : 'POST', body: formData,
+      });
+      const result = await response.json() as { data?: { productId?: string; version?: number; images?: Array<{ storagePath: string; altText: string }>; cleanupPending?: boolean }; error?: { fieldErrors?: Record<string, string[]> } };
+      if (!response.ok || !result.data?.productId) {
+        setErrors(result.error?.fieldErrors ?? {});
+        setMessage(response.status === 409 ? '別の管理者が先に更新しました。最新内容を読み込み直してください。'
+          : response.status === 400 ? '入力内容を確認してください。'
+            : '保存できませんでした。入力を保持したまま再度お試しください。');
+        return;
+      }
+      setMessage(result.data.cleanupPending
+        ? '商品を保存しました。置換した非公開画像の後片付けが保留中です。管理者へ連絡してください。'
+        : '商品を保存しました。');
+      setImageFile(null);
+      if (imageInputRef.current) imageInputRef.current.value = '';
+      setRemovedImages([]);
+      if (result.data.version !== undefined) setVersion(result.data.version);
+      if (result.data.images) setImages(result.data.images);
+      if (!initial) router.replace(`/admin/products/${result.data.productId}`);
+      else router.refresh();
+    } catch {
+      setMessage('通信できませんでした。入力内容はこの画面に保持しています。');
     } finally { setBusy(false); }
   }
 
@@ -221,17 +259,30 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
 
       <section className={styles.section} aria-labelledby="product-images-title">
         <h2 id="product-images-title">商品画像</h2>
-        {initial?.images.map((image) => <p key={image.storagePath}>{image.altText} <small>({image.storagePath})</small></p>)}
-        <div className={styles.field}><label htmlFor="product-image">画像を選択</label><input id="product-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void chooseImage(event.target.files?.[0])} aria-invalid={Boolean(imageError)} aria-describedby={imageError ? 'image-error' : undefined} />
-          <small>JPEG・PNG・WebP、10MiB以下。選択後に画像寸法を読み取ります。</small>
+        {images.map((image) => {
+          const removed = removedImages.includes(image.storagePath);
+          return <div className={styles.imageRow} key={image.storagePath}>
+            <label htmlFor={`image-alt-${image.storagePath}`}>代替テキスト</label>
+            <input id={`image-alt-${image.storagePath}`} value={image.altText} disabled={removed}
+              onChange={(event) => setImages((current) => current.map((entry) => entry.storagePath === image.storagePath ? { ...entry, altText: event.target.value } : entry))} />
+            <button type="button" className={styles.imageRemove} aria-pressed={removed}
+              onClick={() => setRemovedImages((current) => removed ? current.filter((path) => path !== image.storagePath) : [...current, image.storagePath])}>
+              {removed ? '削除を取り消す' : '画像を削除'}
+            </button>
+            <small>{removed ? '保存時に削除します' : '現在の商品画像'}</small>
+          </div>;
+        })}
+        <div className={styles.field}><label htmlFor="product-image">画像を選択</label><input ref={imageInputRef} id="product-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void chooseImage(event.target.files?.[0])} aria-invalid={Boolean(imageError)} aria-describedby={imageError ? 'image-error' : undefined} />
+          <small>静止画のJPEG・PNG・WebP、10MiB以下。各辺8,000px以下・総画素2,400万以下です。</small>
           {imageError && <p className={styles.error} id="image-error" role="alert">{imageError}</p>}
-          {fieldErrors('images').map((error) => <p className={styles.error} key={error}>{error}</p>)}
+          {imageFile && <><label htmlFor="new-image-alt">新しい画像の代替テキスト</label><input id="new-image-alt" maxLength={240} value={imageAltText} onChange={(event) => setImageAltText(event.target.value)} /></>}
+          {[...fieldErrors('images'), ...fieldErrors('image')].map((error, index) => <p className={styles.error} key={`${error}-${index}`}>{error}</p>)}
           {imageFile && imageDimensions && <p aria-live="polite">選択済み: {imageFile.name} · {imageDimensions.width} × {imageDimensions.height}px · {Math.ceil(imageFile.size / 1024)} KiB</p>}
         </div>
       </section>
       {message && <p className={message.startsWith('入力内容') ? styles.alert : styles.success} role="status">{message}</p>}
-      <div className={styles.actions}><button type="submit" disabled={busy}>{busy ? '検証中…' : '入力を検証'}</button>{initial && <button type="button" className={styles.secondary} onClick={() => router.push('/admin/products')}>一覧へ戻る</button>}</div>
-      {initial && <p className={styles.audit}>編集版: {initial.version}</p>}
+      <div className={styles.actions}><button type="submit" disabled={busy}>{busy ? '保存中…' : initial ? '変更を保存' : '商品を作成'}</button>{initial && <button type="button" className={styles.secondary} onClick={() => router.push('/admin/products')}>一覧へ戻る</button>}</div>
+      {initial && <p className={styles.audit}>編集版: {version}</p>}
     </form>
   );
 }

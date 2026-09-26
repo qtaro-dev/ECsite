@@ -119,6 +119,18 @@ function validateShippingLimits(value: z.infer<z.ZodObject<typeof ProductFields>
 export const AdminProductImageSchema = z.object({
   id: z.uuid(), storagePath: z.string().min(1).max(512), altText: z.string().min(1).max(240), sortOrder: z.number().int().min(0),
 }).strict();
+export const AdminProductImageInputSchema = AdminProductImageSchema.omit({ id: true });
+export const AdminProductSaveFormSchema = z.object({
+  productId: z.uuid().optional(),
+  fields: z.unknown(),
+  images: z.array(AdminProductImageInputSchema),
+  imageAltText: z.string().trim().min(1).max(240),
+}).strict().superRefine((value, context) => {
+  const paths = value.images.map((image) => image.storagePath);
+  if (new Set(paths).size !== paths.length) {
+    context.addIssue({ code: 'custom', path: ['images'], message: '同じ画像を重複して指定できません。' });
+  }
+});
 
 export const AdminProductListItemSchema = z.object({
   id: z.uuid(), category: AdminProductCategorySchema, slug: z.string(), sku: z.string(),

@@ -1,14 +1,15 @@
 # T37 DB migration proposal (not applied)
 
-This is a review proposal only. It has not been applied or tested against a database. No migration/RPC file is present in the T37 branch while the user decision is pending.
+This is a review proposal only. The user approved a new migration after the prior audit findings are addressed. It has not been applied or tested against a database. Migration authoring/application is paused while T28 owns the shared migration sequence.
 
 ## Intended changes
 
 - Add `products.version integer NOT NULL DEFAULT 0 CHECK (version >= 0)` for optimistic concurrency. Existing products receive version `0`; successful edits increment it once.
-- Add `public.admin_save_product(uuid, integer, jsonb, jsonb, text[], jsonb, uuid, text)` as the only database writer for product fields, category-specific specs, use cases, and image metadata. It is `SECURITY DEFINER`, uses an empty `search_path`, checks that `p_actor_id` is an active `admin_memberships` row, locks the product row, and returns `P0001` on stale version. Update calls explicitly reject a null expected version.
+- Add `public.admin_save_product(uuid, integer, jsonb, jsonb, text[], jsonb, uuid, text)` as the only database writer for product fields, category-specific specs, use cases, and image metadata. The trusted server generates a UUID before uploading image bytes and passes that ID for both create and update. `p_expected_version IS NULL` means create and requires that the supplied ID not already exist; a non-null version means update, locks the existing row, and compares it. It is `SECURITY DEFINER`, uses an empty `search_path`, and checks that `p_actor_id` is an active `admin_memberships` row. This allows every image object path to use `<product UUID>/...` and lets its metadata be synchronized in the same save transaction. The API never accepts an arbitrary product ID for creation; it generates one after authenticating the admin.
 - Do not add authenticated/anon `SELECT`, `INSERT`, `UPDATE`, or `DELETE` grants or policies. Existing T09 policies and grants remain authoritative. The management page/API uses the server-only service-role client only after `authorizeAdminApi` succeeds. The RPC has `EXECUTE` revoked from `PUBLIC`, `anon`, and `authenticated`; only `service_role` receives `EXECUTE`.
 - Make category immutable after create. Upsert only that category's existing spec table row. Do not delete spec rows. Replace product use-case rows transactionally when the submitted list changes.
 - Product image bytes are uploaded to the private Storage bucket by the authorized API. Each generated path is `<product UUID>/<random UUID>.<jpg|png|webp>`. The RPC checks the product-id prefix, that each path exists in `storage.objects` in bucket `product-images`, and that no other product already owns its metadata path. The unique `product_images.storage_path` constraint remains unchanged; an existing path for this product is updated, while an existing path for another product raises conflict. The RPC synchronizes `product_images` metadata in the same transaction as product fields. It sets status to draft before removing metadata (required by `prevent_last_published_product_image_delete`), synchronizes retained/new metadata, then sets the requested final status. Existing `products_validate_publish` therefore sees the final image metadata within the same transaction. After commit, the API deletes the corresponding private Storage object for removed metadata. If the DB transaction fails, the API removes only newly uploaded objects as compensation; an object-delete failure after commit leaves a private orphan for cleanup and must be surfaced for retry.
+- Image input remains JPEG, PNG, or WebP, up to 10 MiB. The server fully decodes with Sharp, compares decoded format to the declared MIME, rejects animated/multipage inputs, and enforces a maximum 8,000 pixels per edge and 24 million total pixels. Those limits leave ample room for the storefront image scale (at most 1,280 pixels) while bounding a decoded RGBA image near 96 MiB. The validated image is EXIF-oriented and re-encoded in the same format before Storage upload; Sharp's default re-encode strips EXIF/GPS, IPTC, and XMP metadata. The re-encoded output is also capped at 10 MiB to match the Storage bucket limit.
 - Insert draft first, upsert typed fields, then set the requested status in the same transaction. Existing `products_validate_publish` remains responsible for required description, image, and category-spec-row checks. The proposed writer additionally rejects publication above 30,000 g, any single package dimension above 1,700 mm, or a total above 2,000 mm, matching the currently published Yamato limits ([official limit FAQ](https://faq.kuronekoyamato.co.jp/app/answers/detail/a_id/1411)).
 - The draft schema tables have different nullability. If a new draft lacks any NOT NULL specification field for its category (`gpu`, `ssd`, `power-supply`, `pc-case`, `cpu-cooler`), it creates no spec row; draft publication is allowed to remain incomplete. For an existing spec row, omitted fields preserve their stored value, nullable columns accept explicit `null`, and a NOT NULL field cannot be cleared. An existing row is never deleted. Once complete, the upsert records the changed fields. CPU, motherboard, and memory spec tables allow all fields to be null and may retain a row with missing compatibility values.
 - Append one `audit_logs` row with actor, product id, request id, and `reason_code: product_change`. Keep the existing audit validator unchanged. Populate `changed_fields` from the actual diff, limited to its existing allowlist values `price_tax_included_yen`, `status`, and `product_image`.
@@ -33,7 +34,7 @@ create function public.admin_save_product(
 ) returns table(product_id uuid, version integer)
 language plpgsql security definer set search_path = '' as $$
 declare
-  v_id uuid := coalesce(p_product_id, gen_random_uuid());
+  v_id uuid := p_product_id;
   v_category_id uuid;
   v_category_slug text;
   v_spec_table text;
@@ -78,19 +79,20 @@ begin
     raise exception 'invalid product use case' using errcode='22023';
   end if;
 
-  if p_product_id is null then
-    insert into public.products(category_id,slug,sku,name,brand,description,beginner_note,
+  if p_product_id is null then raise exception 'product id is required' using errcode='22023'; end if;
+  if p_expected_version is null then
+    if exists(select 1 from public.products p where p.id=v_id) then
+      raise exception 'product id already exists' using errcode='23505';
+    end if;
+    insert into public.products(id,category_id,slug,sku,name,brand,description,beginner_note,
       price_tax_included_yen,tax_rate_basis_points,status,weight_g,pack_length_mm,pack_width_mm,pack_height_mm)
-    values(v_category_id,p_fields->>'slug',p_fields->>'sku',coalesce(p_fields->>'name',''),
+    values(v_id,v_category_id,p_fields->>'slug',p_fields->>'sku',coalesce(p_fields->>'name',''),
       coalesce(p_fields->>'brand',''),coalesce(p_fields->>'description',''),coalesce(p_fields->>'beginner_note',''),
       nullif(p_fields->>'price_tax_included_yen','')::integer,1000,'draft',
       nullif(p_fields->>'weight_g','')::integer,nullif(p_fields->>'pack_length_mm','')::integer,
       nullif(p_fields->>'pack_width_mm','')::integer,nullif(p_fields->>'pack_height_mm','')::integer)
     returning id into v_id;
   else
-    if p_expected_version is null then
-      raise exception 'expected version is required' using errcode='22023';
-    end if;
     select p.version,p.category_id,p.price_tax_included_yen,p.status
       into v_current_version,v_category_id,v_old_price,v_old_status
       from public.products p where p.id=p_product_id for update;
@@ -156,6 +158,13 @@ begin
     from jsonb_to_recordset(coalesce(p_images,'[]'::jsonb)) as i(storage_path text,alt_text text,sort_order smallint)
     on conflict(storage_path) do update set alt_text=excluded.alt_text,sort_order=excluded.sort_order
       where public.product_images.product_id=v_id;
+  -- The ownership precheck above can race with another transaction. Do not let
+  -- ON CONFLICT ... WHERE silently omit a path that another product claimed.
+  if exists (select 1 from jsonb_to_recordset(coalesce(p_images,'[]'::jsonb)) as submitted(storage_path text)
+      where not exists (select 1 from public.product_images i
+        where i.product_id=v_id and i.storage_path=submitted.storage_path)) then
+    raise exception 'image path is already associated with another product' using errcode='23505';
+  end if;
 
   if v_status='published' and (
     coalesce(nullif(p_fields->>'weight_g','')::integer>30000,false)
@@ -208,5 +217,7 @@ The exact draft is still unexecuted. It needs parser/runtime review and local DB
 - `service_role` can execute only when the supplied actor has active admin membership; revoked/non-member actor fails. HTTP route separately verifies the real session and membership before using service role.
 - Admin draft can omit spec values. Admin updates UPSERT only the selected category table; the category cannot change and there is no spec-row DELETE path.
 - Valid product with image and category row can publish; missing image/category row/base fields and the Yamato weight/dimension limits reject publication. Existing product order snapshots are byte-for-byte unchanged after price/name/spec edits.
-- Two edits with the same expected version: one succeeds and increments version, the other returns stale conflict. Duplicate slug/SKU returns conflict and leaves no partial spec/use-case/audit state.
-- Image paths must have the target product UUID prefix, refer to an existing object in `product-images`, and not be associated with another product. Updating the same product's existing path keeps the `storage_path` unique constraint intact. Replacing the final image on a published product runs metadata deletion only while the row is transactionally draft, then inserts the replacement before final publication; removing the final image and publishing fails. A draft may have no images. Verify Storage cleanup failure after commit leaves no public metadata and is reported as a private orphan.
+- Two edits with the same expected version: one succeeds and increments version, the other returns stale conflict. Duplicate slug/SKU returns conflict and leaves no partial spec/use-case/audit state. Verify the create branch inserts the exact supplied `p_product_id`, so it matches the already-uploaded Storage prefix.
+- Exercise the SQL against each category's real spec table: an incomplete new draft with a NOT NULL spec column creates no spec row; an existing row preserves omitted columns; explicit `null` clears only nullable columns and is rejected for NOT NULL columns; invalid/unknown category keys do not write unintended values. Confirm a complete update can fill an omitted required field and publish.
+- Exercise audit triggers/constraints with create, edit, publish/hide, price change, and image replacement/removal. The transaction must append exactly one valid audit row using the existing action/reason/change-summary constraints; `changed_fields` must match the actual diff and contain only allowed values. Any rejected spec, publication, image, or audit constraint rolls back every write.
+- Image paths must have the target product UUID prefix, refer to an existing object in `product-images`, and not be associated with another product. Updating the same product's existing path keeps the `storage_path` unique constraint intact. Replace the last image on an already-published product and verify final metadata is present before the publication trigger executes; removal without replacement while publishing fails. A draft may have no images. Verify Storage cleanup failure after commit leaves no public metadata and is reported as a private orphan.
