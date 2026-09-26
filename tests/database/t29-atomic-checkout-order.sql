@@ -82,9 +82,10 @@ do $$ begin
     if sqlerrm <> 'T29 injected payment-attempt failure' then raise; end if;
   end;
   if exists(select 1 from public.orders where checkout_quote_id='00000000-0000-4000-8000-000000000297')
-     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000295') <> 1
+     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000295') <> 0
      or exists(select 1 from public.payment_attempts pa join public.orders o on o.id=pa.order_id
-       where o.checkout_quote_id='00000000-0000-4000-8000-000000000297') then
+       where o.checkout_quote_id='00000000-0000-4000-8000-000000000297')
+     or exists(select 1 from public.stock_allocations where product_id='00000000-0000-4000-8000-000000000295') then
     raise exception 'failed RPC left partial order, payment, or stock allocation writes';
   end if;
 end $$;
