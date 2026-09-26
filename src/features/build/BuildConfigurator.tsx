@@ -28,6 +28,14 @@ const rules: Array<{ id: CompatibilityFinding['rule']; title: string }> = [
   { id: 'cpu_cooler_socket', title: 'CPUとクーラーの対応Socket' },
 ];
 
+const matchingLinkLabels: Record<CompatibilityFinding['rule'], string> = {
+  cpu_motherboard_socket: 'このCPUに対応するマザーボードを見る',
+  motherboard_memory_ddr: 'このマザーボードに対応するメモリを見る',
+  motherboard_case_form_factor: 'このマザーボードが搭載できるケースを見る',
+  gpu_case_length: 'このGPUが収まるケースを見る',
+  cpu_cooler_socket: 'このCPUに対応するCPUクーラーを見る',
+};
+
 const statusLabels: Record<CompatibilityFinding['status'], string> = {
   compatible: '一致',
   incompatible: '不一致',
@@ -297,7 +305,7 @@ export function BuildConfigurator({ initialSelections, initialLoadStates }: {
             <p>{finding.reason}</p>
             {Object.keys(finding.comparedValues).length > 0 && <dl className={styles.comparisonValues}>{Object.entries(finding.comparedValues).map(([key, value]) => <div key={key}><dt>{comparisonLabels[key] ?? key}</dt><dd>{formatValue(value)}{typeof value === 'number' && ['gpuCardLengthMm', 'caseMaxGpuLengthMm'].includes(key) ? ' mm' : ''}</dd></div>)}</dl>}
             {finding.status === 'unknown' && <p className={styles.missingNote}>必要な仕様が不足しています。互換すると断定できません。</p>}
-            {finding.status === 'incompatible' && finding.matchingUrl && <Link className={styles.matchingLink} href={finding.matchingUrl}>条件に合う商品を探す</Link>}
+            {finding.status === 'incompatible' && finding.matchingUrl && <Link className={styles.matchingLink} href={finding.matchingUrl}>{matchingLinkLabels[finding.rule]}</Link>}
           </article>;
         })}
       </div>}

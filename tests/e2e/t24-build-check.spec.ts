@@ -7,7 +7,8 @@ test('S05 checks compatible, incompatible, and unknown parts; selections survive
   const cpuAm4: ProductSearchItem = { ...cpuAm5, id: '00000000-0000-4000-8000-000000000242', slug: 'fixture-cpu-am4', sku: 'CPU-AM4', name: 'Fixture CPU AM4', specifications: { socket_code: 'AM4' } };
   const cpuUnknown: ProductSearchItem = { ...cpuAm5, id: '00000000-0000-4000-8000-000000000243', slug: 'fixture-cpu-unknown', sku: 'CPU-UNKNOWN', name: 'Fixture CPU Unknown', specifications: {} };
   const motherboard: ProductSearchItem = { ...cpuAm5, id: '00000000-0000-4000-8000-000000000244', slug: 'fixture-motherboard-am5', sku: 'MB-AM5', name: 'Fixture AM5 Motherboard', category: 'motherboard', specifications: { socket_code: 'AM5', ddr_generation: 'DDR5', form_factor: 'ATX' } };
-  const catalog: Record<string, ProductSearchItem[]> = { cpu: [cpuAm5, cpuAm4, cpuUnknown], motherboard: [motherboard] };
+  const memory: ProductSearchItem = { ...cpuAm5, id: '00000000-0000-4000-8000-000000000245', slug: 'fixture-memory-ddr4', sku: 'MEM-DDR4', name: 'Fixture DDR4 Memory', category: 'memory', specifications: { ddr_generation: 'DDR4' } };
+  const catalog: Record<string, ProductSearchItem[]> = { cpu: [cpuAm5, cpuAm4, cpuUnknown], motherboard: [motherboard], memory: [memory] };
   await page.route('**/api/products**', async (route) => {
     const url = new URL(route.request().url());
     const items = catalog[url.searchParams.get('category') ?? ''] ?? [];
@@ -17,6 +18,7 @@ test('S05 checks compatible, incompatible, and unknown parts; selections survive
     const body = route.request().postDataJSON() as { products: Array<{ category: string; productId: string }> };
     const cpuProduct = body.products.find((product) => product.category === 'cpu');
     const boardProduct = body.products.find((product) => product.category === 'motherboard');
+    const memoryProduct = body.products.find((product) => product.category === 'memory');
     const socketFinding = !cpuProduct || !boardProduct
       ? { rule: 'cpu_motherboard_socket', status: 'not_applicable', reason: '比較対象の商品が選択されていません。', comparedValues: {}, matchingUrl: null }
       : cpuProduct.productId === cpuAm5.id
@@ -25,7 +27,9 @@ test('S05 checks compatible, incompatible, and unknown parts; selections survive
           ? { rule: 'cpu_motherboard_socket', status: 'incompatible', reason: 'CPUとマザーボードのSocketが一致しません。', comparedValues: { cpuSocketCode: 'AM4', motherboardSocketCode: 'AM5' }, matchingUrl: '/search?category=motherboard&spec=%7B%22socket_code%22%3A%22AM4%22%7D' }
           : { rule: 'cpu_motherboard_socket', status: 'unknown', reason: '比較に必要な仕様が不足しているため判定できません。', comparedValues: { cpuSocketCode: null, motherboardSocketCode: 'AM5' }, matchingUrl: null };
     const data = [socketFinding,
-      { rule: 'motherboard_memory_ddr', status: 'not_applicable', reason: '比較対象の商品が選択されていません。', comparedValues: {}, matchingUrl: null },
+      memoryProduct
+        ? { rule: 'motherboard_memory_ddr', status: 'incompatible', reason: 'マザーボードとメモリのDDR規格が一致しません。', comparedValues: { motherboardDdrGeneration: 'DDR5', memoryDdrGeneration: 'DDR4' }, matchingUrl: '/search?category=memory&spec=%7B%22ddr_generation%22%3A%22DDR5%22%7D' }
+        : { rule: 'motherboard_memory_ddr', status: 'not_applicable', reason: '比較対象の商品が選択されていません。', comparedValues: {}, matchingUrl: null },
       { rule: 'motherboard_case_form_factor', status: 'not_applicable', reason: '比較対象の商品が選択されていません。', comparedValues: {}, matchingUrl: null },
       { rule: 'gpu_case_length', status: 'not_applicable', reason: '比較対象の商品が選択されていません。', comparedValues: {}, matchingUrl: null },
       { rule: 'cpu_cooler_socket', status: 'not_applicable', reason: '比較対象の商品が選択されていません。', comparedValues: {}, matchingUrl: null },
@@ -59,12 +63,15 @@ test('S05 checks compatible, incompatible, and unknown parts; selections survive
 
   await page.locator('#product-select-cpu').selectOption({ label: 'Fixture CPU AM4（CPU-AM4）' });
   await expect(compatibility.getByText('CPUとマザーボードのSocketが一致しません。')).toBeVisible();
-  await expect(compatibility.getByRole('link', { name: '条件に合う商品を探す' })).toHaveAttribute('href', /\/search\?category=motherboard&spec=/);
+  await expect(compatibility.getByRole('link', { name: 'このCPUに対応するマザーボードを見る' })).toHaveAttribute('href', /\/search\?category=motherboard&spec=/);
   await expect(cpu.getByRole('button', { name: 'カートに追加' })).toBeEnabled();
   await cpu.getByRole('button', { name: 'カートに追加' }).click();
   await expect(cpu.getByText('Fixture CPU AM4をカートに追加しました。')).toBeVisible();
   expect(cartAdds).toHaveLength(2);
   expect(cartAdds[1].productId).not.toBe(cartAdds[0].productId);
+
+  await page.locator('#product-select-memory').selectOption({ label: 'Fixture DDR4 Memory（MEM-DDR4）' });
+  await expect(compatibility.getByRole('link', { name: 'このマザーボードに対応するメモリを見る' })).toHaveAttribute('href', /\/search\?category=memory&spec=/);
 
   await page.locator('#product-select-cpu').selectOption({ label: 'Fixture CPU Unknown（CPU-UNKNOWN）' });
   await expect(compatibility.getByText('判定できません', { exact: true })).toBeVisible();
