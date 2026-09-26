@@ -343,7 +343,12 @@ paths:
       summary: List/search products for admin
       security: [{ sessionCookies: [] }]
       x-admin-membership-required: true
-      responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '503': { $ref: '#/components/responses/Unavailable' } }
+      parameters: [{ name: q, in: query, schema: { type: string, maxLength: 100 }, description: 'Search product name, brand, slug, and SKU before applying the 100-item result limit.' }]
+      responses:
+        '200': { description: Up to 100 matching non-deleted products, content: { application/json: { schema: { $ref: '#/components/schemas/AdminProductListResponse' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/Unavailable' }
     post:
       operationId: post_admin_products
       summary: Create product (typed fields; draft may be incomplete)
@@ -362,6 +367,30 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminProductUpdate' } } } }
       responses: { '200': { $ref: '#/components/responses/GenericSuccess' }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' }, '503': { $ref: '#/components/responses/Unavailable' } }
+  /admin/products/{productId}/images:
+    post:
+      operationId: post_admin_product_image
+      summary: Upload and associate a validated product image
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      x-origin-check: required
+      parameters:
+        - { name: productId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { $ref: '#/components/parameters/Origin' }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/AdminProductImageUpload' }
+      responses:
+        '201': { description: Image uploaded and associated, content: { application/json: { schema: { $ref: '#/components/schemas/AdminProductImage' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '413': { description: Image is larger than 10 MiB }
+        '415': { description: Unsupported image type or invalid image bytes }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /admin/overview:
     get:
       operationId: get_admin_overview
@@ -811,8 +840,9 @@ components:
       properties: { limit: { type: integer, minimum: 1, maximum: 100 } }
     AdminProductFields:
       type: object
+      required: [category, slug, sku, useCases, specifications]
       properties:
-        categoryId: { type: string, format: uuid }
+        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] }
         slug: { type: string }
         sku: { type: string }
         name: { type: string }
@@ -826,6 +856,23 @@ components:
         packLengthMm: { type: integer, minimum: 1 }
         packWidthMm: { type: integer, minimum: 1 }
         packHeightMm: { type: integer, minimum: 1 }
+        useCases:
+          type: array
+          uniqueItems: true
+          items: { type: string, enum: [gaming, daily, editing] }
+        specifications:
+          type: object
+          description: Typed fields for the selected category; fields may be omitted in a draft.
+          anyOf:
+            - { $ref: '#/components/schemas/CpuSpecifications' }
+            - { $ref: '#/components/schemas/GpuSpecifications' }
+            - { $ref: '#/components/schemas/MotherboardSpecifications' }
+            - { $ref: '#/components/schemas/MemorySpecifications' }
+            - { $ref: '#/components/schemas/SsdSpecifications' }
+            - { $ref: '#/components/schemas/PowerSupplySpecifications' }
+            - { $ref: '#/components/schemas/CaseSpecifications' }
+            - { $ref: '#/components/schemas/CoolerSpecifications' }
+      additionalProperties: false
     AdminOverview:
       type: object
       required: [publishedProducts, outOfStockProducts, orders, notificationFailures]
@@ -838,7 +885,7 @@ components:
     AdminProductCreate:
       allOf: [{ $ref: '#/components/schemas/AdminProductFields' }]
       unevaluatedProperties: false
-      description: Drafts may be incomplete; publication validation is server-side. Category-specific specs and image editing are defined by their feature contract.
+      description: Drafts may omit specification values. The category-specific schema is validated against category; publication also requires descriptive fields, an image, shipping data, and category requirements.
     AdminProductUpdate:
       allOf:
         - { $ref: '#/components/schemas/AdminProductFields' }
@@ -846,6 +893,109 @@ components:
           required: [expectedVersion]
           properties: { expectedVersion: { type: integer, minimum: 0 } }
       unevaluatedProperties: false
+    CpuSpecifications:
+      type: object
+      additionalProperties: false
+      properties:
+        socket_code: { type: [string, 'null'], maxLength: 120 }
+        core_count: { type: [integer, 'null'], minimum: 1 }
+        base_clock_mhz: { type: [integer, 'null'], minimum: 1 }
+        tdp_w: { type: [integer, 'null'], minimum: 1 }
+    GpuSpecifications:
+      type: object
+      additionalProperties: false
+      properties:
+        chipset: { type: string, maxLength: 120 }
+        vram_gb: { type: integer, minimum: 1 }
+        card_length_mm: { type: [integer, 'null'], minimum: 1 }
+    MotherboardSpecifications:
+      type: object
+      additionalProperties: false
+      properties:
+        socket_code: { type: [string, 'null'], maxLength: 120 }
+        ddr_generation: { type: [string, 'null'], enum: [DDR4, DDR5, null] }
+        form_factor: { type: [string, 'null'], enum: [ATX, mATX, ITX, null] }
+    MemorySpecifications:
+      type: object
+      additionalProperties: false
+      properties:
+        ddr_generation: { type: [string, 'null'], enum: [DDR4, DDR5, null] }
+        capacity_gb: { type: [integer, 'null'], minimum: 1 }
+        module_count: { type: [integer, 'null'], minimum: 1 }
+        speed_mt_s: { type: [integer, 'null'], minimum: 1 }
+    SsdSpecifications:
+      type: object
+      additionalProperties: false
+      properties:
+        capacity_gb: { type: integer, minimum: 1 }
+        interface: { type: string, maxLength: 120 }
+        form_factor: { type: string, maxLength: 120 }
+    PowerSupplySpecifications:
+      type: object
+      additionalProperties: false
+      properties:
+        rated_w: { type: integer, minimum: 1 }
+        form_factor: { type: string, maxLength: 120 }
+        efficiency_grade: { type: string, maxLength: 120 }
+    CaseSpecifications:
+      type: object
+      additionalProperties: false
+      properties:
+        max_gpu_length_mm: { type: [integer, 'null'], minimum: 1 }
+        outer_length_mm: { type: integer, minimum: 1 }
+        outer_width_mm: { type: integer, minimum: 1 }
+        outer_height_mm: { type: integer, minimum: 1 }
+        supported_form_factors: { type: [array, 'null'], maxItems: 3, items: { type: string, enum: [ATX, mATX, ITX] } }
+    CoolerSpecifications:
+      type: object
+      additionalProperties: false
+      properties:
+        supported_socket_codes: { type: [array, 'null'], maxItems: 5, items: { type: string, maxLength: 32 } }
+        height_mm: { type: integer, minimum: 1 }
+        cooling_type: { type: string, maxLength: 120 }
+    AdminProductImage:
+      type: object
+      required: [id, storagePath, altText, sortOrder]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        storagePath: { type: string, minLength: 1, maxLength: 512 }
+        altText: { type: string, minLength: 1, maxLength: 240 }
+        sortOrder: { type: integer, minimum: 0 }
+    AdminProductImageUpload:
+      type: object
+      required: [file, altText]
+      additionalProperties: false
+      properties:
+        file: { type: string, format: binary, description: 'JPEG, PNG, or WebP; maximum 10 MiB; dimensions are checked server-side.' }
+        altText: { type: string, minLength: 1, maxLength: 240 }
+    AdminProductListResponse:
+      type: object
+      required: [data, requestId]
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          required: [items]
+          additionalProperties: false
+          properties:
+            items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/AdminProductListItem' } }
+        requestId: { type: string, format: uuid }
+    AdminProductListItem:
+      type: object
+      required: [id, category, slug, sku, name, brand, status, priceTaxIncludedYen, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] }
+        slug: { type: string }
+        sku: { type: string }
+        name: { type: string }
+        brand: { type: string }
+        status: { type: string, enum: [draft, published, hidden] }
+        priceTaxIncludedYen: { type: [integer, 'null'], minimum: 0 }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { type: string, format: date-time }
     InventoryAdjustment:
       type: object
       required: [productId, delta, reason, expectedVersion]
