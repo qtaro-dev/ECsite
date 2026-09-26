@@ -23,6 +23,9 @@ on:
       - 'tests/database/t29-atomic-checkout-order.sql'
       - 'tests/database/t29-order-concurrency.py'
       - 'tests/database/t40-admin-shipping-settings.sql'
+      - 'tests/database/t37-admin-products.sql'
+      - 'tests/database/t37-storage-fixtures.py'
+      - 'tests/database/t37-product-concurrency.py'
       - '.github/workflows/t06-db.yml'
   push:
     branches: [main]
@@ -47,6 +50,9 @@ on:
       - 'tests/database/t29-atomic-checkout-order.sql'
       - 'tests/database/t29-order-concurrency.py'
       - 'tests/database/t40-admin-shipping-settings.sql'
+      - 'tests/database/t37-admin-products.sql'
+      - 'tests/database/t37-storage-fixtures.py'
+      - 'tests/database/t37-product-concurrency.py'
       - '.github/workflows/t06-db.yml'
 
 permissions:
@@ -64,6 +70,8 @@ jobs:
         run: supabase start --debug
       - name: Apply migrations from a clean database
         run: supabase db reset --local
+      - name: Export local Supabase API credentials
+        run: supabase status --output json | jq -r '"SUPABASE_URL=\(.API_URL)\nSUPABASE_ANON_KEY=\(.ANON_KEY)\nSUPABASE_SERVICE_ROLE_KEY=\(.SERVICE_ROLE_KEY)\nJWT_SECRET=\(.JWT_SECRET)"' >> "$GITHUB_ENV"
       - name: Check T06 constraints and indexes
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t06-member-product-schema.sql
       - name: Check T07 inventory, order, and payment schema
@@ -101,8 +109,12 @@ jobs:
         run: python3 tests/database/t29-order-concurrency.py
       - name: Check T40 shipping settings versions, validation, and audit
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t40-admin-shipping-settings.sql
-      - name: Export local Supabase API credentials
-        run: supabase status --output json | jq -r '"SUPABASE_URL=\(.API_URL)\nSUPABASE_ANON_KEY=\(.ANON_KEY)\nSUPABASE_SERVICE_ROLE_KEY=\(.SERVICE_ROLE_KEY)\nJWT_SECRET=\(.JWT_SECRET)"' >> "$GITHUB_ENV"
+      - name: Upload synthetic T37 product images
+        run: python3 tests/database/t37-storage-fixtures.py
+      - name: Check T37 admin product validation, RLS, publication and history
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t37-admin-products.sql
+      - name: Check T37 optimistic product version concurrency
+        run: python3 tests/database/t37-product-concurrency.py
       - name: Upload and read T11 image placeholders
         run: python3 tests/database/t11-storage-fixtures.py
       - name: Check T09 private Storage URLs
