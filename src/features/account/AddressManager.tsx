@@ -28,7 +28,16 @@ export function AddressManager({ initialAddresses, returnTo }: { initialAddresse
 
   function startEdit(address: Address) {
     setEditing(address.id);
-    setForm({ ...address, building: address.building ?? '' });
+    const fields: FormValue = {
+      recipientName: address.recipientName,
+      postalCode: address.postalCode,
+      prefectureCode: address.prefectureCode,
+      city: address.city,
+      street: address.street,
+      building: address.building,
+      isDefault: address.isDefault,
+    };
+    setForm({ ...fields, building: fields.building ?? '' });
     setFieldErrors({}); setMessage('');
   }
   function startNew() { setEditing(null); setForm({ ...empty }); setFieldErrors({}); setMessage(''); }

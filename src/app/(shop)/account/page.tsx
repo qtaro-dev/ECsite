@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { StatusMessage } from '@/components/StatusMessage';
+import { LogoutButton } from '@/features/auth/LogoutButton';
 import { createSupabaseServerClient } from '@/server/auth/supabase';
 import styles from './account.module.css';
 
@@ -16,6 +17,7 @@ export default async function AccountPage() {
   return <main className={styles.page} id="main-content" tabIndex={-1}>
     <p className={styles.eyebrow}>MY ACCOUNT</p><h1>会員メニュー</h1>
     <p>ログイン中のメールアドレス: {user.email}</p>
+    <LogoutButton />
     <p>配送先と注文履歴を確認できます。</p>
     {(addressError || orderError) && <StatusMessage kind="error" title="会員情報を読み込めませんでした"><p>時間をおいて再読み込みしてください。</p></StatusMessage>}
     <div className={styles.grid}>
