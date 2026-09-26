@@ -205,7 +205,7 @@ begin
   begin
     perform public.admin_save_product('00000000-0000-4000-8000-000000000380',0,
       pg_temp.t37_fields('cpu','t37-cpu-main','T37-CPU-MAIN'),'{"socket_code":"AM5"}'::jsonb,ARRAY['gaming'],
-      '[{"storage_path":"00000000-0000-4000-8000-000000000392.png","alt_text":"CPU","sort_order":0}]'::jsonb,
+      '[{"storage_path":"00000000-0000-4000-8000-000000000380/00000000-0000-4000-8000-000000000392.png","alt_text":"CPU","sort_order":0}]'::jsonb,
       '00000000-0000-4000-8000-000000000371','t37-image-foreign-owner');
   exception when unique_violation then v_conflicted:=true; end;
   if not v_conflicted then raise exception 'image path associated with another product was accepted'; end if;

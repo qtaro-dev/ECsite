@@ -67,6 +67,7 @@ test('A02 rejects an image above the approved four-million-byte cap in the brows
   await page.getByLabel('画像を選択').setInputFiles({
     name: 'over-limit.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(4_000_001),
   });
-  await expect(page.getByRole('alert')).toContainText('4,000,000 bytes');
+  await expect(page.locator('[role="alert"]').filter({ hasText: '4,000,000 bytes' }))
+    .toContainText('4,000,000 bytes');
   await expect(page.getByLabel('画像を選択')).toHaveValue('');
 });

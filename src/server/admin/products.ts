@@ -62,6 +62,7 @@ export async function getAdminProduct(productId: string) {
   return AdminProductDetailSchema.parse({
     id: row.id,
     version: row.version,
+    updatedAt: row.updated_at,
     category: category.slug,
     slug: row.slug,
     sku: row.sku,
