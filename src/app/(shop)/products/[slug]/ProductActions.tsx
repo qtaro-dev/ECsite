@@ -25,6 +25,6 @@ export function ProductActions({ productId, slug, availableQuantity, category }:
       ? <span className={styles.disabledLink} aria-disabled="true">カートへ進む（在庫切れ）</span>
       : <Link className={styles.primaryAction} href={cartHref}>カートへ進む</Link>}
     <Link className={styles.secondaryAction} href={buildHref}>構成に追加</Link>
-    <p className={styles.note}>カートと構成の保存は、各機能の準備状況に応じて後続画面で行います。</p>
+    <p className={styles.note}>カートの価格・在庫は購入手続き開始時にも再確認されます。構成の選択はURLまたはブラウザ内の一時状態です。</p>
   </section>;
 }

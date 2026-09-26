@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { ProductActions } from "./ProductActions";
 import { ProductImage } from "./ProductImage";
 import styles from "./page.module.css";
-import { getPublishedProductDetail, productImageUrl } from "@/server/catalog/product-detail";
+import { getPublishedProductDetail } from "@/server/catalog/product-detail";
+import { productImageUrl } from "@/lib/product-image-url";
 
 const labels: Record<string, string> = {
   socket_code: "ソケット", core_count: "コア数", base_clock_mhz: "基本クロック（MHz）", tdp_w: "TDP（W）",

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getPublishedProductDetail, productImageUrl } from '../../src/server/catalog/product-detail';
+import { getPublishedProductDetail } from '../../src/server/catalog/product-detail';
+import { productImageUrl } from '../../src/lib/product-image-url';
 import { GET as getProductImage } from '../../src/app/api/product-images/[...path]/route';
 
 const env = { NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co/', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'publishable' };
