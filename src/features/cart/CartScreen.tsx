@@ -10,15 +10,7 @@ import { CartLineSchema, CartProjectionSchema } from '@/lib/schemas';
 import { productImageUrl } from '@/lib/product-image-url';
 import styles from './CartScreen.module.css';
 
-const CartDisplayLineSchema = CartLineSchema.extend({
-  name: z.string().min(1).optional(),
-  slug: z.string().min(1).optional(),
-  brand: z.string().min(1).optional(),
-  sku: z.string().min(1).optional(),
-  imagePath: z.string().min(1).nullable().optional(),
-  unitPriceAtAddYen: z.number().int().safe().nonnegative().nullable().optional(),
-  availabilityState: z.enum(['available', 'sold_out', 'unavailable']).optional(),
-});
+const CartDisplayLineSchema = CartLineSchema;
 const CartScreenProjectionSchema = CartProjectionSchema.extend({ items: z.array(CartDisplayLineSchema) });
 type CartDisplayLine = z.infer<typeof CartDisplayLineSchema>;
 type CartScreenProjection = z.infer<typeof CartScreenProjectionSchema>;
@@ -52,6 +44,8 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
   const [busyProductId, setBusyProductId] = useState<string | null>(null);
   const [pageError, setPageError] = useState('');
   const [notice, setNotice] = useState('');
+  const [initialAddAttempt, setInitialAddAttempt] = useState(0);
+  const [initialAddFailed, setInitialAddFailed] = useState(false);
   const handledInitialProduct = useRef(false);
 
   const loadCart = useCallback(async () => {
@@ -77,7 +71,6 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
         if (cancelled) return;
         setCart(initialCart);
         if (initialProduct && !handledInitialProduct.current) {
-          handledInitialProduct.current = true;
           setBusyProductId(initialProduct.productId);
           const response = await fetch('/api/cart', {
             method: 'PUT', headers: { 'Content-Type': 'application/json' },
@@ -88,22 +81,29 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
           if (response.ok && payload.data !== undefined) {
             setCart(parseCart(payload.data));
             setNotice('商品をカートに追加しました。現在の価格と販売可能数を確認してください。');
+            handledInitialProduct.current = true;
           } else {
             const conflictCart = payload.error?.currentCart;
             if (conflictCart !== undefined) setCart(parseCart(conflictCart));
             setPageError(failureMessage(response.status, payload.error?.code));
+            setInitialAddFailed(true);
             setLineMessages((current) => ({ ...current, [initialProduct.productId]: failureMessage(response.status, payload.error?.code) }));
+            // Keep the request eligible for a later remount/retry. A rejected
+            // first attempt must not consume the query-string add action.
           }
         }
       } catch (error) {
-        if (!cancelled) setPageError(error instanceof Error ? error.message : 'カートを読み込めませんでした。');
+        if (!cancelled) {
+          setPageError(error instanceof Error ? error.message : 'カートを読み込めませんでした。');
+          if (initialProduct && !handledInitialProduct.current) setInitialAddFailed(true);
+        }
       } finally {
         if (!cancelled) { setLoading(false); setBusyProductId(null); }
       }
     }
     void initialize();
     return () => { cancelled = true; };
-  }, [initialProduct, loadCart]);
+  }, [initialProduct, loadCart, initialAddAttempt]);
 
   async function updateQuantity(item: CartDisplayLine) {
     const quantity = drafts[item.productId] ?? item.quantity;
@@ -154,7 +154,10 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
     <header className={styles.header}><p className={styles.eyebrow}>YOUR CART</p><h1>カート</h1><p>カートには現在の税込価格と販売可能数が表示されます。商品価格・在庫は購入手続き開始時にも再確認されます。</p></header>
 
     {notice && <StatusMessage kind="success" title="カートを更新しました"><p>{notice}</p></StatusMessage>}
-    {pageError && <StatusMessage kind="error" title="カートを更新できませんでした"><p>{pageError}</p><Button variant="secondary" type="button" onClick={() => void refresh()}>カートを再読み込み</Button></StatusMessage>}
+    {pageError && <StatusMessage kind="error" title="カートを更新できませんでした"><p>{pageError}</p>
+      <Button variant="secondary" type="button" onClick={() => void refresh()}>カートを再読み込み</Button>
+      {initialProduct && initialAddFailed && <Button type="button" onClick={() => { setInitialAddFailed(false); setInitialAddAttempt((count) => count + 1); }}>商品を再度カートに追加</Button>}
+    </StatusMessage>}
 
     {loading && <section className={styles.loading} aria-label="カートを読み込み中" aria-busy="true"><span /><span /><span /></section>}
     {isEmpty && <section className={styles.empty} aria-labelledby="empty-cart-heading"><h2 id="empty-cart-heading">カートは空です</h2><p>商品を探して、気になるパーツをカートに追加してください。</p><div className={styles.emptyLinks}><Link href="/search">商品を検索する</Link><Link href="/">トップページへ戻る</Link></div></section>}
@@ -166,7 +169,7 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
           const available = item.availabilityState === 'unavailable' || item.availabilityState === 'sold_out' || item.availableQuantity === 0;
           const overAvailable = item.quantity > item.availableQuantity;
           const name = itemName(item);
-          const hasPriceChanged = item.unitPriceAtAddYen !== undefined && item.unitPriceAtAddYen !== null && item.unitPriceAtAddYen !== item.unitPriceYen;
+          const hasPriceChanged = item.unitPriceAtAddYen !== null && item.unitPriceYen !== null && item.unitPriceAtAddYen !== item.unitPriceYen;
           return <article className={styles.line} key={item.productId} aria-labelledby={`cart-item-${item.productId}`}>
             {item.imagePath && <Link href={item.slug ? `/products/${item.slug}` : '/search'} aria-label={`${name}の商品詳細`} className={styles.imageLink}><Image src={productImageUrl(item.imagePath)} alt="" width={112} height={84} unoptimized /></Link>}
             <div className={styles.itemMain}>
@@ -175,10 +178,10 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
               {available ? <p className={styles.soldOut} role="status">{item.availabilityState === 'unavailable' ? '販売終了' : '在庫切れ'}</p>
                 : <p className={styles.stock}>販売可能数：{item.availableQuantity.toLocaleString('ja-JP')}点</p>}
               {overAvailable && <StatusMessage kind="warning" title="数量を確認してください"><p>カート数量は{item.quantity}点ですが、現在の販売可能数は{item.availableQuantity}点です。数量を変更してください。</p></StatusMessage>}
-              {hasPriceChanged && <StatusMessage kind="warning" title="価格が変更されました"><p>追加時 {yen(item.unitPriceAtAddYen!)} → 現在 {yen(item.unitPriceYen)}。合計には現在価格を使用しています。</p></StatusMessage>}
+              {hasPriceChanged && item.unitPriceAtAddYen !== null && item.unitPriceYen !== null && <StatusMessage kind="warning" title="価格が変更されました"><p>追加時 {yen(item.unitPriceAtAddYen)} → 現在 {yen(item.unitPriceYen)}。合計には現在価格を使用しています。</p></StatusMessage>}
               {item.unitPriceAtAddYen === null && <p className={styles.muted}>追加時の価格と比較できません。現在価格をご確認ください。</p>}
-              <div className={styles.priceRow}><span>税込単価</span><strong>{yen(item.unitPriceYen)}</strong>{hasPriceChanged && <span className={styles.priceChanged}>変更あり</span>}</div>
-              <div className={styles.lineTotal}><span>行小計</span><strong>{yen(item.lineTotalYen)}</strong></div>
+              <div className={styles.priceRow}><span>税込単価</span><strong>{item.unitPriceYen === null ? '確認できません' : yen(item.unitPriceYen)}</strong>{hasPriceChanged && <span className={styles.priceChanged}>変更あり</span>}</div>
+              <div className={styles.lineTotal}><span>行小計</span><strong>{item.lineTotalYen === null ? '—' : yen(item.lineTotalYen)}</strong></div>
               {lineMessages[item.productId] && <p className={styles.rowError} role="alert">{lineMessages[item.productId]}</p>}
               <div className={styles.rowActions}>
                 <label htmlFor={`quantity-${item.productId}`}>数量（1〜10）</label>

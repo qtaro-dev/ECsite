@@ -17,6 +17,7 @@ on:
       - 'tests/database/t15-product-detail.sql'
       - 'tests/database/t16-catalog-exceptions.sql'
       - 'tests/database/t25-cart-api.sql'
+      - 'tests/database/t26-cart-reference-price.sql'
       - 'tests/database/t40-admin-shipping-settings.sql'
       - '.github/workflows/t06-db.yml'
   push:
@@ -36,6 +37,7 @@ on:
       - 'tests/database/t15-product-detail.sql'
       - 'tests/database/t16-catalog-exceptions.sql'
       - 'tests/database/t25-cart-api.sql'
+      - 'tests/database/t26-cart-reference-price.sql'
       - 'tests/database/t40-admin-shipping-settings.sql'
       - '.github/workflows/t06-db.yml'
 
@@ -79,6 +81,8 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t16-catalog-exceptions.sql
       - name: Check T25 anonymous/member cart RPC ownership and stock bounds
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t25-cart-api.sql
+      - name: Check T26 reference prices, current totals, and unavailable lines
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t26-cart-reference-price.sql
       - name: Check T40 shipping settings versions, validation, and audit
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t40-admin-shipping-settings.sql
       - name: Export local Supabase API credentials
