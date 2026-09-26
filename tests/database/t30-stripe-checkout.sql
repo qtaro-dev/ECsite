@@ -8,7 +8,7 @@ insert into public.products(id,category_id,slug,sku,name,brand,description,begin
 values ('00000000-0000-4000-8000-000000000302',(select id from public.categories where slug='cpu'),
   't30-stripe-fixture','T30-CPU','T30 Stripe fixture','T30 Labs','fixture','fixture',100,1000,'draft',500,300,200,100);
 insert into public.inventory(product_id,on_hand,allocated)
-values ('00000000-0000-4000-8000-000000000302',5,2);
+values ('00000000-0000-4000-8000-000000000302',5,3);
 insert into public.orders(id,user_id,status,currency,goods_total_yen,shipping_base_yen,shipping_heavy_yen,
   shipping_total_yen,tax_total_yen,grand_total_yen,tax_rate_basis_points,shipping_rule_version,
   origin_snapshot,address_snapshot,checkout_key)
@@ -106,7 +106,7 @@ do $$ declare r jsonb; v_expiry bigint; begin
   r := public.checkout_session_creation_failed('00000000-0000-4000-8000-000000000303',
     '00000000-0000-4000-8000-000000000305','stripe_rejected');
   if r->>'status'<>'session_exists' then raise exception 'release was allowed after Session persistence: %',r; end if;
-  if (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000302')<>2
+  if (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000302')<>3
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000303')<>'active' then
     raise exception 'refused release changed inventory';
   end if;
@@ -122,7 +122,7 @@ do $$ declare r jsonb; v_expiry bigint; begin
   r := public.checkout_session_creation_failed('00000000-0000-4000-8000-000000000304',
     '00000000-0000-4000-8000-000000000306','stripe_rejected');
   if r->>'status'<>'released' then raise exception 'definitive failure did not release allocation: %',r; end if;
-  if (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000302')<>1
+  if (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000302')<>2
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000304')<>'released'
      or (select state from public.payment_attempts where id='00000000-0000-4000-8000-000000000306')<>'failed'
      or (select status from public.orders where id='00000000-0000-4000-8000-000000000304')<>'payment_failed' then
