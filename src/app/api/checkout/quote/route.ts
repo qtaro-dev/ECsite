@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
   try { source = await loadCheckoutQuoteSource(user.id, parsed.data.addressId, cart); }
   catch (error) {
     if (error instanceof CheckoutQuoteSourceError && error.code === 'ADDRESS_NOT_FOUND') return authError(404, 'NOT_FOUND', '配送先が見つかりません。配送先を選び直してください。');
+    if (error instanceof CheckoutQuoteSourceError && error.code === 'SHIPPING_UNAVAILABLE') return authError(503, 'UNAVAILABLE', '有効な送料設定がないため正式な送料を計算できません。管理者が送料設定を登録するまで購入手続きを進められません。');
     return authError(503, 'UNAVAILABLE', message);
   }
   const calculated = calculateCheckoutQuote({ ...source, cart });
@@ -63,7 +64,6 @@ export async function POST(request: NextRequest) {
   }
 
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + 15 * 60 * 1000).toISOString();
   const quote = calculated.quote;
   // Expired quotes are only retained for their authorized 15 minute lifetime.
   const { error: expiredDeleteError } = await serviceClient.from('checkout_quotes').delete().lt('expires_at', now.toISOString());
@@ -78,11 +78,10 @@ export async function POST(request: NextRequest) {
     tax_total_yen: quote.taxTotalYen,
     grand_total_yen: quote.grandTotalYen,
     shipping_settings_version: quote.shippingSettingsVersion,
-    expires_at: expiresAt,
-  }).select('id').single();
+  }).select('id,expires_at').single();
   if (saveError || !saved) return authError(503, 'UNAVAILABLE', message);
 
-  const response = CheckoutQuoteResultSchema.safeParse({ quoteId: saved.id, expiresAt, ...quote });
+  const response = CheckoutQuoteResultSchema.safeParse({ quoteId: saved.id, expiresAt: saved.expires_at, ...quote });
   if (!response.success) return authError(503, 'UNAVAILABLE', message);
   return authSuccess(response.data);
 }

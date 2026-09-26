@@ -112,6 +112,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/Unavailable' }
   /checkout/start:
     post:
@@ -574,17 +575,59 @@ components:
       properties: { productId: { type: string, format: uuid }, quantity: { type: integer, minimum: 1, maximum: 10 } }
     QuoteRequest:
       type: object
-      oneOf: [{ required: [addressId] }, { required: [address] }]
+      description: New addresses are first registered through the member address API; quote creation accepts only an owned saved address ID.
+      required: [addressId]
       additionalProperties: false
-      properties: { addressId: { type: string, format: uuid }, address: { $ref: '#/components/schemas/Address' } }
+      properties: { addressId: { type: string, format: uuid } }
+    CheckoutQuoteAddress:
+      type: object
+      required: [id, recipientName, postalCode, prefectureCode, city, street, building, isDefault]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        recipientName: { type: string, minLength: 1, maxLength: 80 }
+        postalCode: { type: string, pattern: '^[0-9]{7}$' }
+        prefectureCode: { type: integer, minimum: 1, maximum: 47 }
+        city: { type: string, minLength: 1, maxLength: 100 }
+        street: { type: string, minLength: 1, maxLength: 150 }
+        building: { type: [string, 'null'], maxLength: 100 }
+        isDefault: { type: boolean }
+    CheckoutQuoteItem:
+      type: object
+      required: [productId, sku, name, brand, category, quantity, unitPriceYen, lineTotalYen, availableQuantity, taxRateBasisPoints, unitPriceAtAddYen]
+      additionalProperties: false
+      properties:
+        productId: { type: string, format: uuid }
+        sku: { type: string, minLength: 1 }
+        name: { type: string, minLength: 1 }
+        brand: { type: string, minLength: 1 }
+        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] }
+        quantity: { type: integer, minimum: 1, maximum: 10 }
+        unitPriceYen: { type: integer, minimum: 0 }
+        lineTotalYen: { type: integer, minimum: 0 }
+        availableQuantity: { type: integer, minimum: 0 }
+        taxRateBasisPoints: { type: integer, const: 1000 }
+        unitPriceAtAddYen: { type: [integer, 'null'], minimum: 0, description: Informational cart-entry reference only; the quote uses the current catalog price. }
+    QuotePriceChange:
+      type: object
+      required: [productId, name, unitPriceAtAddYen, unitPriceYen]
+      additionalProperties: false
+      properties:
+        productId: { type: string, format: uuid }
+        name: { type: string, minLength: 1 }
+        unitPriceAtAddYen: { type: integer, minimum: 0 }
+        unitPriceYen: { type: integer, minimum: 0 }
     Quote:
       type: object
-      required: [quoteId, expiresAt, items, goodsTotalYen, shipping, taxTotalYen, grandTotalYen, compatibility]
+      description: Current-price formal quote. The quote ID only identifies a short-lived draft; T29 must re-read member, address ownership, cart, current prices, stock, shipping rules and tax before order creation.
+      required: [quoteId, expiresAt, address, items, priceChanges, goodsTotalYen, shipping, taxTotalYen, grandTotalYen, shippingSettingsVersion, shippingSourceUrl, shippingSourceCheckedAt, compatibility]
       additionalProperties: false
       properties:
         quoteId: { type: string, format: uuid }
         expiresAt: { type: string, format: date-time }
-        items: { type: array, items: { $ref: '#/components/schemas/CartLine' } }
+        address: { $ref: '#/components/schemas/CheckoutQuoteAddress' }
+        items: { type: array, minItems: 1, items: { $ref: '#/components/schemas/CheckoutQuoteItem' } }
+        priceChanges: { type: array, items: { $ref: '#/components/schemas/QuotePriceChange' }, description: Differences from the informational price observed when each line was first added. }
         goodsTotalYen: { type: integer, minimum: 0 }
         shipping:
           type: object
@@ -596,6 +639,9 @@ components:
             totalYen: { type: integer, minimum: 0 }
         taxTotalYen: { type: integer, minimum: 0 }
         grandTotalYen: { type: integer, minimum: 0 }
+        shippingSettingsVersion: { type: string, minLength: 1 }
+        shippingSourceUrl: { type: string, format: uri }
+        shippingSourceCheckedAt: { type: [string, 'null'], format: date-time }
         compatibility: { type: array, minItems: 5, maxItems: 5, items: { $ref: '#/components/schemas/CompatibilityFinding' } }
     CheckoutStart:
       type: object

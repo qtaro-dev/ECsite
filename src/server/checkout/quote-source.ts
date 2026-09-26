@@ -5,7 +5,7 @@ import type { CheckoutCatalogProduct } from './quote-calculation';
 import type { ShippingSettings } from '@/server/shipping/calculator';
 
 export class CheckoutQuoteSourceError extends Error {
-  constructor(readonly code: 'ADDRESS_NOT_FOUND' | 'UNAVAILABLE') { super(code); }
+  constructor(readonly code: 'ADDRESS_NOT_FOUND' | 'SHIPPING_UNAVAILABLE' | 'UNAVAILABLE') { super(code); }
 }
 
 export type CheckoutQuoteSource = {
@@ -75,7 +75,8 @@ export async function loadCheckoutQuoteSource(
     client.from('inventory').select('product_id,on_hand,allocated').in('product_id', productIds),
     client.from('shipping_settings').select('version,origin_prefecture_code,base_fee_yen,free_threshold_yen,heavy_threshold_g,heavy_rule_json,yamato_source_url,source_checked_at,is_active').eq('is_active', true).maybeSingle(),
   ]);
-  if (productsResult.error || inventoryResult.error || settingsResult.error || !settingsResult.data) throw new CheckoutQuoteSourceError('UNAVAILABLE');
+  if (productsResult.error || inventoryResult.error || settingsResult.error) throw new CheckoutQuoteSourceError('UNAVAILABLE');
+  if (!settingsResult.data) throw new CheckoutQuoteSourceError('SHIPPING_UNAVAILABLE');
   const products = (productsResult.data ?? []).map((row) => mapCheckoutCatalogProduct(row as unknown as Record<string, unknown>)).filter((row): row is CheckoutCatalogProduct => row !== null);
   const availableByProductId = new Map((inventoryResult.data ?? []).map((row) => [row.product_id, Math.max(0, row.on_hand - row.allocated)]));
   const row = settingsResult.data;

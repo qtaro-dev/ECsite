@@ -21,7 +21,9 @@ const product: CheckoutCatalogProduct = {
   packLengthMm: 100, packWidthMm: 100, packHeightMm: 100, specs: { socket_code: 'AM5' }, status: 'published', deletedAt: null,
 };
 const cart: CartProjection = {
-  items: [{ productId: product.id, quantity: 1, unitPriceYen: 9999, lineTotalYen: 9999, availableQuantity: 5 }],
+  items: [{ productId: product.id, quantity: 1, unitPriceYen: 9999, lineTotalYen: 9999, availableQuantity: 5,
+    unitPriceAtAddYen: 9000, name: product.name, slug: 'test-product', brand: product.brand, sku: product.sku,
+    imagePath: null, availabilityState: 'available' }],
   goodsTotalYen: 9999, estimatedShippingYen: 940,
 };
 
@@ -29,7 +31,7 @@ function calculate(overrides: { cart?: CartProjection; products?: CheckoutCatalo
   const products = overrides.products ?? [product];
   const sourceCart = overrides.cart ?? cart;
   return calculateCheckoutQuote({
-    cart: { ...sourceCart, items: sourceCart.items.map((line) => ({ ...line, unitPriceAtAddYen: 9000 })) },
+    cart: sourceCart,
     products,
     availableByProductId: new Map(products.map(({ id }) => [id, overrides.stock ?? 5])),
     address,

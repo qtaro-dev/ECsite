@@ -61,8 +61,7 @@ export function calculateCheckoutQuote(input: {
   const { cart, products, availableByProductId, address, settings } = input;
   if (!cart.items.length) return { ok: false, failure: { kind: 'cart_empty' } };
   const byId = new Map(products.map((product) => [product.id, product]));
-  type CartLineWithInitialPrice = CartProjection['items'][number] & { unitPriceAtAddYen?: number | null };
-  const cartLines = cart.items as CartLineWithInitialPrice[];
+  const cartLines = cart.items;
   const unavailable = cart.items.filter((line) => {
     const product = byId.get(line.productId);
     return !product || product.status !== 'published' || product.deletedAt !== null
@@ -119,10 +118,10 @@ export function calculateCheckoutQuote(input: {
         lineTotalYen: currentProducts[index].priceTaxIncludedYen * line.quantity,
         availableQuantity: availableByProductId.get(line.productId) ?? 0,
         taxRateBasisPoints: 1000,
-        unitPriceAtAddYen: line.unitPriceAtAddYen ?? line.unitPriceYen,
+        unitPriceAtAddYen: line.unitPriceAtAddYen,
       })),
-      priceChanges: cartLines.flatMap((line, index) => (line.unitPriceAtAddYen ?? line.unitPriceYen) !== currentProducts[index].priceTaxIncludedYen
-        ? [{ productId: line.productId, name: currentProducts[index].name, unitPriceAtAddYen: line.unitPriceAtAddYen ?? line.unitPriceYen, unitPriceYen: currentProducts[index].priceTaxIncludedYen }]
+      priceChanges: cartLines.flatMap((line, index) => line.unitPriceAtAddYen !== null && line.unitPriceAtAddYen !== currentProducts[index].priceTaxIncludedYen
+        ? [{ productId: line.productId, name: currentProducts[index].name, unitPriceAtAddYen: line.unitPriceAtAddYen, unitPriceYen: currentProducts[index].priceTaxIncludedYen }]
         : []),
       goodsTotalYen: shipping.quote.goodsTotalYen,
       shipping: {

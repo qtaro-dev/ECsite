@@ -41,7 +41,7 @@ describe('checkout quote route', () => {
     mocks.getCart.mockResolvedValue(cart);
     mocks.loadCheckoutQuoteSource.mockResolvedValue({});
     mocks.calculateCheckoutQuote.mockReturnValue({ ok: true, quote });
-    insert = vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: { id: '00000000-0000-4000-8000-000000000013' }, error: null }) }) });
+    insert = vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: { id: '00000000-0000-4000-8000-000000000013', expires_at: '2026-09-26T03:15:00.000Z' }, error: null }) }) });
     deleteQuery = vi.fn().mockReturnValue({ lt: vi.fn().mockResolvedValue({ error: null }) });
     rateLimit = vi.fn().mockResolvedValue({ data: [{ allowed: true, retry_after_seconds: 0 }], error: null });
     mocks.createCartServiceClient.mockReturnValue({ rpc: rateLimit, from: vi.fn(() => ({ delete: deleteQuery, insert })) });
@@ -58,7 +58,8 @@ describe('checkout quote route', () => {
       expect(mocks.getCart).toHaveBeenCalledWith(expect.anything(), null);
       expect(rateLimit).toHaveBeenCalledWith('checkout_quote_rate_limit', { p_user_id: user.id });
       const stored = insert.mock.calls[0][0];
-      expect(stored).toMatchObject({ user_id: user.id, address_id: addressId, items_snapshot: [{ productId, quantity: 1, unitPriceYen: 9999, lineTotalYen: 9999 }], grand_total_yen: 10939, expires_at: '2026-09-26T03:15:00.000Z' });
+      expect(stored).toMatchObject({ user_id: user.id, address_id: addressId, items_snapshot: [{ productId, quantity: 1, unitPriceYen: 9999, lineTotalYen: 9999 }], grand_total_yen: 10939 });
+      expect(stored).not.toHaveProperty('expires_at');
       expect(Object.keys(stored)).not.toContain('address');
       expect(JSON.stringify(stored)).not.toContain('受取人');
       expect(deleteQuery).toHaveBeenCalledOnce();

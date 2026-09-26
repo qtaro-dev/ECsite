@@ -55,14 +55,20 @@ jobs:
       - name: Create isolated T36 browser accounts
         run: node tests/e2e/t36-create-users.mjs
 
+      - name: Create isolated T28 browser account
+        run: node tests/e2e/t28-create-member.mjs
+
       - name: Grant the T36 admin fixture and verify the regular member stays unprivileged
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t36-admin-fixtures.sql
+
+      - name: Prepare T28 formal quote fixtures
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t28-e2e-fixtures.sql
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run catalog, authentication, member address, and admin browser tests
-        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts tests/e2e/t17-email-auth.spec.ts tests/e2e/t21-member-address.spec.ts tests/e2e/t24-build-check.spec.ts tests/e2e/t26-cart.spec.ts tests/e2e/t36-admin-auth.spec.ts tests/e2e/t40-admin-shipping.spec.ts
+      - name: Run catalog, authentication, member, checkout, and admin browser tests
+        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts tests/e2e/t17-email-auth.spec.ts tests/e2e/t21-member-address.spec.ts tests/e2e/t24-build-check.spec.ts tests/e2e/t26-cart.spec.ts tests/e2e/t28-checkout-quote.spec.ts tests/e2e/t36-admin-auth.spec.ts tests/e2e/t40-admin-shipping.spec.ts
 
   quality:
     name: Quality gates
