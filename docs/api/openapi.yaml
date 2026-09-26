@@ -130,7 +130,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
+        '409': { $ref: '#/components/responses/CheckoutConflict' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/Unavailable' }
   /checkout/status:
@@ -474,7 +474,7 @@ components:
   parameters:
     Q: { name: q, in: query, schema: { type: string, maxLength: 100 } }
     Origin: { name: Origin, in: header, required: true, schema: { type: string, format: uri } }
-    IdempotencyKey: { name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 1, maxLength: 255 } }
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: true, description: Stable UUID for one checkout attempt; retries and a second submit for the same quote resolve to one order., schema: { type: string, format: uuid } }
   schemas:
     Envelope:
       type: object
@@ -655,6 +655,37 @@ components:
       properties:
         orderId: { type: string, format: uuid }
         checkoutUrl: { type: string, format: uri, description: Stripe test Checkout session URL. }
+    CheckoutDifference:
+      type: object
+      required: [field]
+      additionalProperties: false
+      properties:
+        field: { type: string, enum: [price, quantity, product_added, product_removed, product_changed, goods_total, shipping_base, shipping_heavy, shipping_rule, tax, total, stock, availability] }
+        productId: { type: string, format: uuid }
+        name: { type: string }
+        quotedYen: { type: integer, minimum: 0 }
+        currentYen: { type: integer, minimum: 0 }
+        quotedValue: { type: string }
+        currentValue: { type: string }
+        quotedQuantity: { type: integer, minimum: 0 }
+        currentQuantity: { type: integer, minimum: 0 }
+        requestedQuantity: { type: integer, minimum: 1 }
+        availableQuantity: { type: integer, minimum: 0 }
+    CheckoutStartConflict:
+      type: object
+      required: [error, requestId]
+      additionalProperties: false
+      properties:
+        error:
+          type: object
+          required: [code, message, nextAction, differences]
+          additionalProperties: false
+          properties:
+            code: { type: string, enum: [QUOTE_EXPIRED, QUOTE_CHANGED, STOCK_UNAVAILABLE, PRODUCT_UNAVAILABLE, CART_CHANGED, ADDRESS_CHANGED, CHECKOUT_KEY_CONFLICT] }
+            message: { type: string }
+            nextAction: { type: string, enum: [create_new_quote, review_cart, select_address, retry_later] }
+            differences: { type: array, items: { $ref: '#/components/schemas/CheckoutDifference' } }
+        requestId: { type: string, minLength: 1 }
     CheckoutStatusResult:
       type: object
       required: [status, guidance, retryEligible]
@@ -1036,7 +1067,7 @@ components:
       description: Requested quantity exceeded current available stock; current server cart and availability are returned.
       content: { application/json: { schema: { $ref: '#/components/schemas/CartConflictEnvelope' } } }
     CheckoutStart:
-      description: Order created and Stripe test Checkout session URL returned.
+      description: Revalidate the member's current cart, current prices, address ownership, stock, current shipping settings, and tax from server-side data. The 15-minute quote is neither a reservation nor a price or stock guarantee; its item reference prices are display-only.
       content:
         application/json:
           schema:
@@ -1070,5 +1101,6 @@ components:
     Forbidden: { description: Caller lacks required role., content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
     NotFound: { description: 'Resource is absent, unpublished or not owned.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
     Conflict: { description: 'State, stock, amount or version changed.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+    CheckoutConflict: { description: 'The quote expired or current cart, product, stock, shipping, tax, or amount changed. No order is created. Return per-field differences and a next action to create a new quote, review the cart, or select an address.', content: { application/json: { schema: { $ref: '#/components/schemas/CheckoutStartConflict' } } } }
     RateLimited: { description: Request rate limit exceeded., headers: { Retry-After: { schema: { type: integer, minimum: 0 } } }, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
     Unavailable: { description: Retryable service failure or unavailable shipping quote; do not guess amount., content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }

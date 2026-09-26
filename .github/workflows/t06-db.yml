@@ -20,6 +20,8 @@ on:
       - 'tests/database/t26-cart-reference-price.sql'
       - 'tests/database/t28-checkout-quote.sql'
       - 'tests/database/t28-rate-limit-concurrency.py'
+      - 'tests/database/t29-atomic-checkout-order.sql'
+      - 'tests/database/t29-order-concurrency.py'
       - 'tests/database/t40-admin-shipping-settings.sql'
       - '.github/workflows/t06-db.yml'
   push:
@@ -42,6 +44,8 @@ on:
       - 'tests/database/t26-cart-reference-price.sql'
       - 'tests/database/t28-checkout-quote.sql'
       - 'tests/database/t28-rate-limit-concurrency.py'
+      - 'tests/database/t29-atomic-checkout-order.sql'
+      - 'tests/database/t29-order-concurrency.py'
       - 'tests/database/t40-admin-shipping-settings.sql'
       - '.github/workflows/t06-db.yml'
 
@@ -91,6 +95,10 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t28-checkout-quote.sql
       - name: Check T28 atomic rate limiting under concurrent requests
         run: python3 tests/database/t28-rate-limit-concurrency.py
+      - name: Check T29 atomic checkout RPC permissions and invariants
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t29-atomic-checkout-order.sql
+      - name: Check T29 checkout and stock concurrency
+        run: python3 tests/database/t29-order-concurrency.py
       - name: Check T40 shipping settings versions, validation, and audit
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t40-admin-shipping-settings.sql
       - name: Export local Supabase API credentials
