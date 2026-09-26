@@ -10,9 +10,12 @@ insert into public.addresses(id,user_id,recipient_name,postal_code,prefecture_co
 insert into public.products(id,category_id,slug,sku,name,brand,description,beginner_note,
   price_tax_included_yen,tax_rate_basis_points,status,weight_g,pack_length_mm,pack_width_mm,pack_height_mm)
 values ('00000000-0000-4000-8000-000000000295',(select id from public.categories where slug='cpu'),
-  't29-atomic-cpu','T29-CPU','T29 Atomic CPU','T29 Labs','fixture','fixture',9000,1000,'published',500,300,200,100);
+  't29-atomic-cpu','T29-CPU','T29 Atomic CPU','T29 Labs','fixture','fixture',9000,1000,'draft',500,300,200,100);
 insert into public.cpu_specs(product_id,socket_code,core_count,base_clock_mhz,tdp_w)
 values ('00000000-0000-4000-8000-000000000295','AM5',8,3600,65);
+insert into public.product_images(product_id,storage_path,alt_text)
+values ('00000000-0000-4000-8000-000000000295','t29/t29-atomic-cpu.png','T29 synthetic atomic checkout fixture');
+update public.products set status='published' where id='00000000-0000-4000-8000-000000000295';
 insert into public.inventory(product_id,on_hand,allocated)
 values ('00000000-0000-4000-8000-000000000295',3,0);
 insert into public.carts(user_id) values

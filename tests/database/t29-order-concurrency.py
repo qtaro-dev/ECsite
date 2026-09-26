@@ -103,7 +103,7 @@ def main() -> None:
         for i in range(4)
     )
     product_inserts = ",\n".join(
-        f"({sql_literal(products[i])}::uuid,(select id from public.categories where slug='cpu'),{sql_literal(slugs[i])},{sql_literal(skus[i])},'T29 concurrency CPU {i}','T29 Test','fixture','fixture',1000,1000,'published',500,300,200,100)"
+        f"({sql_literal(products[i])}::uuid,(select id from public.categories where slug='cpu'),{sql_literal(slugs[i])},{sql_literal(skus[i])},'T29 concurrency CPU {i}','T29 Test','fixture','fixture',1000,1000,'draft',500,300,200,100)"
         for i in range(2)
     )
     cart_inserts = ",\n".join(f"({sql_literal(users[i])}::uuid)" for i in range(4))
@@ -127,6 +127,10 @@ insert into public.addresses(id,user_id,recipient_name,postal_code,prefecture_co
 insert into public.products(id,category_id,slug,sku,name,brand,description,beginner_note,price_tax_included_yen,tax_rate_basis_points,status,weight_g,pack_length_mm,pack_width_mm,pack_height_mm) values {product_inserts};
 insert into public.cpu_specs(product_id,socket_code,core_count,base_clock_mhz,tdp_w) values
  ({sql_literal(products[0])}::uuid,'AM5',4,3000,65),({sql_literal(products[1])}::uuid,'AM5',4,3000,65);
+insert into public.product_images(product_id,storage_path,alt_text) values
+ ({sql_literal(products[0])}::uuid,{sql_literal('t29/' + skus[0] + '.png')},'T29 synthetic concurrency fixture'),
+ ({sql_literal(products[1])}::uuid,{sql_literal('t29/' + skus[1] + '.png')},'T29 synthetic concurrency fixture');
+update public.products set status='published' where id in ({sql_literal(products[0])}::uuid,{sql_literal(products[1])}::uuid);
 insert into public.inventory(product_id,on_hand,allocated) values ({sql_literal(products[0])}::uuid,1,0),({sql_literal(products[1])}::uuid,1,0);
 insert into public.carts(user_id) values {cart_inserts};
 insert into public.cart_items(cart_id,product_id,quantity,unit_price_at_add_yen) values {cart_item_inserts};
