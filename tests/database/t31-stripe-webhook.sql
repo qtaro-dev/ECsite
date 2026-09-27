@@ -146,7 +146,7 @@ do $$ declare r jsonb; begin
     if sqlerrm='injected failure did not abort the RPC' then raise; end if;
   end;
   if exists(select 1 from public.payment_events where stripe_event_id='evt_t31_retry')
-     or (select status from public.orders where id='00000000-0000-4000-8000-000000000317')<>'payment_pending'
+     or (select status from public.orders where id='00000000-0000-4000-8000-000000000317')<>'review_required'
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000317')<>'active' then
     raise exception 'failed webhook RPC left a partial event or state change';
   end if;
