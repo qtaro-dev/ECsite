@@ -35,10 +35,10 @@
 <body>
   <main>
     <h1>実装チケット進捗一覧</h1>
-    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 47件。チケットの仕様と依存は<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件は<a href="multi-agent-execution-plan.md">実行計画</a>を参照してください。</p>
+    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 48件。チケットの仕様と依存は<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件は<a href="multi-agent-execution-plan.md">実行計画</a>を参照してください。</p>
     <div class="summary" aria-label="進捗件数">
-      <span>全件 <output id="count-all">47</output></span>
-      <span>未実装 <output id="count-not-started">14</output></span>
+      <span>全件 <output id="count-all">48</output></span>
+      <span>未実装 <output id="count-not-started">15</output></span>
       <span>実装中 <output id="count-active">1</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
       <span>完了 <output id="count-done">30</output></span>
@@ -49,7 +49,7 @@
       <label>担当<select id="owner"><option value="">すべて</option><option>LUNA-A</option><option>LUNA-B</option></select></label>
       <label>状態<select id="state"><option value="">すべて</option><option>未実装</option><option>実装中</option><option>レビュー中</option><option>完了</option><option>保留</option></select></label>
     </div>
-    <div class="table-wrap" role="region" aria-label="47件の実装チケット" tabindex="0">
+    <div class="table-wrap" role="region" aria-label="48件の実装チケット" tabindex="0">
       <table>
         <thead><tr><th scope="col">番号</th><th scope="col">チケット</th><th scope="col">フェーズ / Wave</th><th scope="col">担当</th><th scope="col">依存</th><th scope="col">状態</th><th scope="col">根拠 PR / commit</th><th scope="col">更新日</th></tr></thead>
         <tbody>
@@ -285,8 +285,13 @@
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T47-public-demo-operations-portfolio.md">T47</a></th>
-            <td>公開・運用・ポートフォリオ説明</td><td>F7 / W35</td><td>LUNA-B</td>
+            <td>公開・運用・ポートフォリオ説明</td><td>F7 / W36</td><td>LUNA-B</td>
             <td>T22、T42、T43、T44、T45、T46</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T48-product-image-optimization.md">T48</a></th>
+            <td>商品画像のアップロード時最適化</td><td>F7 / W32</td><td>LUNA-B</td>
+            <td>T37</td><td class="status">未実装</td><td class="evidence">利用者追加要件（2026-09-27）。入力4,000,000 bytes以下を維持し、保存後1MiB以下へ自動リサイズ・圧縮</td><td class="updated">2026-09-27</td>
           </tr>
         </tbody>
       </table>

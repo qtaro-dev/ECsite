@@ -8,7 +8,7 @@
 
 ## 個別チケット索引（推奨実装順）
 
-番号は元のT01–T47のまま維持する。着手順は依存関係に従い、T20→T19、T25→T24、T27→T26、T34→T22となる。
+既存のT01–T47の番号は維持し、新規T48を追加する。着手順は依存関係に従い、T20→T19、T25→T24、T27→T26、T34→T22、T37→T48→T43/T44→T45となる。
 
 | 実装順 | チケット | 依存 | 対応要件ID |
 | ---: | --- | --- | --- |
@@ -54,11 +54,12 @@
 | 40 | [T40 発送元・送料規則の管理](../tickets/T40-admin-shipping-settings.md) | T08、T27、T36 | ORD-03、ORD-04、ORD-05、ORD-10、SEC-01 |
 | 41 | [T41 SMTP設定の管理](../tickets/T41-admin-smtp-settings.md) | T08、T20、T36 | ACC-08、SEC-01 |
 | 42 | [T42 異常系デモの利用者導線](../tickets/T42-abnormal-demo-paths.md) | T11、T23、T25、T27、T24、T26、T28、T29、T30、T31、T32、T33、T34、T35 | DEM-01、INV-01、ORD-07、CMP-02、CMP-05 |
-| 43 | [T43 レスポンシブ・アクセシビリティ仕上げ](../tickets/T43-responsive-accessibility-final.md) | T14、T15、T16、T21、T24、T26、T28、T33、T36、T37、T38、T39、T40、T41 | CAT-01、CAT-02、CAT-03、CMP-04、ORD-01、QLT-01 |
-| 44 | [T44 セキュリティ・RLS・削除の横断検証](../tickets/T44-security-rls-retention-audit.md) | T09、T10、T17、T18、T20、T19、T21、T29、T30、T31、T32、T33、T34、T22、T36、T37、T38、T39、T40、T41 | SEC-01、SEC-02、ACC-06、INV-03、QLT-01 |
-| 45 | [T45 全体E2Eと性能検収](../tickets/T45-full-e2e-performance.md) | T35、T42、T43、T44 | QLT-01、DEM-01、ORD-01、ACC-02、INV-03 |
-| 46 | [T46 GitHub Actions・Vercel・SupabaseのCI/CD](../tickets/T46-cicd-vercel-supabase-release.md) | T05、T45 | QLT-01、SEC-01、SEC-02 |
-| 47 | [T47 公開・運用・ポートフォリオ説明](../tickets/T47-public-demo-operations-portfolio.md) | T22、T42、T43、T44、T45、T46 | QLT-01、DEM-01、ACC-09、ORD-07、SEC-01 |
+| 43 | [T48 商品画像のアップロード時最適化](../tickets/T48-product-image-optimization.md) | T37 | CAT-04、SEC-01、USR-IMG-01 |
+| 44 | [T43 レスポンシブ・アクセシビリティ仕上げ](../tickets/T43-responsive-accessibility-final.md) | T14、T15、T16、T21、T24、T26、T28、T33、T36、T37、T38、T39、T40、T41、T48 | CAT-01、CAT-02、CAT-03、CMP-04、ORD-01、QLT-01 |
+| 45 | [T44 セキュリティ・RLS・削除の横断検証](../tickets/T44-security-rls-retention-audit.md) | T09、T10、T17、T18、T20、T19、T21、T29、T30、T31、T32、T33、T34、T22、T36、T37、T38、T39、T40、T41、T48 | SEC-01、SEC-02、ACC-06、INV-03、QLT-01 |
+| 46 | [T45 全体E2Eと性能検収](../tickets/T45-full-e2e-performance.md) | T35、T42、T43、T44、T48 | QLT-01、DEM-01、ORD-01、ACC-02、INV-03 |
+| 47 | [T46 GitHub Actions・Vercel・SupabaseのCI/CD](../tickets/T46-cicd-vercel-supabase-release.md) | T05、T45 | QLT-01、SEC-01、SEC-02 |
+| 48 | [T47 公開・運用・ポートフォリオ説明](../tickets/T47-public-demo-operations-portfolio.md) | T22、T42、T43、T44、T45、T46 | QLT-01、DEM-01、ACC-09、ORD-07、SEC-01 |
 
 ## チケット概要（番号順）
 
@@ -372,24 +373,31 @@
 - **受け入れ条件**：各ケースの入口・期待表示・次の操作が分かり、実課金・実SMS・実発送を連想させない。
 - **テスト**：Playwright全6ケース、ガイドと実動作の一致確認。
 
+### [T48 商品画像のアップロード時最適化](../tickets/T48-product-image-optimization.md)
+- **目的**：T37の商品画像をアップロード時に自動最適化し、保存画像を1MiB以下にする。
+- **内容・範囲**：現行入力上限4,000,000 bytesを維持してサーバー側でリサイズ・圧縮し、変換後の実データが1,048,576 bytes以下であることを検証してから保存する。未達の場合は保存しない。
+- **依存**：T37。LUNA-B担当。M7/F7 W32に置き、T31の処理系列を変更せず、T43/T44/T45の最終検証前に実施。
+- **受け入れ条件**：入力上限・既存形式/寸法/画素数の検査、出力容量、画像形式、権限、Storage/RLS、失敗時の回復が整合する。
+- **テスト**：入力境界、変換後上限、変換不可能画像、実Storageサイズ、管理者/非管理者、Playwright、T37回帰。
+
 ### [T43 レスポンシブ・アクセシビリティ仕上げ](../tickets/T43-responsive-accessibility-final.md)
 - **目的**：全画面を公開ECとして使いやすくする。
 - **内容・範囲**：S01–S17/A01–A06の0–767/768–1199/1200px以上、320px、200%拡大、44px操作領域、フォーカス、読み上げ、コントラスト、管理表カード化を調整。
-- **依存**：T14–T16、T21、T24、T26、T28、T33、T36–T41。
+- **依存**：T14–T16、T21、T24、T26、T28、T33、T36–T41、T48。
 - **受け入れ条件**：主要操作に横スクロール・隠れたボタンがなく、警告は色以外でも理解できる。
 - **テスト**：Playwright PC/タブレット/スマホ、axe等の自動検査とキーボード手動確認。
 
 ### [T44 セキュリティ・RLS・削除の横断検証](../tickets/T44-security-rls-retention-audit.md)
 - **目的**：公開前の個人情報・権限・秘密漏えいを防ぐ。
 - **内容・範囲**：全表RLSマトリクス、管理API、Origin/Cookie/CSP、レート制限、Production認証省略拒否、秘密スキャン、30日削除・バックアップ保持条件を検証。
-- **依存**：T09–T10、T17–T22、T29–T34、T36–T41。
+- **依存**：T09–T10、T17–T22、T29–T34、T36–T41、T48。
 - **受け入れ条件**：会員間隔離、管理者自己付与不可、ライブStripe鍵不在、個人情報30日削除が確認できる。問題は隠さず修正チケット化。
 - **テスト**：RLS許可拒否、API侵入ケース、秘密スキャン、削除統合、手動セキュリティレビュー。
 
 ### [T45 全体E2Eと性能検収](../tickets/T45-full-e2e-performance.md)
 - **目的**：要件の正常系・異常系を一式で証明する。
 - **内容・範囲**：Playwrightの探索→注文、Google、メール、模擬SMS、管理、競合、Webhooks、PC/タブレット/スマホをまとめ、LCP/CLS/INPを測定する。
-- **依存**：T35、T42–T44。
+- **依存**：T35、T42–T44、T48。
 - **受け入れ条件**：主要シナリオが再実行可能で、既知の失敗を記録し、性能目標未達は原因と改善チケットを残す。
 - **テスト**：全CIテスト、Playwright、実測Web Vitals、RLS/在庫競合の再実行。
 

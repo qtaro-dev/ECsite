@@ -2,13 +2,13 @@
 
 **版** 0.9 ／ **作成日** 2026年9月25日 ／ **状態** 計画のみ。LUNA-A・LUNA-Bの製品実装は未開始。  
 **対象GitHubリポジトリ** [qtaro-dev/ECsite](https://github.com/qtaro-dev/ECsite)  
-**チケットの正本** [ルート直下の47件](../tickets/) と[チケット索引](implementation-tickets.md)。[進捗一覧](implementation-status.html)は実装状態を表示する。本書は担当と実行順を指定し、個別チケットの仕様・依存・受け入れ条件は変更しない。
+**チケットの正本** [ルート直下の48件](../tickets/) と[チケット索引](implementation-tickets.md)。[進捗一覧](implementation-status.html)は実装状態を表示する。本書は担当と実行順を指定し、個別チケットの仕様・依存・受け入れ条件は変更しない。
 
 ## 1. 前提と割当方針
 
-LUNA-AはDB、RLS、カートのサーバー処理、送料・税、注文、在庫、Stripe、管理側の在庫・注文・送料、横断セキュリティ、最終CI/CDを継続担当する。LUNA-Bはワイヤー、API契約、共通UI、商品探索・表示、Supabase Auth/Google/メール/SMS、会員・構成画面、管理側の商品・SMTP、デモ、画面品質、E2E、公開説明を継続担当する。LUNA-Aが22件、LUNA-Bが25件を担当する。件数の均等化より、状態変更と秘密の境界を一人が追えることを優先した。
+LUNA-AはDB、RLS、カートのサーバー処理、送料・税、注文、在庫、Stripe、管理側の在庫・注文・送料、横断セキュリティ、最終CI/CDを継続担当する。LUNA-Bはワイヤー、API契約、共通UI、商品探索・表示、Supabase Auth/Google/メール/SMS、会員・構成画面、管理側の商品・SMTP・画像最適化、デモ、画面品質、E2E、公開説明を継続担当する。LUNA-Aが22件、LUNA-Bが26件を担当する。件数の均等化より、状態変更と秘密の境界を一人が追えることを優先した。
 
-既存の推奨順序は直列作業の基準である。本書では**番号と依存関係を一切変更せず**、依存が完了し、変更ファイルが分離できるチケットだけ前倒しして並行させる。1エージェントが同時に扱うチケットは常に1件。空き時間があっても、依存未完了や競合する仕事を無理に開始しない。フェーズF0–F7とWave W01–W35は計画上の実行枠であり、所要時間の見積ではない。
+既存チケットの番号と依存関係は維持し、追加チケットT48の依存は個別票に明記する。依存が完了し、変更ファイルが分離できるチケットだけ前倒しして並行させる。1エージェントが同時に扱うチケットは常に1件。空き時間があっても、依存未完了や競合する仕事を無理に開始しない。フェーズF0–F7とWave W01–W36は計画上の実行枠であり、所要時間の見積ではない。
 
 このワークスペースには現時点で`.git`がなく、指定リポジトリへの接続も確認できていない。T01で利用者の権限・既存リポジトリ状態を確認し、既存内容を上書きせず接続する。接続に認証やアカウント操作が必要な場合は利用者へ具体的に提示する。本書はリポジトリの中身を確認済みと仮定しない。
 
@@ -23,11 +23,11 @@ LUNA-AはDB、RLS、カートのサーバー処理、送料・税、注文、在
 | F4 認証・会員・管理入口 | W15–W19 | T25→T36→T40 | T17→T18→T20→T19→T21 | T17の認証共通部を先にマージ。並行時は認証ヘルパー・SQLを共有編集しない。 |
 | F5 購入と決済 | W20–W26 | T28→T29→T30→T31→T32→T34 | T24→T26→T37→T33 | 注文トランザクション・Webhook・CronはAが直列。構成UIを確定してから注文確認を作る。 |
 | F6 削除・管理・統合 | W27–W31 | T38→T39 | T22→T35→T42→T41 | T22とT35は単独検証。T38のDB変更中にT41のVault変更を走らせない。 |
-| F7 横断検証・公開 | W32–W35 | T44→T46 | T43→T45→T47 | CSS/UIとRLS/API監査のみ条件付き並行。E2E、CI/CD、公開は直列ゲート。 |
+| F7 横断検証・公開 | W32–W36 | T44→T46 | T48→T43→T45→T47 | T48はT37の後、最終UI/セキュリティ/全体E2Eに先行。T43/T44のみ条件付き並行。E2E、CI/CD、公開は直列ゲート。 |
 
 **表の読み方**：同じWaveにAとBがあれば同時着手の候補である。両方の依存PRがマージ済みで、予定変更ファイルが重ならないことを開始直前に確認する。片方が完了しても、相方の未確定変更を前提に次のチケットへ進まない。Wave内のPRも1件ずつレビュー・マージ・再検証する。
 
-## 3. 47件の担当表
+## 3. 48件の担当表
 
 **開始条件**は個別チケットの直接依存をすべて列挙し、すべてがマージ済みであることを意味する。**並行可能**は同じWaveに配置した候補であり、実際のファイル差分に重複があれば単独実行へ切り替える。**完了後に解放**は、そのWaveの両担当がマージ済みになった時点で全依存を満たす直接後続のみを示す。空欄相当の「—」は別の依存が残るか、後続がないことを示す。
 
@@ -64,7 +64,7 @@ LUNA-AはDB、RLS、カートのサーバー処理、送料・税、注文、在
 | F5 / W21 | [T26](../tickets/T26-cart-ui-estimated-shipping.md) | LUNA-B | カートUI | T12、T25、T27 | T28 | Aの購入画面と共通UIを同時編集しない | — |
 | F5 / W22 | [T29](../tickets/T29-atomic-order-stock-allocation.md) | LUNA-A | 注文・在庫引当SQL | T07、T10、T27、T28 | — | 注文SQL・在庫を単独確定 | T30、T38 |
 | F5 / W23 | [T30](../tickets/T30-stripe-test-checkout-session.md) | LUNA-A | Stripe Session | T29 | T37 | Bの商品管理とSQLを同時編集しない | T31 |
-| F5 / W23 | [T37](../tickets/T37-admin-products-specs-images.md) | LUNA-B | 商品管理画面/API | T06、T09、T15、T36 | T30 | AのStripe SessionとSQLを同時編集しない | — |
+| F5 / W23 | [T37](../tickets/T37-admin-products-specs-images.md) | LUNA-B | 商品管理画面/API | T06、T09、T15、T36 | T30 | AのStripe SessionとSQLを同時編集しない | T48 |
 | F5 / W24 | [T31](../tickets/T31-stripe-webhook-state.md) | LUNA-A | Webhook・決済状態 | T29、T30 | — | Webhook・決済状態を単独確定 | T32、T34 |
 | F5 / W25 | [T32](../tickets/T32-payment-expiry-reconciliation.md) | LUNA-A | 期限切れ・照合 | T31 | — | Cron/照合を単独確定 | T33 |
 | F5 / W26 | [T34](../tickets/T34-order-notification-jobs.md) | LUNA-A | 注文通知ジョブ | T08、T20、T31 | T33 | Bの結果UIと通知ジョブを分離 | T22、T35、T39 |
@@ -74,12 +74,13 @@ LUNA-AはDB、RLS、カートのサーバー処理、送料・税、注文、在
 | F6 / W29 | [T38](../tickets/T38-admin-inventory-adjustment.md) | LUNA-A | 在庫管理画面/API | T07、T29、T36 | — | 在庫SQL・管理を単独確定 | — |
 | F6 / W30 | [T39](../tickets/T39-admin-orders-payments-readonly.md) | LUNA-A | 注文管理参照画面 | T31、T32、T33、T34、T36 | T42 | Bのデモfixtureと共用DB試験を分離 | — |
 | F6 / W30 | [T42](../tickets/T42-abnormal-demo-paths.md) | LUNA-B | 異常系デモ導線 | T11、T23、T25、T27、T24、T26、T28、T29、T30、T31、T32、T33、T34、T35 | T39 | Aの注文管理とfixture/共用DB試験を分離 | — |
-| F6 / W31 | [T41](../tickets/T41-admin-smtp-settings.md) | LUNA-B | SMTP管理画面 | T08、T20、T36 | — | Vault/秘密設定SQLを単独確定 | T43、T44 |
-| F7 / W32 | [T44](../tickets/T44-security-rls-retention-audit.md) | LUNA-A | 横断セキュリティ監査 | T09、T10、T17、T18、T20、T19、T21、T29、T30、T31、T32、T33、T34、T22、T36、T37、T38、T39、T40、T41 | T43 | BのUI改修と同一ファイルを同時編集しない | T45 |
-| F7 / W32 | [T43](../tickets/T43-responsive-accessibility-final.md) | LUNA-B | レスポンシブ・a11y | T14、T15、T16、T21、T24、T26、T28、T33、T36、T37、T38、T39、T40、T41 | T44 | Aの監査と同一画面を同時編集しない | T45 |
-| F7 / W33 | [T45](../tickets/T45-full-e2e-performance.md) | LUNA-B | 全体E2E・性能 | T35、T42、T43、T44 | — | 全体E2Eを単独実行 | T46 |
-| F7 / W34 | [T46](../tickets/T46-cicd-vercel-supabase-release.md) | LUNA-A | CI/CD・環境分離 | T05、T45 | — | 環境・CI/CDを単独確定 | T47 |
-| F7 / W35 | [T47](../tickets/T47-public-demo-operations-portfolio.md) | LUNA-B | 公開・運用資料 | T22、T42、T43、T44、T45、T46 | — | 公開判断・運用資料を単独確定 | — |
+| F6 / W31 | [T41](../tickets/T41-admin-smtp-settings.md) | LUNA-B | SMTP管理画面 | T08、T20、T36 | — | Vault/秘密設定SQLを単独確定 | T43、T44（T48も完了後） |
+| F7 / W32 | [T48](../tickets/T48-product-image-optimization.md) | LUNA-B | 商品画像アップロード最適化 | T37 | — | 画像変換・Storage保存を単独確定。T31のWebhook系列には割り込まず、最終検証前に置く | T43、T44 |
+| F7 / W33 | [T44](../tickets/T44-security-rls-retention-audit.md) | LUNA-A | 横断セキュリティ監査 | T09、T10、T17、T18、T20、T19、T21、T29、T30、T31、T32、T33、T34、T22、T36、T37、T38、T39、T40、T41、T48 | T43 | BのUI改修と同一ファイルを同時編集しない | T45 |
+| F7 / W33 | [T43](../tickets/T43-responsive-accessibility-final.md) | LUNA-B | レスポンシブ・a11y | T14、T15、T16、T21、T24、T26、T28、T33、T36、T37、T38、T39、T40、T41、T48 | T44 | Aの監査と同一画面を同時編集しない | T45 |
+| F7 / W34 | [T45](../tickets/T45-full-e2e-performance.md) | LUNA-B | 全体E2E・性能 | T35、T42、T43、T44、T48 | — | 全体E2Eを単独実行 | T46 |
+| F7 / W35 | [T46](../tickets/T46-cicd-vercel-supabase-release.md) | LUNA-A | CI/CD・環境分離 | T05、T45 | — | 環境・CI/CDを単独確定 | T47 |
+| F7 / W36 | [T47](../tickets/T47-public-demo-operations-portfolio.md) | LUNA-B | 公開・運用資料 | T22、T42、T43、T44、T45、T46 | — | 公開判断・運用資料を単独確定 | — |
 
 ## 4. ファイル所有と競合を避ける規則
 
@@ -117,8 +118,9 @@ LUNA-AはDB、RLS、カートのサーバー処理、送料・税、注文、在
 - **W16–W19**：T17の認証基盤をマージしてからAがカート・管理者共通処理に着手する。Google/SMTP/SMSの外部設定が未了なら接続試験は未完了と明示する。
 - **W20–W26**：T24で互換性警告UIを確定してからT28注文確認を実装する。T29–T32は在庫・決済の状態機械としてAが連続管理する。Stripeテスト鍵のみ使用する。
 - **W27–W31**：T22削除とT35購入統合は共有DBを占有する単独ゲート。T38の在庫SQLとT41の秘密設定SQLは同時適用しない。
-- **W32**：T43はCSS/画面、T44はRLS/API/秘密の監査に範囲を分ける。両者が同一ファイルへ触れる必要が出たら直列化する。
-- **W33–W35**：T45全体E2E、T46環境・CI/CD、T47公開を順に完了する。公開判断は利用者と行い、実課金・実SMS・実発送は行わない。
+- **W32**：T48がT37で確定した画像アップロードの境界に自動最適化を追加する。T31の決済状態系列とは独立し、管理商品画像の変更だけを行う。
+- **W33**：T43はCSS/画面、T44はRLS/API/秘密の監査に範囲を分ける。両者が同一ファイルへ触れる必要が出たら直列化する。いずれもT48の成果を検証する。
+- **W34–W36**：T45全体E2E、T46環境・CI/CD、T47公開を順に完了する。公開判断は利用者と行い、実課金・実SMS・実発送は行わない。
 
 ## 7. 完了報告と引き継ぎ書式
 
