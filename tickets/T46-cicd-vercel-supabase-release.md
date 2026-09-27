@@ -5,6 +5,8 @@
 **推奨実装順**：47/49（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
+**公開MVPでの追加設定**：[公開MVP計画](../docs/mvp-release-plan.md)によりPreview/Production各Supabase Authの匿名サインインを有効化し、レート制限、T50/T51のRLSと架空データ、環境分離を検証する。Productionの認証省略フラグを有効にしない。
+
 ## 目的
 
 レビューと環境分離を保って公開できるようにする。

@@ -5,6 +5,8 @@
 **推奨実装順**：46/48（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
+**公開MVPでの対象**：[公開MVP計画](../docs/mvp-release-plan.md)によりT50/T51の2人のデモ購入・相互隔離を含む公開対象のE2Eを先に検証する。Google/SMTP/SMSおよびT42追加デモ導線は後日とし、未検証の元チケット全体を完了扱いにしない。
+
 ## 目的
 
 要件の正常系・異常系を一式で証明する。

@@ -5,6 +5,8 @@
 **推奨実装順**：45/48（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
+**公開MVPでの対象**：[公開MVP計画](../docs/mvp-release-plan.md)によりT50/T51の匿名Auth、2閲覧者のRLS分離、架空データ制約、管理者拒否、30日削除を優先監査する。一般向けGoogle/SMTP/SMSは公開後に回し、元チケットの未監査範囲を完了扱いにしない。
+
 ## 目的
 
 公開前の個人情報・権限・秘密漏えいを防ぐ。

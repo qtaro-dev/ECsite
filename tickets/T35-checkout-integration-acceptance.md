@@ -5,6 +5,8 @@
 **推奨実装順**：35/47（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）  
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
+**公開MVPでの対象**：[公開MVP計画](../docs/mvp-release-plan.md)によりT50/T51の2人のデモ会員で購入・在庫・決済を検収する。T34の注文メールは公開後に回し、その未検証部分をチケット完了と表示しない。
+
 ## 目的
 
 M5の正常系・異常系を通して確認する。
