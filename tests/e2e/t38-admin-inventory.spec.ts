@@ -42,7 +42,7 @@ test('A03 adjusts inventory with a reason and reports current values on invalid 
   expect(adjustmentResponse.status(), JSON.stringify(adjustmentBody)).toBe(200);
   await expect(card.getByRole('status')).toContainText('在庫を調整しました');
   const adjustedOnHand = first.onHand + 1;
-  const onHandValue = card.locator('dl div').filter({ has: card.locator('dt').filter({ hasText: '実在庫' }) }).locator('dd');
+  const onHandValue = card.locator('dl div').filter({ hasText: '実在庫' }).locator('dd');
   await expect(onHandValue).toHaveText(String(adjustedOnHand));
   await expect(page.getByRole('region', { name: '最近の調整履歴' })).toContainText('T38 E2E 入庫');
 
