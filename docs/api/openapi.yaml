@@ -180,17 +180,37 @@ paths:
         before verification. Accept timestamps no more than 300 seconds from
         verifier time. Reject missing/malformed headers, bad MAC, or stale
         timestamp with 401. Calls for already processed work are idempotent;
-        a valid request may be retried within the timestamp window.
+        a valid request may be retried within the timestamp window. The raw
+        body is limited to 4096 bytes. A signed JSON body may contain only an
+        optional integer `limit` from 1 to 3 (default 3). The handler reads
+        Stripe test-mode state in Vercel and invokes service-role-only database
+        RPCs; Stripe secrets are never sent to Supabase Cron. Each candidate
+        receives a five-minute lease. Unavailable or inconsistent state keeps
+        inventory allocated and marks the order for review; only verified paid
+        state consumes stock, and only definitive unpaid failure/expiry releases it.
       security: [{ internalJobHmac: [] }]
       parameters:
         - { name: X-Internal-Job-Timestamp, in: header, required: true, description: Unix timestamp in seconds, schema: { type: string, pattern: '^[0-9]+$' } }
         - { name: X-Internal-Job-Signature, in: header, required: true, description: Lowercase hex HMAC-SHA256 over ASCII timestamp + LF + exact raw request body bytes, schema: { type: string, pattern: '^[0-9a-f]{64}$' } }
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReconcileRequest' } } } }
       responses:
-        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '200':
+          description: Candidates checked; uncertain Stripe outcomes are held for review.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [received, checked, processed, needsReview, alreadyResolved, unavailable]
+                properties:
+                  received: { type: boolean, const: true }
+                  checked: { type: integer, minimum: 0, maximum: 100 }
+                  processed: { type: integer, minimum: 0 }
+                  needsReview: { type: integer, minimum: 0 }
+                  alreadyResolved: { type: integer, minimum: 0 }
+                  unavailable: { type: integer, minimum: 0 }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/Unavailable' }
   /auth/sms/start:
     post:
@@ -851,7 +871,7 @@ components:
     ReconcileRequest:
       type: object
       additionalProperties: false
-      properties: { limit: { type: integer, minimum: 1, maximum: 100 } }
+      properties: { limit: { type: integer, minimum: 1, maximum: 3, default: 3 } }
     AdminProductFields:
       type: object
       required: [category, slug, sku, useCases, specifications]
