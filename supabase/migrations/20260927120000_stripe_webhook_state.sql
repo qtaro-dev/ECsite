@@ -273,7 +273,7 @@ begin
     if (p_result='failed' and (p_event_type is distinct from 'checkout.session.async_payment_failed'
           or p_session_status is distinct from 'complete' or p_payment_status is distinct from 'unpaid'
           or p_payment_intent_status is null
-          or p_payment_intent_status not in ('requires_payment_method','canceled'))
+          or p_payment_intent_status not in ('requires_payment_method','canceled')))
        or (p_result='expired' and (p_session_status is distinct from 'expired'
           or (p_payment_intent_status is not null and p_payment_intent_status in ('succeeded','processing')))) then
       if v_order_status='payment_pending' and v_attempt_state in ('created','processing') then
