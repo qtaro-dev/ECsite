@@ -5,6 +5,8 @@
 **推奨実装順**：49/49（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
+**公開MVPでの対象**：[公開MVP計画](../docs/mvp-release-plan.md)によりT50/T51の個別デモ会員、架空住所、Stripeテスト決済、30日削除を公開案内に含める。一般利用者向けGoogle/SMTP/SMS、T42追加異常系は公開後として明示し、元チケットの残件を完了扱いにしない。
+
 ## 目的
 
 採用担当者が操作できる公開デモを安全に提供する。

@@ -3,7 +3,7 @@
 **版** 0.9 ／ **作成日** 2026年9月25日 ／ **状態** 実装前の計画。製品実装、外部アカウント作成、デプロイは未実施。  
 **チケット索引** `docs/implementation-tickets.md` ／ **個別チケット** `tickets/Txx-*.md` ／ **2エージェント実行計画** [担当割当・実行計画](multi-agent-execution-plan.md) ／ **進捗** [HTML一覧](implementation-status.html) ／ **環境手順** `docs/environment-setup.md` ／ **AIガードレール** `AGENTS.md`
 
-**公開順の更新**：利用者の2026-09-27のMVP優先指示に基づく[公開MVP実行計画](mvp-release-plan.md)を先に適用する。以下は49件の全件計画として残す。
+**公開順の更新**：利用者の2026-09-27のMVP優先指示に基づく[公開MVP実行計画](mvp-release-plan.md)を先に適用する。以下は元の49件の全件計画として残し、公開デモのT50/T51を追加した計51件の状況は索引と進捗一覧で管理する。
 
 ## 1. 正本と到達目標
 

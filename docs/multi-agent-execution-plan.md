@@ -5,6 +5,7 @@
 **チケットの正本** [ルート直下の49件](../tickets/) と[チケット索引](implementation-tickets.md)。[進捗一覧](implementation-status.html)は実装状態を表示する。本書は担当と実行順を指定し、個別チケットの仕様・依存・受け入れ条件は変更しない。
 
 **公開MVPの最新方針**：[mvp-release-plan.md](mvp-release-plan.md)。利用者の2026-09-27の指示により、以下の全件計画よりMVPの分類・順序を優先する。各チケットの元の未完了部分は残件として記録する。
+追加の[T50](../tickets/T50-isolated-demo-auth.md)はLUNA-AがT32後に、[T51](../tickets/T51-fictional-demo-checkout.md)はLUNA-BがT50/T33後に担当する。T50のRLS/DB変更とT32/T22のDB変更は直列、T50とT33の独立ファイルは並行可。従来のT18/T19/T20は一般向け認証として公開後へ回す。
 
 ## 1. 前提と割当方針
 

@@ -3,6 +3,8 @@
 **版** 0.9 ／ **作成日** 2026年9月25日 ／ **状態** 手順のみ。外部アカウント・プロジェクト・秘密は未作成、接続未実施。  
 実施時は`AGENTS.md`と`docs/implementation-plan.md`を併読する。画面名・サービス仕様は変更され得るため、実行直前に公式資料を確認する。
 
+**公開MVPの最新方針**：[mvp-release-plan.md](mvp-release-plan.md)を先に適用する。一般閲覧者はT50/T51の個別匿名デモ会員と固定架空住所を利用する。Preview/ProductionのSupabase Authで匿名サインインを有効化し、レート制限とRLSを検証する。公開MVPに一般利用者向けGoogle OAuth・SMTP・SMSは不要。以下のメール/Googleの手順は公開後の全件計画として残し、デモ会員へ実住所・実メール入力を開放しない。
+
 ## 1. 環境の対応
 
 | 環境 | Web | DB/Auth/Storage | 決済 | メール/SMS | 個人情報 |
