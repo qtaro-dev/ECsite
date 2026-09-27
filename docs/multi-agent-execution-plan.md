@@ -4,6 +4,8 @@
 **対象GitHubリポジトリ** [qtaro-dev/ECsite](https://github.com/qtaro-dev/ECsite)  
 **チケットの正本** [ルート直下の49件](../tickets/) と[チケット索引](implementation-tickets.md)。[進捗一覧](implementation-status.html)は実装状態を表示する。本書は担当と実行順を指定し、個別チケットの仕様・依存・受け入れ条件は変更しない。
 
+**公開MVPの最新方針**：[mvp-release-plan.md](mvp-release-plan.md)。利用者の2026-09-27の指示により、以下の全件計画よりMVPの分類・順序を優先する。各チケットの元の未完了部分は残件として記録する。
+
 ## 1. 前提と割当方針
 
 LUNA-AはDB、RLS、カートのサーバー処理、送料・税、注文、在庫、Stripe、管理側の在庫・注文・送料、横断セキュリティ、最終CI/CDと公開テスト環境の実Stripe通知検証を継続担当する。LUNA-Bはワイヤー、API契約、共通UI、商品探索・表示、Supabase Auth/Google/メール/SMS、会員・構成画面、管理側の商品・SMTP・画像最適化、デモ、画面品質、E2E、公開説明を継続担当する。LUNA-Aが23件、LUNA-Bが26件を担当する。件数の均等化より、状態変更と秘密の境界を一人が追えることを優先した。

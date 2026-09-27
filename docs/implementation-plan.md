@@ -3,6 +3,8 @@
 **版** 0.9 ／ **作成日** 2026年9月25日 ／ **状態** 実装前の計画。製品実装、外部アカウント作成、デプロイは未実施。  
 **チケット索引** `docs/implementation-tickets.md` ／ **個別チケット** `tickets/Txx-*.md` ／ **2エージェント実行計画** [担当割当・実行計画](multi-agent-execution-plan.md) ／ **進捗** [HTML一覧](implementation-status.html) ／ **環境手順** `docs/environment-setup.md` ／ **AIガードレール** `AGENTS.md`
 
+**公開順の更新**：利用者の2026-09-27のMVP優先指示に基づく[公開MVP実行計画](mvp-release-plan.md)を先に適用する。以下は49件の全件計画として残す。
+
 ## 1. 正本と到達目標
 
 要件の正本は`output/pdf/自作PCパーツECサイト_要件定義書_レビュー版.pdf`。基本設計は`output/pdf/自作PCパーツECサイト_基本設計書_レビュー版.pdf`、詳細設計は`output/pdf/自作PCパーツECサイト_詳細設計書_レビュー版.pdf`（編集原稿`docs/detailed-design-review.md`）を継承する。送料940円、重量物の公式運賃加算、公開デモ個人情報の30日削除は詳細設計時に利用者が承認済みである。文書の古い「未決定」記載より、この承認済み内容を優先する。設計変更は実装担当が独断で行わない。
