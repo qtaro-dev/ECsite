@@ -38,11 +38,11 @@
     <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 47件。チケットの仕様と依存は<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件は<a href="multi-agent-execution-plan.md">実行計画</a>を参照してください。</p>
     <div class="summary" aria-label="進捗件数">
       <span>全件 <output id="count-all">47</output></span>
-      <span>未実装 <output id="count-not-started">17</output></span>
-      <span>実装中 <output id="count-active">0</output></span>
+      <span>未実装 <output id="count-not-started">15</output></span>
+      <span>実装中 <output id="count-active">1</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
       <span>完了 <output id="count-done">28</output></span>
-      <span>保留 <output id="count-blocked">2</output></span>
+      <span>保留 <output id="count-blocked">3</output></span>
     </div>
     <div class="controls">
       <label>チケット検索<input id="query" type="search" placeholder="番号・名称・依存"></label>
@@ -201,7 +201,7 @@
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T30-stripe-test-checkout-session.md">T30</a></th>
             <td>Stripe CheckoutテストSession</td><td>F5 / W23</td><td>LUNA-A</td>
-            <td>T29</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T29</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/53">Draft PR #53</a>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36272476927">DB CI 36272476927 合格</a>、<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36272476906">quality/browser CI 36272476906 合格</a>。Stripeテスト用<code>sk_test</code>のSession接続待ち</td><td class="updated">2026-09-27</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T31-stripe-webhook-state.md">T31</a></th>
@@ -241,7 +241,7 @@
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T38-admin-inventory-adjustment.md">T38</a></th>
             <td>在庫調整の管理</td><td>F6 / W29</td><td>LUNA-A</td>
-            <td>T07、T29、T36</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T07、T29、T36</td><td class="status">実装中</td><td class="evidence">ブランチ codex/t38-admin-inventory</td><td class="updated">2026-09-27</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T39-admin-orders-payments-readonly.md">T39</a></th>
