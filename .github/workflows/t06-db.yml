@@ -26,6 +26,8 @@ on:
       - 'tests/database/t37-admin-products.sql'
       - 'tests/database/t37-storage-fixtures.py'
       - 'tests/database/t37-product-concurrency.py'
+      - 'tests/database/t38-admin-inventory.sql'
+      - 'tests/database/t38-inventory-concurrency.py'
       - '.github/workflows/t06-db.yml'
   push:
     branches: [main]
@@ -53,6 +55,8 @@ on:
       - 'tests/database/t37-admin-products.sql'
       - 'tests/database/t37-storage-fixtures.py'
       - 'tests/database/t37-product-concurrency.py'
+      - 'tests/database/t38-admin-inventory.sql'
+      - 'tests/database/t38-inventory-concurrency.py'
       - '.github/workflows/t06-db.yml'
 
 permissions:
@@ -115,6 +119,10 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t37-admin-products.sql
       - name: Check T37 optimistic product version concurrency
         run: python3 tests/database/t37-product-concurrency.py
+      - name: Check T38 inventory floor, permissions, history, and audit
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t38-admin-inventory.sql
+      - name: Check T38 concurrent inventory adjustment versions
+        run: python3 tests/database/t38-inventory-concurrency.py
       - name: Upload and read T11 image placeholders
         run: python3 tests/database/t11-storage-fixtures.py
       - name: Check T09 private Storage URLs
