@@ -200,6 +200,8 @@ Webhookは生ボディの署名と許容時刻を検証し、`payment_events.str
 
 Stripe Checkout Sessionの有効期限は30分、在庫引当と決済試行の期限は注文作成から35分とする。Session作成に最大5分を見込み、Stripeが要求する30分以上のSession期間を確保できない時点でSessionを作らず、注文・引当を安全に失敗処理する。作成応答で引当期限内の30分を確保できないSessionが返った場合はStripe側でSessionを期限切れにしてから失敗処理し、期限切れ操作の結果が不明なら引当を維持して照合対象にする。引当期限時刻直後に機械的に解放せず、Supabase Cronが署名付きVercel内部APIを起動し、Vercel側でStripeの現在状態を確認してから解放する。Stripe秘密鍵をDB Cronに渡さない。外部照合不能なら引当を維持して`review_required`で管理者へ通知し、二重販売を避ける。**期限後の成功通知**は在庫の消費状況を再確認し、安全に確定できる場合だけ`paid`へ進める。既に解放・再販売済みなら自動で`paid`にせず`review_required`とし、管理者がStripe側状況を確認する。失敗後の再試行では価格・送料・在庫を再見積し、必要なら新注文とする。注文完了メールは`paid`確定後に1回だけキューへ投入する。
 
+T32補償ジョブはSupabase `pg_cron`から5分間隔で起動し、`pg_net`がVercelの`POST /api/internal/reconcile-payments`へ署名する。MAC対象はASCII Unix秒時刻、LF、送信するJSON本文のUTF-8バイト列を連結した値に対するHMAC-SHA256とし、時刻差は最大300秒、本文は4KiB以下、1回最大3件とする。試行ごとに5分leaseを取得し、重複実行でStripe照会が競合しないようにする。VercelのStripeテスト鍵とSupabaseサービスロール鍵はそれぞれのサーバー環境に保持し、Cronへ渡すのは別用途の内部HMAC秘密だけとする。DB状態更新は注文、決済試行、引当、在庫の順にロックし、T31 Webhookと同じ注文行で直列化する。
+
 在庫調整・注文引当は管理画面からの直接SQL更新を禁止し、DB関数でロックと監査を行う。決済失敗・在庫不足・Webhook遅延のデモ用シナリオはテストデータとStripeテスト手段で再現し、一般利用者に内部操作を露出しない。
 
 ## 10. 認証・Google・メール・SMS

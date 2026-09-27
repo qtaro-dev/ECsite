@@ -96,6 +96,12 @@ SupabaseのPRごとのBranchingは有料プランの可能性があるため採�
 
 有料プラン、課金、契約、本人認証が必要になったら、LUNAはその時点で「何を作るか／なぜ必要か／費用見込み／無料代替／設定後の確認方法」を提示する。利用者の操作・承認が届くまで外部接続の完了を主張しない。
 
+### T32 期限切れ決済のCron接続
+
+T32マイグレーションは5分間隔の`pg_cron`ジョブ`t32-payment-reconciliation`を登録する。`pg_net`がHTTPS POSTをVercelへ送る。各Supabase環境のVaultへ`t32_reconciliation_url`（その環境の安定したHTTPS URLに`/api/internal/reconcile-payments`を付けた値）と`t32_internal_job_secret`（対応するVercel環境の`INTERNAL_JOB_SECRET`と同じ専用32バイト以上の乱数）を個別登録する。空欄ならジョブは安全に何も送らず、片方だけ／不正な値はCron実行エラーになる。Stripe秘密鍵はVercelだけに置き、Supabase VaultやCronに入れない。APIは3件以内を並列処理し、Function最大実行時間を60秒に設定するため、T46でPreviewとProductionの実行上限がこの設定を受け入れることを確認する。
+
+接続時はSupabase Cron画面または`cron.job`でジョブ登録を確認し、`cron.job_run_details`の実行成功とVercel側で署名付き`POST`が処理されることを確認する。期限切れSessionの実照合はStripeのテスト環境で行い、その接続確認はT49のPreview受け入れに含める。Vault値・HTTP署名・秘密鍵をPRやログへ貼らない。
+
 ## 9. リリース前の確認
 
 - PreviewとProductionでSupabase Project Ref、Stripeテスト鍵・Webhook秘密、SMTP送信先、Hook秘密、Cron秘密が異なる。

@@ -24,6 +24,8 @@ on:
       - 'tests/database/t29-order-concurrency.py'
       - 'tests/database/t30-stripe-checkout.sql'
       - 'tests/database/t31-stripe-webhook.sql'
+      - 'tests/database/t32-payment-reconciliation.sql'
+      - 'tests/database/t32-reconciliation-concurrency.py'
       - 'tests/database/t40-admin-shipping-settings.sql'
       - 'tests/database/t37-admin-products.sql'
       - 'tests/database/t37-storage-fixtures.py'
@@ -55,6 +57,8 @@ on:
       - 'tests/database/t29-order-concurrency.py'
       - 'tests/database/t30-stripe-checkout.sql'
       - 'tests/database/t31-stripe-webhook.sql'
+      - 'tests/database/t32-payment-reconciliation.sql'
+      - 'tests/database/t32-reconciliation-concurrency.py'
       - 'tests/database/t40-admin-shipping-settings.sql'
       - 'tests/database/t37-admin-products.sql'
       - 'tests/database/t37-storage-fixtures.py'
@@ -117,6 +121,10 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t30-stripe-checkout.sql
       - name: Check T31 Stripe webhook signature-state RPC grants and payment transitions
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t31-stripe-webhook.sql
+      - name: Check T32 Stripe reconciliation, Cron signature bytes, grants, and stock safety
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t32-payment-reconciliation.sql
+      - name: Check T32 independent-session claim locking and order serialization
+        run: python3 tests/database/t32-reconciliation-concurrency.py
       - name: Check T29 checkout and stock concurrency
         run: python3 tests/database/t29-order-concurrency.py
       - name: Check T40 shipping settings versions, validation, and audit
