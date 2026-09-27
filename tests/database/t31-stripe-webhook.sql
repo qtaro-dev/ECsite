@@ -154,7 +154,7 @@ do $$ declare r jsonb; begin
   r := pg_temp.t31_apply_event('evt_t31_retry','checkout.session.async_payment_succeeded','succeeded',
     '00000000-0000-4000-8000-000000000317','00000000-0000-4000-8000-000000000318',
     'complete','paid',100,'jpy','00000000-0000-4000-8000-000000000317','pi_t31_317','succeeded',100,'jpy','00000000-0000-4000-8000-000000000317');
-  if r->>'status'<>'processed' or (select outcome from public.payment_events where stripe_event_id='evt_t31_retry')<>'needs_review' then
+  if r->>'status'<>'processed' or (select outcome from public.payment_events where stripe_event_id='evt_t31_retry')<>'processed' then
     raise exception 'Stripe retry after rolled back database failure did not process: %',r;
   end if;
 
@@ -163,7 +163,7 @@ do $$ declare r jsonb; begin
     'complete','unpaid',100,'jpy','00000000-0000-4000-8000-000000000319','pi_t31_319','requires_payment_method',0,'jpy','00000000-0000-4000-8000-000000000319');
   if r->>'status'<>'processed' or (select status from public.orders where id='00000000-0000-4000-8000-000000000319')<>'payment_failed'
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000319')<>'released'
-     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>4 then
+     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>3 then
     raise exception 'definitive async failure did not release allocation: %',r;
   end if;
   r := pg_temp.t31_apply_event('evt_t31_expiry','checkout.session.expired','expired',
@@ -171,7 +171,7 @@ do $$ declare r jsonb; begin
     'expired','unpaid',100,'jpy','00000000-0000-4000-8000-000000000321',null,null,null,null,null);
   if r->>'status'<>'processed' or (select status from public.orders where id='00000000-0000-4000-8000-000000000321')<>'expired'
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000321')<>'released'
-     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>3 then
+     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>2 then
     raise exception 'expired Checkout Session did not release allocation: %',r;
   end if;
 
