@@ -5,6 +5,8 @@
 **推奨実装順**：44/48（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
+**公開MVPでの対象**：[公開MVP計画](../docs/mvp-release-plan.md)によりT50/T51のデモ入口・架空住所・購入結果を含む公開画面を先に検証する。未公開のT39/T41等は後日検証し、元チケットの未検証範囲を完了扱いにしない。
+
 ## 目的
 
 全画面を公開ECとして使いやすくする。

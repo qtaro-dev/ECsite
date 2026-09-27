@@ -27,11 +27,11 @@
 - 2エージェントで作業する場合は、着手前に`docs/multi-agent-execution-plan.md`の担当表、Wave、並行条件、競合注意を確認する。担当外チケットや依存未完了チケットに着手しない。
 - 別worktree・別チケットブランチを使い、同じファイル、DBマイグレーション、共用テストDBを並行変更しない。競合や設計矛盾は推測で解決せず報告する。相手の変更に依存する場合は、そのPRと必要なDB変更がマージ・適用されるまで待つ。
 - 各チケット完了時に変更点、テスト結果、PR/commit、未解決事項を報告する。マージ後の`main`を次チケットの基準にする。
-- `docs/implementation-status.html`は49件の進捗一覧。LUNA-Bが各Waveの実装PRマージ後に一覧のみのPRで状態・根拠・更新日を記入する。LUNA-Aは更新に必要な証拠をLUNA-Bへ報告し、一覧を同時編集しない。完了は受け入れ条件、テスト、レビュー、マージの確認後に限る。
+- `docs/implementation-status.html`はT50/T51を含む51件の進捗一覧。LUNA-Bが各Waveの実装PRマージ後に一覧のみのPRで状態・根拠・更新日を記入する。LUNA-Aは更新に必要な証拠をLUNA-Bへ報告し、一覧を同時編集しない。完了は受け入れ条件、テスト、レビュー、マージの確認後に限る。
 
 ## 3. 固定した技術と責務
 
-Next.js App Router、React、TypeScript、CSS Modules、Zod、Supabase Postgres/Auth/Storage/Cron、`@supabase/ssr`、Stripe Checkout**テスト環境**、Vitest、Playwright、GitHub Actions、Vercel Git連携を使う。ライブ決済を導入しない。外部商品API、ゲスト注文、利用者向け取り置き、構成保存は初期版に加えない。
+Next.js App Router、React、TypeScript、CSS Modules、Zod、Supabase Postgres/Auth/Storage/Cron、`@supabase/ssr`、Stripe Checkout**テスト環境**、Vitest、Playwright、GitHub Actions、Vercel Git連携を使う。ライブ決済を導入しない。外部商品API、利用者向け取り置き、構成保存は初期版に加えない。通常のゲスト注文は初期版に加えないが、利用者が承認した公開MVP用の**閲覧者ごとに分離された匿名デモ会員**はT50/T51に限り実装する。Productionの認証省略や共有アカウントとして扱わない。
 
 予定ディレクトリ（初期化チケットで作成）：
 

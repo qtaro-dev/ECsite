@@ -5,6 +5,8 @@
 **推奨実装順**：34/47（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）  
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
+**公開MVPでの追加対象**：[公開MVP計画](../docs/mvp-release-plan.md)によりT50/T51の匿名デモAuthユーザー、架空住所、カート、注文、Stripeテスト顧客等も30日削除に含める。Supabase匿名Authは自動削除されないため、Authユーザーの削除と関連行・監査の扱いを検証する。T34の通知ジョブは公開後に回し、MVP着手条件から外す。元の通知関係の残件は完了と表示しない。
+
 ## 目的
 
 公開デモの個人情報方針を動作で満たす。
