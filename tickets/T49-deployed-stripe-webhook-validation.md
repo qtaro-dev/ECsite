@@ -1,9 +1,12 @@
 # T49 公開テスト環境でのStripe Webhook接続・実通知検証
 
-**状態**：未着手  
-**フェーズ**：M7 品質・CI/CD・公開 / F7 W36  
-**推奨実装順**：48/49（T46の環境分離・Previewデプロイ後、T47の公開判断前）  
-**担当**：LUNA-A  
+**状態**：未着手
+
+**フェーズ**：M7 品質・CI/CD・公開 / F7 W36
+
+**推奨実装順**：48/49（T46の環境分離・Previewデプロイ後、T47の公開判断前）
+
+**担当**：LUNA-A
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
 ## 目的
