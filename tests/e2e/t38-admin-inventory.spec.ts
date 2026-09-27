@@ -42,7 +42,8 @@ test('A03 adjusts inventory with a reason and reports current values on invalid 
   expect(adjustmentResponse.status(), JSON.stringify(adjustmentBody)).toBe(200);
   await expect(card.getByRole('status')).toContainText('在庫を調整しました');
   const adjustedOnHand = first.onHand + 1;
-  await expect(card.locator('dl').getByText(String(adjustedOnHand), { exact: true })).toBeVisible();
+  const onHandValue = card.locator('dl div').filter({ has: card.locator('dt').filter({ hasText: '実在庫' }) }).locator('dd');
+  await expect(onHandValue).toHaveText(String(adjustedOnHand));
   await expect(page.getByRole('region', { name: '最近の調整履歴' })).toContainText('T38 E2E 入庫');
 
   const invalidPage = await page.request.get('/api/admin/inventory?page=0');
@@ -52,7 +53,7 @@ test('A03 adjusts inventory with a reason and reports current values on invalid 
   await card.getByLabel(`${first.name}の調整理由`).fill('T38 E2E 不正削減');
   await card.getByRole('button', { name: '在庫を調整' }).click();
   await expect(card.getByRole('alert')).toContainText(/引当数より少なく|0未満/);
-  await expect(card.locator('dl').getByText(String(adjustedOnHand), { exact: true })).toBeVisible();
+  await expect(onHandValue).toHaveText(String(adjustedOnHand));
   const dimensions = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth }));
   expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
 });
