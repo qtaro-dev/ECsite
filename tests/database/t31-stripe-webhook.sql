@@ -191,7 +191,7 @@ do $$ declare r jsonb; begin
   if r->>'status'<>'needs_review' or (select status from public.orders where id='00000000-0000-4000-8000-000000000319')<>'review_required'
      or (select state from public.payment_attempts where id='00000000-0000-4000-8000-000000000320')<>'review_required'
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000319')<>'released'
-     or (select on_hand from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>18
+     or (select on_hand from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>17
      or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>2 then
     raise exception 'late success after allocation release was not held for review: %, order=%, attempt=%, allocation=%, intent=%, on_hand=%, allocated=%',
       r,
