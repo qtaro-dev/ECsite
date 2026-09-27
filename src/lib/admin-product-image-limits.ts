@@ -3,6 +3,7 @@
 // Vercel Functions reject request bodies above 4.5 MB. Keep a separate limit
 // for the multipart envelope so image bytes plus fields fit with headroom.
 export const ADMIN_PRODUCT_IMAGE_MAX_BYTES = 4_000_000;
+export const ADMIN_PRODUCT_IMAGE_MAX_STORED_BYTES = 1_048_576;
 export const ADMIN_PRODUCT_MULTIPART_MAX_BYTES = 4_300_000;
 export const ADMIN_PRODUCT_IMAGE_MAX_SIDE = 8_000;
 export const ADMIN_PRODUCT_IMAGE_MAX_PIXELS = 24_000_000;

@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
+import { createClient } from '@supabase/supabase-js';
 import sharp from 'sharp';
+import { ADMIN_PRODUCT_IMAGE_MAX_BYTES, ADMIN_PRODUCT_IMAGE_MAX_STORED_BYTES } from '../../src/lib/admin-product-image-limits';
 
 async function signInAsAdmin(page: Page) {
   await page.goto('/login?next=%2Fadmin%2Fproducts');
@@ -7,6 +9,16 @@ async function signInAsAdmin(page: Page) {
   await page.getByLabel('パスワード').fill(process.env.T36_ADMIN_PASSWORD!);
   await page.getByRole('button', { name: 'ログイン' }).click();
   await expect(page).toHaveURL('/admin/products');
+}
+
+async function noisyPng(width: number, height: number) {
+  const pixels = Buffer.allocUnsafe(width * height * 3);
+  let state = 0x2a6d365a;
+  for (let index = 0; index < pixels.length; index++) {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    pixels[index] = state >>> 24;
+  }
+  return sharp(pixels, { raw: { width, height, channels: 3 } }).png().toBuffer();
 }
 
 test('A02 creates a draft, edits it, and remains usable on desktop and mobile', async ({ page }) => {
@@ -70,4 +82,48 @@ test('A02 rejects an image above the approved four-million-byte cap in the brows
   await expect(page.locator('[role="alert"]').filter({ hasText: '4,000,000 bytes' }))
     .toContainText('4,000,000 bytes');
   await expect(page.getByLabel('画像を選択')).toHaveValue('');
+});
+
+test('T48 automatically optimizes uploads and keeps the stored object at or below one MiB', async ({ page }) => {
+  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  test.skip(!process.env.T36_ADMIN_EMAIL || !process.env.T36_ADMIN_PASSWORD || !supabaseUrl || !serviceRoleKey,
+    'T36 admin account and local Supabase service credentials are required');
+  await signInAsAdmin(page);
+  await page.getByRole('link', { name: '新規商品' }).click();
+
+  const suffix = `${Date.now()}`;
+  await page.getByLabel('slug', { exact: true }).fill(`t48-image-${suffix}`);
+  await page.getByLabel('SKU', { exact: true }).fill(`T48-${suffix}`);
+  await page.getByRole('button', { name: '商品を作成' }).click();
+  await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]+$/i);
+
+  const source = await noisyPng(900, 900);
+  expect(source.byteLength).toBeGreaterThan(ADMIN_PRODUCT_IMAGE_MAX_STORED_BYTES);
+  expect(source.byteLength).toBeLessThanOrEqual(ADMIN_PRODUCT_IMAGE_MAX_BYTES);
+  await page.getByLabel('画像を選択').setInputFiles({ name: 'large-noise.png', mimeType: 'image/png', buffer: source });
+  await expect(page.getByText(/自動でリサイズ・圧縮/)).toBeVisible();
+
+  const responsePromise = page.waitForResponse((response) =>
+    response.url().includes('/api/admin/products') && response.request().method() === 'PATCH');
+  await page.getByRole('button', { name: '変更を保存' }).click();
+  const response = await responsePromise;
+  expect(response.status()).toBe(200);
+  await expect(page.getByRole('status')).toContainText('商品を保存しました');
+  const body = await response.json() as { data?: { images?: Array<{ storagePath: string; altText: string }> } };
+  const savedImage = body.data?.images?.find((image) => image.altText.includes('商品画像'));
+  expect(savedImage?.storagePath).toBeTruthy();
+
+  const storage = createClient(supabaseUrl!, serviceRoleKey!, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  const { data, error } = await storage.storage.from('product-images').download(savedImage!.storagePath);
+  expect(error).toBeNull();
+  expect(data).not.toBeNull();
+  expect(data!.size).toBeLessThanOrEqual(ADMIN_PRODUCT_IMAGE_MAX_STORED_BYTES);
+  const stored = Buffer.from(await data!.arrayBuffer());
+  const metadata = await sharp(stored).metadata();
+  expect(metadata.format).toBe('png');
+  expect(metadata.width).toBeLessThan(900);
+  expect(metadata.height).toBeLessThan(900);
 });
