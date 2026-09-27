@@ -2,7 +2,7 @@
 
 **状態**：未着手  
 **フェーズ**：M7 品質・CI/CD・公開  
-**推奨実装順**：43/47（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）  
+**推奨実装順**：44/48（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
 ## 目的
@@ -46,6 +46,7 @@
 - [T39 注文・決済状態の管理閲覧](T39-admin-orders-payments-readonly.md)
 - [T40 発送元・送料規則の管理](T40-admin-shipping-settings.md)
 - [T41 SMTP設定の管理](T41-admin-smtp-settings.md)
+- [T48 商品画像のアップロード時最適化](T48-product-image-optimization.md)
 
 ## 対象範囲
 

@@ -2,7 +2,7 @@
 
 **状態**：未着手  
 **フェーズ**：M7 品質・CI/CD・公開  
-**推奨実装順**：45/47（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）  
+**推奨実装順**：46/48（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
 ## 目的
@@ -35,6 +35,7 @@
 - [T42 異常系デモの利用者導線](T42-abnormal-demo-paths.md)
 - [T43 レスポンシブ・アクセシビリティ仕上げ](T43-responsive-accessibility-final.md)
 - [T44 セキュリティ・RLS・削除の横断検証](T44-security-rls-retention-audit.md)
+- [T48 商品画像のアップロード時最適化](T48-product-image-optimization.md)
 
 ## 対象範囲
 

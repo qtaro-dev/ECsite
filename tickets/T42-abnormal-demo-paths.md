@@ -2,7 +2,7 @@
 
 **状態**：未着手  
 **フェーズ**：M7 品質・CI/CD・公開  
-**推奨実装順**：42/47（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）  
+**推奨実装順**：42/48（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
 ## 目的
