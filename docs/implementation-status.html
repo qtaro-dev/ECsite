@@ -38,11 +38,11 @@
     <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 51件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
     <div class="summary" aria-label="進捗件数">
       <span>全件 <output id="count-all">51</output></span>
-      <span>未実装 <output id="count-not-started">17</output></span>
+      <span>未実装 <output id="count-not-started">16</output></span>
       <span>実装中 <output id="count-active">0</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
       <span>完了 <output id="count-done">32</output></span>
-      <span>保留 <output id="count-blocked">2</output></span>
+      <span>保留 <output id="count-blocked">3</output></span>
     </div>
     <div class="controls">
       <label>チケット検索<input id="query" type="search" placeholder="番号・名称・依存"></label>
@@ -211,7 +211,7 @@
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T32-payment-expiry-reconciliation.md">T32</a></th>
             <td>期限切れ照合と補償ジョブ</td><td>F5 / W25</td><td>LUNA-A</td>
-            <td>T31</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T31</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/66">PR #66</a> / <a href="https://github.com/qtaro-dev/ECsite/commit/19b361e9ab7ab4d88d2ddf7b2cd3069dc132c965">19b361e</a>; CI #165、DB integration #94合格。実装・CI済、Vault/Vercel実接続とStripe現在状態の実通知検証はT49で確認待ち</td><td class="updated">2026-09-28</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T33-checkout-result-order-history.md">T33</a></th>
