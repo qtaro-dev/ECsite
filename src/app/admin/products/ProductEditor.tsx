@@ -280,7 +280,7 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
           </div>;
         })}
         <div className={styles.field}><label htmlFor="product-image">画像を選択</label><input ref={imageInputRef} id="product-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void chooseImage(event.target.files?.[0])} aria-invalid={Boolean(imageError)} aria-describedby={imageError ? 'image-error' : undefined} />
-          <small>静止画のJPEG・PNG・WebP、4,000,000 bytes（約4MB）以下。各辺8,000px以下・総画素2,400万以下です。</small>
+          <small>静止画のJPEG・PNG・WebP、4,000,000 bytes（約4MB）以下。各辺8,000px以下・総画素2,400万以下です。保存時に自動でリサイズ・圧縮し、画像ファイルを1MiB以下にします。</small>
           {imageError && <p className={styles.error} id="image-error" role="alert">{imageError}</p>}
           {imageFile && <><label htmlFor="new-image-alt">新しい画像の代替テキスト</label><input id="new-image-alt" maxLength={240} value={imageAltText} onChange={(event) => setImageAltText(event.target.value)} /></>}
           {[...fieldErrors('images'), ...fieldErrors('image')].map((error, index) => <p className={styles.error} key={`${error}-${index}`}>{error}</p>)}
