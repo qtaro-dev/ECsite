@@ -10,9 +10,13 @@ vi.mock('../../src/server/admin/overview', () => ({ createAdminDataClient: () =>
 }) }));
 vi.mock('../../src/server/admin/products', () => ({ getAdminProduct }));
 vi.mock('../../src/server/admin/product-images', () => ({
-  ProductImageValidationError: class ProductImageValidationError extends Error {},
+  ProductImageValidationError: class ProductImageValidationError extends Error {
+    readonly reason: string;
+    constructor(reason: string) { super(reason); this.reason = reason; }
+  },
   inspectAndSanitizeProductImage: inspect,
 }));
+import { ProductImageValidationError } from '../../src/server/admin/product-images';
 import { ProductSaveError, saveAdminProduct } from '../../src/server/admin/save-product';
 
 const adminId = '88888888-8888-4888-8888-888888888888';
@@ -81,6 +85,37 @@ describe('admin product save service', () => {
       alt_text: 'front view',
       sort_order: 0,
     }]);
+  });
+
+  it('accepts the exact input cap and uploads only the optimized bytes', async () => {
+    const source = new Uint8Array(4_000_000);
+    const optimized = new Uint8Array(1_048_576);
+    inspect.mockResolvedValue({ extension: 'png', contentType: 'image/png', width: 100, height: 100, bytes: optimized });
+    const result = await saveAdminProduct({ fields: baseFields, images: [], imageAltText: 'optimized image',
+      imageFile: new File([source], 'source.png', { type: 'image/png' }), actorId: adminId, requestId: 'request' });
+
+    expect(inspect).toHaveBeenCalledTimes(1);
+    const [contentType, inputSize, inspectedBytes] = inspect.mock.calls[0];
+    expect([contentType, inputSize, inspectedBytes.byteLength]).toEqual(['image/png', 4_000_000, 4_000_000]);
+    expect(inspectedBytes).not.toBe(optimized);
+    expect(upload).toHaveBeenCalledTimes(1);
+    const [storagePath, uploadedBytes, uploadOptions] = upload.mock.calls[0];
+    expect(storagePath).toMatch(new RegExp(`^${result.productId}/[0-9a-f-]{36}\\.png$`, 'i'));
+    expect(uploadedBytes).toBe(optimized);
+    expect(uploadOptions).toEqual({ contentType: 'image/png', upsert: false, cacheControl: '3600' });
+    expect(optimized.byteLength).toBeLessThanOrEqual(1_048_576);
+  });
+
+  it('returns a field error and stores nothing when optimization cannot meet the stored-size cap', async () => {
+    inspect.mockRejectedValue(new ProductImageValidationError('stored-size'));
+    const imageFile = new File([new Uint8Array([8, 9])], 'source.png', { type: 'image/png' });
+
+    await expect(saveAdminProduct({ fields: baseFields, images: [], imageAltText: 'image', imageFile,
+      actorId: adminId, requestId: 'request' })).rejects.toMatchObject({
+      code: 'BAD_REQUEST', fieldErrors: { image: ['画像を自動リサイズ・圧縮しても1MiB以下にできませんでした。小さめの画像を選択してください。'] },
+    });
+    expect(upload).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it('maps stale version and unclaimed-id conflicts without exposing database details', async () => {
