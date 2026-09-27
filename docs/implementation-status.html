@@ -39,9 +39,9 @@
     <div class="summary" aria-label="進捗件数">
       <span>全件 <output id="count-all">49</output></span>
       <span>未実装 <output id="count-not-started">15</output></span>
-      <span>実装中 <output id="count-active">1</output></span>
+      <span>実装中 <output id="count-active">0</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">31</output></span>
+      <span>完了 <output id="count-done">32</output></span>
       <span>保留 <output id="count-blocked">2</output></span>
     </div>
     <div class="controls">
@@ -206,7 +206,7 @@
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T31-stripe-webhook-state.md">T31</a></th>
             <td>Stripe Webhookと決済状態</td><td>F5 / W24</td><td>LUNA-A</td>
-            <td>T29、T30</td><td class="status">実装中</td><td class="evidence">T30マージ後に着手</td><td class="updated">2026-09-27</td>
+            <td>T29、T30</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/59">PR #59</a> / <a href="https://github.com/qtaro-dev/ECsite/commit/209bbe9c904237df535e051c4337261a6e96d4c5">209bbe9</a>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36311782042">CI run #152合格</a>、<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36311782050">DB integration #92合格</a>。実通知検証はT49へ移管</td><td class="updated">2026-09-27</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T32-payment-expiry-reconciliation.md">T32</a></th>
