@@ -51,7 +51,7 @@ begin
   if v_success_start=0 or v_failed_start<=v_success_start then
     raise exception 'T31 webhook succeeded/failure branch markers changed; review migration';
   end if;
-  v_success_block := pg_catalog.substring(v_definition from v_success_start for v_failed_start-v_success_start);
+  v_success_block := pg_catalog.substr(v_definition,v_success_start,v_failed_start-v_success_start);
   if pg_catalog.length(v_success_block)-pg_catalog.length(pg_catalog.replace(v_success_block,v_old_status_check,''))
        <> pg_catalog.length(v_old_status_check) then
     raise exception 'T31 success status check did not match exactly once';
@@ -62,7 +62,8 @@ begin
   end if;
   v_success_block := pg_catalog.replace(v_success_block,v_old_status_check,v_new_status_check);
   v_success_block := pg_catalog.replace(v_success_block,v_old_review_check,v_new_review_check);
-  v_definition := pg_catalog.overlay(v_definition placing v_success_block from v_success_start for v_failed_start-v_success_start);
+  v_definition := pg_catalog.substr(v_definition,1,v_success_start-1)
+    || v_success_block || pg_catalog.substr(v_definition,v_failed_start);
   execute v_definition;
 end;
 $$;
