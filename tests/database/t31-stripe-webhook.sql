@@ -44,7 +44,7 @@ create function pg_temp.t31_apply_event(
 ) returns jsonb language sql as $$
   select public.apply_stripe_checkout_webhook(
     p_event_id,p_event_type,p_result,p_order_id,p_attempt_id,
-    'cs_test_t31_'||pg_catalog.substr(pg_catalog.replace(p_order_id::text,'-',''),1,12),
+    'cs_test_t31_'||pg_catalog.right(pg_catalog.replace(p_order_id::text,'-',''),12),
     'payment',false,p_session_status,p_payment_status,p_session_amount,p_session_currency,
     pg_catalog.floor(pg_catalog.date_part('epoch',now()))::bigint,
     pg_catalog.floor(pg_catalog.date_part('epoch',now()))::bigint+1810,
