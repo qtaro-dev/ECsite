@@ -159,8 +159,8 @@ do $$ begin
 
   begin
     update public.orders set status='expired' where checkout_key='00000000-0000-0000-0000-000000000701';
-    update public.orders set status='paid',paid_at=now() where checkout_key='00000000-0000-0000-0000-000000000701';
-    raise exception 'expected terminal order transition to fail';
+    update public.orders set status='payment_pending' where checkout_key='00000000-0000-0000-0000-000000000701';
+    raise exception 'expected expired order to payment_pending transition to fail';
   exception when check_violation then null;
   end;
 

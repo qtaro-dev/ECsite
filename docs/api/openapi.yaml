@@ -149,6 +149,17 @@ paths:
     post:
       operationId: post_webhooks_stripe
       summary: Stripe webhook; verify signature over exact raw bytes
+      description: >-
+        Verify Stripe-Signature on the exact raw request bytes. For Checkout
+        Session completion, asynchronous payment, and expiry events, retrieve
+        the current Session and PaymentIntent state before atomically applying
+        amount, JPY, order/attempt metadata, event deduplication, and inventory
+        changes. A late success after failure or expiry becomes paid only when
+        every stock allocation remains active and inventory can be consumed
+        atomically; otherwise the payment requires review without a stock change.
+        Duplicate signed events return 200; database or Stripe API
+        failures return 503 so Stripe can retry. Unsupported signed events are
+        recorded as ignored and acknowledged.
       security: []
       parameters: [{ name: Stripe-Signature, in: header, required: true, schema: { type: string } }]
       requestBody: { required: true, description: Exact unparsed request body, content: { application/json: { schema: { type: string, format: binary } } } }
