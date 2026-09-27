@@ -192,8 +192,8 @@ Server Componentは商品表示のための取得をデータ層へ直接行い�
 
 | 対象 | 状態遷移・条件 |
 | --- | --- |
-| 注文 | `payment_pending→paid`は署名済み成功イベントと金額・通貨・Session照合時のみ。`→payment_failed/expired`は確定失敗・期限切れ。矛盾・遅延成功は`review_required`。 |
-| 決済試行 | `created→processing→succeeded/failed/expired`。再試行は新規試行番号を作る。同じ注文の成功は1回だけ。 |
+| 注文 | `payment_pending→paid`は署名済み成功イベントと金額・通貨・Session照合時のみ。`payment_failed/expired→paid`は同じ照合に加えて全引当が有効で在庫を原子的に消費できる場合のみ。条件を満たさない遅延成功は在庫を変更せず`review_required`。 |
+| 決済試行 | `created→processing→succeeded/failed/expired`。`failed/expired→succeeded`は照合済み遅延成功で全引当を安全に消費できる場合のみ。それ以外は`review_required`。再試行は新規試行番号を作る。同じ注文の成功は1回だけ。 |
 | 引当 | `active→consumed`で`on_hand`と`allocated`を共に数量分減算。`active→released`で`allocated`のみ減算。二重遷移は無操作。 |
 
 Webhookは生ボディの署名と許容時刻を検証し、`payment_events.stripe_event_id`で重複排除する。受信順に依存せずStripe Session/PaymentIntentの現在状態を照合し、成功は金額・JPY・注文IDメタデータ・試行IDを検証する。成功処理と在庫消費を同一DBトランザクションにする。失敗・期限切れも引当解放と状態変更を同一トランザクションにする。Stripeからの応答だけでDB処理が失敗したときはWebhookを非2xxとして再送に任せ、補償ジョブも照合する。重複通知は200で応答し追加処理しない。画面の戻りURLは結果表示の契機に限る。

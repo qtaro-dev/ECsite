@@ -72,6 +72,12 @@ do $$ declare r jsonb; begin
      or not has_function_privilege('service_role','public.ignore_stripe_webhook_event(text,text)','EXECUTE') then
     raise exception 'service_role cannot execute Stripe webhook RPCs';
   end if;
+  if has_table_privilege('anon','public.orders','UPDATE')
+     or has_table_privilege('authenticated','public.orders','UPDATE')
+     or has_table_privilege('anon','public.payment_attempts','UPDATE')
+     or has_table_privilege('authenticated','public.payment_attempts','UPDATE') then
+    raise exception 'browser roles may bypass the service-only payment transition RPCs';
+  end if;
 end $$;
 
 set local role authenticated;
@@ -121,6 +127,19 @@ do $$ declare r jsonb; begin
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000313')<>'active' then
     raise exception 'amount mismatch was not retained for review: %',r;
   end if;
+  -- A terminal state with every allocation still active can safely recover to paid.
+  update public.payment_attempts set state='failed' where id='00000000-0000-4000-8000-000000000314';
+  update public.orders set status='payment_failed' where id='00000000-0000-4000-8000-000000000313';
+  r := pg_temp.t31_apply_event('evt_t31_late_safe','checkout.session.async_payment_succeeded','succeeded',
+    '00000000-0000-4000-8000-000000000313','00000000-0000-4000-8000-000000000314',
+    'complete','paid',100,'jpy','00000000-0000-4000-8000-000000000313','pi_t31_late_safe','succeeded',100,'jpy','00000000-0000-4000-8000-000000000313');
+  if r->>'status'<>'processed' or (select status from public.orders where id='00000000-0000-4000-8000-000000000313')<>'paid'
+     or (select state from public.payment_attempts where id='00000000-0000-4000-8000-000000000314')<>'succeeded'
+     or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000313')<>'consumed'
+     or (select on_hand from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>18
+     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>4 then
+    raise exception 'safe late success did not atomically consume retained stock: %',r;
+  end if;
   r := pg_temp.t31_apply_event('evt_t31_currency_mismatch','checkout.session.completed','succeeded',
     '00000000-0000-4000-8000-000000000315','00000000-0000-4000-8000-000000000316',
     'complete','paid',100,'usd','00000000-0000-4000-8000-000000000315','pi_t31_315','succeeded',100,'usd','00000000-0000-4000-8000-000000000315');
@@ -163,15 +182,25 @@ do $$ declare r jsonb; begin
     'complete','unpaid',100,'jpy','00000000-0000-4000-8000-000000000319','pi_t31_319','requires_payment_method',0,'jpy','00000000-0000-4000-8000-000000000319');
   if r->>'status'<>'processed' or (select status from public.orders where id='00000000-0000-4000-8000-000000000319')<>'payment_failed'
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000319')<>'released'
-     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>3 then
+     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>2 then
     raise exception 'definitive async failure did not release allocation: %',r;
+  end if;
+  r := pg_temp.t31_apply_event('evt_t31_late_unsafe','checkout.session.async_payment_succeeded','succeeded',
+    '00000000-0000-4000-8000-000000000319','00000000-0000-4000-8000-000000000320',
+    'complete','paid',100,'jpy','00000000-0000-4000-8000-000000000319','pi_t31_late_unsafe','succeeded',100,'jpy','00000000-0000-4000-8000-000000000319');
+  if r->>'status'<>'needs_review' or (select status from public.orders where id='00000000-0000-4000-8000-000000000319')<>'review_required'
+     or (select state from public.payment_attempts where id='00000000-0000-4000-8000-000000000320')<>'review_required'
+     or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000319')<>'released'
+     or (select on_hand from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>18
+     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>2 then
+    raise exception 'late success after allocation release was not held for review: %',r;
   end if;
   r := pg_temp.t31_apply_event('evt_t31_expiry','checkout.session.expired','expired',
     '00000000-0000-4000-8000-000000000321','00000000-0000-4000-8000-000000000322',
     'expired','unpaid',100,'jpy','00000000-0000-4000-8000-000000000321',null,null,null,null,null);
   if r->>'status'<>'processed' or (select status from public.orders where id='00000000-0000-4000-8000-000000000321')<>'expired'
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000321')<>'released'
-     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>2 then
+     or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>1 then
     raise exception 'expired Checkout Session did not release allocation: %',r;
   end if;
 

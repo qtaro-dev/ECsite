@@ -154,7 +154,10 @@ paths:
         Session completion, asynchronous payment, and expiry events, retrieve
         the current Session and PaymentIntent state before atomically applying
         amount, JPY, order/attempt metadata, event deduplication, and inventory
-        changes. Duplicate signed events return 200; database or Stripe API
+        changes. A late success after failure or expiry becomes paid only when
+        every stock allocation remains active and inventory can be consumed
+        atomically; otherwise the payment requires review without a stock change.
+        Duplicate signed events return 200; database or Stripe API
         failures return 503 so Stripe can retry. Unsupported signed events are
         recorded as ignored and acknowledged.
       security: []
