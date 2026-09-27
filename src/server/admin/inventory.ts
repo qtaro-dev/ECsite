@@ -6,6 +6,16 @@ export class InventoryAdjustmentError extends Error {
   constructor(readonly status: 'conflict' | 'below_allocated' | 'below_zero' | 'above_maximum' | 'not_found', readonly latest?: unknown) { super(status); }
 }
 
+function parseInventoryState(result: Record<string, unknown>) {
+  return AdminInventoryStateSchema.parse({
+    productId: result.productId,
+    onHand: result.onHand,
+    allocated: result.allocated,
+    available: result.available,
+    version: result.version,
+  });
+}
+
 export async function getAdminInventory(requestedPage = 1) {
   const client = createAdminDataClient();
   const { count, error: countError } = await client.from('products').select('id', { count: 'exact', head: true }).is('deleted_at', null);
@@ -53,11 +63,11 @@ export async function adjustAdminInventory(input: {
   if (error) throw new Error('Inventory adjustment database operation failed');
   const result = data as Record<string, unknown>;
   if (result.status === 'updated') return {
-    state: AdminInventoryStateSchema.parse(result), adjustmentId: result.adjustmentId,
+    state: parseInventoryState(result), adjustmentId: result.adjustmentId,
     auditId: result.auditId, createdAt: result.createdAt,
   };
   if (result.status === 'conflict' || result.status === 'below_allocated' || result.status === 'below_zero' || result.status === 'above_maximum' || result.status === 'not_found') {
-    const latest = result.status === 'not_found' ? undefined : AdminInventoryStateSchema.parse(result);
+    const latest = result.status === 'not_found' ? undefined : parseInventoryState(result);
     throw new InventoryAdjustmentError(result.status, latest);
   }
   throw new Error('Unexpected inventory adjustment result');

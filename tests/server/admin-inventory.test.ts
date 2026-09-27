@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { createAdminDataClient } = vi.hoisted(() => ({ createAdminDataClient: vi.fn() }));
 vi.mock('server-only', () => ({}));
 vi.mock('../../src/server/admin/overview', () => ({ createAdminDataClient }));
-import { getAdminInventory } from '../../src/server/admin/inventory';
+import { adjustAdminInventory, getAdminInventory, InventoryAdjustmentError } from '../../src/server/admin/inventory';
 
 function createPagedClient(total: number) {
   const products = Array.from({ length: total }, (_, index) => ({
@@ -47,5 +47,36 @@ describe('admin inventory pagination', () => {
     expect([first.totalPages, second.totalPages, last.totalPages]).toEqual([3, 3, 3]);
     expect(new Set([...first.items, ...second.items, ...last.items].map((item) => item.productId)).size).toBe(101);
     expect(ranges).toEqual([[0, 49], [50, 99], [100, 149]]);
+  });
+});
+
+describe('admin inventory adjustment RPC response mapping', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('picks state fields from the complete successful database response', async () => {
+    const createdAt = '2026-09-27T03:04:05.000Z';
+    const adjustmentId = '99999999-9999-4999-8999-999999999999';
+    const auditId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const rpc = vi.fn().mockResolvedValue({ data: {
+      status: 'updated', productId: '77777777-7777-4777-8777-777777777777',
+      onHand: 4, allocated: 2, available: 2, version: 1, adjustmentId, auditId, createdAt,
+    }, error: null });
+    createAdminDataClient.mockReturnValue({ rpc });
+    const result = await adjustAdminInventory({ productId: '77777777-7777-4777-8777-777777777777', delta: 1, reason: '入庫', expectedVersion: 0 },
+      '88888888-8888-4888-8888-888888888888', 't38-request');
+    expect(result).toEqual({
+      state: { productId: '77777777-7777-4777-8777-777777777777', onHand: 4, allocated: 2, available: 2, version: 1 },
+      adjustmentId, auditId, createdAt,
+    });
+  });
+
+  it('preserves the latest values from a complete conflict response', async () => {
+    createAdminDataClient.mockReturnValue({ rpc: vi.fn().mockResolvedValue({ data: {
+      status: 'conflict', productId: '77777777-7777-4777-8777-777777777777',
+      onHand: 8, allocated: 3, available: 5, version: 6,
+    }, error: null }) });
+    await expect(adjustAdminInventory({ productId: '77777777-7777-4777-8777-777777777777', delta: 1, reason: '入庫', expectedVersion: 2 },
+      '88888888-8888-4888-8888-888888888888', 't38-request'))
+      .rejects.toMatchObject({ status: 'conflict', latest: { onHand: 8, allocated: 3, available: 5, version: 6 } } satisfies Partial<InventoryAdjustmentError>);
   });
 });

@@ -34,7 +34,12 @@ test('A03 adjusts inventory with a reason and reports current values on invalid 
   const card = page.locator('article').filter({ hasText: first.sku });
   await card.getByLabel(`${first.name}の増減数`).fill('1');
   await card.getByLabel(`${first.name}の調整理由`).fill('T38 E2E 入庫');
+  const adjustmentResponsePromise = page.waitForResponse((candidate) =>
+    candidate.url().endsWith('/api/admin/inventory') && candidate.request().method() === 'POST');
   await card.getByRole('button', { name: '在庫を調整' }).click();
+  const adjustmentResponse = await adjustmentResponsePromise;
+  const adjustmentBody = await adjustmentResponse.json();
+  expect(adjustmentResponse.status(), JSON.stringify(adjustmentBody)).toBe(200);
   await expect(card.getByRole('status')).toContainText('在庫を調整しました');
   const adjustedOnHand = first.onHand + 1;
   await expect(card.locator('dl').getByText(String(adjustedOnHand), { exact: true })).toBeVisible();
@@ -59,6 +64,7 @@ test('a regular member cannot read or adjust admin inventory', async ({ page }) 
   await page.getByLabel('メールアドレス').fill(process.env.T36_MEMBER_EMAIL!);
   await page.getByLabel('パスワード').fill(process.env.T36_MEMBER_PASSWORD!);
   await page.getByRole('button', { name: 'ログイン' }).click();
+  await expect(page).toHaveURL('/account');
   const response = await page.request.get('/api/admin/inventory');
   expect(response.status()).toBe(403);
   expect(await response.json()).toMatchObject({ error: { code: 'FORBIDDEN' } });
