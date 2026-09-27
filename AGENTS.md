@@ -8,9 +8,11 @@
 2. `output/pdf/自作PCパーツECサイト_要件定義書_レビュー版.pdf` と、それ以後にユーザーが明示承認した送料・個人情報の決定（`docs/detailed-design-review.md`に反映済み）。
 3. `output/pdf/自作PCパーツECサイト_基本設計書_レビュー版.pdf`。
 4. `output/pdf/自作PCパーツECサイト_詳細設計書_レビュー版.pdf`、編集用の`docs/detailed-design-review.md`。
-5. `docs/implementation-plan.md`、2エージェント運用時の`docs/multi-agent-execution-plan.md`、索引`docs/implementation-tickets.md`、現在割り当てられた`tickets/Txx-*.md`、`docs/environment-setup.md`。
+5. 公開MVPの対象・順序は`docs/mvp-release-plan.md`、全件の元計画は`docs/implementation-plan.md`、2エージェント運用時の`docs/multi-agent-execution-plan.md`、索引`docs/implementation-tickets.md`、現在割り当てられた`tickets/Txx-*.md`、`docs/environment-setup.md`。
 
 上位資料と下位資料が矛盾する、詳細設計に複数案が残る、外部サービスの制約で設計どおりにできない場合は、推測で実装しない。根拠の箇所、影響、選択肢を報告し、仕様変更が必要なら利用者の判断を待つ。通常のライブラリ内部の選択は、設計の範囲内で理由を記録して決めてよい。
+
+2026-09-27以降の公開順序は利用者のMVP優先指示と`docs/mvp-release-plan.md`に従う。公開後へ回した機能を実装済みと表示しない。元チケットの一部だけがMVPとして通った場合は、残件を明記してチケット自体を「完了」にしない。
 
 ## 2. チケット作業の約束
 
