@@ -187,7 +187,7 @@ do $$ declare r jsonb; begin
   end if;
   r := pg_temp.t31_apply_event('evt_t31_late_unsafe','checkout.session.async_payment_succeeded','succeeded',
     '00000000-0000-4000-8000-000000000319','00000000-0000-4000-8000-000000000320',
-    'complete','paid',100,'jpy','00000000-0000-4000-8000-000000000319','pi_t31_late_unsafe','succeeded',100,'jpy','00000000-0000-4000-8000-000000000319');
+    'complete','paid',100,'jpy','00000000-0000-4000-8000-000000000319','pi_t31_319','succeeded',100,'jpy','00000000-0000-4000-8000-000000000319');
   if r->>'status'<>'needs_review' or (select status from public.orders where id='00000000-0000-4000-8000-000000000319')<>'review_required'
      or (select state from public.payment_attempts where id='00000000-0000-4000-8000-000000000320')<>'review_required'
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000319')<>'released'
