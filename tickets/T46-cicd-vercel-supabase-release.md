@@ -2,7 +2,7 @@
 
 **状態**：未着手  
 **フェーズ**：M7 品質・CI/CD・公開  
-**推奨実装順**：47/48（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
+**推奨実装順**：47/49（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
 ## 目的
@@ -41,6 +41,7 @@
 
 - CIにDB/RLS/Playwrightを追加、PR Preview、main Production、別Supabaseプロジェクト、マイグレーション適用ゲート、環境別変数、失敗時ロールバック手順。アプリはVercel Git連携でデプロイし、Actionsから二重デプロイしない。
 - PRのDB/RLS/Playwright、main公開、環境別秘密、監督付きDB適用、復旧手順を整える。
+- T49へ引き渡すPreviewの実URL、Supabase Preview接続先、マイグレーション適用結果、環境別の秘密設定手順を整理する。StripeテストWebhookの実通知確認はT49で行う。
 - 入出力・DB・権限・画面に変更がある場合は、同じチケット内で対応するOpenAPI、Zod、マイグレーション、RLS、テスト、文書を整合させる。
 
 ## 対象外

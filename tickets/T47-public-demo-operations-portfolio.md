@@ -2,7 +2,7 @@
 
 **状態**：未着手  
 **フェーズ**：M7 品質・CI/CD・公開  
-**推奨実装順**：48/48（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
+**推奨実装順**：49/49（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
 ## 目的
@@ -37,6 +37,7 @@
 - [T44 セキュリティ・RLS・削除の横断検証](T44-security-rls-retention-audit.md)
 - [T45 全体E2Eと性能検収](T45-full-e2e-performance.md)
 - [T46 GitHub Actions・Vercel・SupabaseのCI/CD](T46-cicd-vercel-supabase-release.md)
+- [T49 公開テスト環境でのStripe Webhook接続・実通知検証](T49-deployed-stripe-webhook-validation.md)
 - **外部作業ゲート**：G-Publication（利用者が公開先・アカウントを設定）。接続・認証・費用が必要な段階で利用者へ具体的に提示する。
 
 ## 対象範囲

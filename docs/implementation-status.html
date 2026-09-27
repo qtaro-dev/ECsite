@@ -35,13 +35,13 @@
 <body>
   <main>
     <h1>実装チケット進捗一覧</h1>
-    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 48件。チケットの仕様と依存は<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件は<a href="multi-agent-execution-plan.md">実行計画</a>を参照してください。</p>
+    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 49件。チケットの仕様と依存は<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件は<a href="multi-agent-execution-plan.md">実行計画</a>を参照してください。</p>
     <div class="summary" aria-label="進捗件数">
-      <span>全件 <output id="count-all">48</output></span>
+      <span>全件 <output id="count-all">49</output></span>
       <span>未実装 <output id="count-not-started">15</output></span>
       <span>実装中 <output id="count-active">1</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">30</output></span>
+      <span>完了 <output id="count-done">31</output></span>
       <span>保留 <output id="count-blocked">2</output></span>
     </div>
     <div class="controls">
@@ -49,7 +49,7 @@
       <label>担当<select id="owner"><option value="">すべて</option><option>LUNA-A</option><option>LUNA-B</option></select></label>
       <label>状態<select id="state"><option value="">すべて</option><option>未実装</option><option>実装中</option><option>レビュー中</option><option>完了</option><option>保留</option></select></label>
     </div>
-    <div class="table-wrap" role="region" aria-label="48件の実装チケット" tabindex="0">
+    <div class="table-wrap" role="region" aria-label="49件の実装チケット" tabindex="0">
       <table>
         <thead><tr><th scope="col">番号</th><th scope="col">チケット</th><th scope="col">フェーズ / Wave</th><th scope="col">担当</th><th scope="col">依存</th><th scope="col">状態</th><th scope="col">根拠 PR / commit</th><th scope="col">更新日</th></tr></thead>
         <tbody>
@@ -285,13 +285,18 @@
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T47-public-demo-operations-portfolio.md">T47</a></th>
-            <td>公開・運用・ポートフォリオ説明</td><td>F7 / W36</td><td>LUNA-B</td>
-            <td>T22、T42、T43、T44、T45、T46</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>公開・運用・ポートフォリオ説明</td><td>F7 / W37</td><td>LUNA-B</td>
+            <td>T22、T42、T43、T44、T45、T46、T49</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T48-product-image-optimization.md">T48</a></th>
             <td>商品画像のアップロード時最適化</td><td>F7 / W32</td><td>LUNA-B</td>
             <td>T37</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/60">PR #60</a> / <a href="https://github.com/qtaro-dev/ECsite/commit/798a98ec6f9a3262e638f83c455e7e0ddf61ccf4">798a98e</a>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36309342265">CI合格（品質・DB/Storageブラウザ）</a>。入力上限4,000,000 bytesを維持し、保存画像を1MiB以下へ自動最適化</td><td class="updated">2026-09-27</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T49-deployed-stripe-webhook-validation.md">T49</a></th>
+            <td>公開テスト環境でのStripe Webhook接続・実通知検証</td><td>F7 / W36</td><td>LUNA-A</td>
+            <td>T31、T32、T46</td><td class="status">未実装</td><td class="evidence">Vercel Preview・Supabase Preview・Stripeテストモード。外部設定時に利用者確認</td><td class="updated">2026-09-27</td>
           </tr>
         </tbody>
       </table>

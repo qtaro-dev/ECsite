@@ -45,6 +45,7 @@
 
 - Playwrightの探索→注文、Google、メール、模擬SMS、管理、競合、Webhooks、PC/タブレット/スマホをまとめ、LCP/CLS/INPを測定する。
 - 探索→注文、Google、メール、模擬SMS、管理、在庫競合、Webhook、PC/タブレット/スマホを自動化する。
+- T45のWebhook E2Eは署名付きテストイベントと隔離DBを用いる。StripeからVercel Previewへの実通知接続試験はT46の環境構築後に[T49](T49-deployed-stripe-webhook-validation.md)で実施する。
 - 入出力・DB・権限・画面に変更がある場合は、同じチケット内で対応するOpenAPI、Zod、マイグレーション、RLS、テスト、文書を整合させる。
 
 ## 対象外

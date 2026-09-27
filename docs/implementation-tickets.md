@@ -8,7 +8,7 @@
 
 ## 個別チケット索引（推奨実装順）
 
-既存のT01–T47の番号は維持し、新規T48を追加する。着手順は依存関係に従い、T20→T19、T25→T24、T27→T26、T34→T22、T37→T48→T43/T44→T45となる。
+既存のT01–T48の番号は維持し、新規T49を追加する。着手順は依存関係に従い、T20→T19、T25→T24、T27→T26、T34→T22、T37→T48→T43/T44→T45→T46→T49→T47となる。T31の実Stripe通知接続試験はT49へ分離する。
 
 | 実装順 | チケット | 依存 | 対応要件ID |
 | ---: | --- | --- | --- |
@@ -59,7 +59,8 @@
 | 45 | [T44 セキュリティ・RLS・削除の横断検証](../tickets/T44-security-rls-retention-audit.md) | T09、T10、T17、T18、T20、T19、T21、T29、T30、T31、T32、T33、T34、T22、T36、T37、T38、T39、T40、T41、T48 | SEC-01、SEC-02、ACC-06、INV-03、QLT-01 |
 | 46 | [T45 全体E2Eと性能検収](../tickets/T45-full-e2e-performance.md) | T35、T42、T43、T44、T48 | QLT-01、DEM-01、ORD-01、ACC-02、INV-03 |
 | 47 | [T46 GitHub Actions・Vercel・SupabaseのCI/CD](../tickets/T46-cicd-vercel-supabase-release.md) | T05、T45 | QLT-01、SEC-01、SEC-02 |
-| 48 | [T47 公開・運用・ポートフォリオ説明](../tickets/T47-public-demo-operations-portfolio.md) | T22、T42、T43、T44、T45、T46 | QLT-01、DEM-01、ACC-09、ORD-07、SEC-01 |
+| 48 | [T49 公開テスト環境でのStripe Webhook接続・実通知検証](../tickets/T49-deployed-stripe-webhook-validation.md) | T31、T32、T46 | ORD-07、ORD-08、INV-02、INV-03、SEC-01、QLT-01、USR-STRIPE-01 |
+| 49 | [T47 公開・運用・ポートフォリオ説明](../tickets/T47-public-demo-operations-portfolio.md) | T22、T42、T43、T44、T45、T46、T49 | QLT-01、DEM-01、ACC-09、ORD-07、SEC-01 |
 
 ## チケット概要（番号順）
 
@@ -290,7 +291,7 @@
 - **内容・範囲**：生ボディ署名検証、イベントID重複排除、Session/PaymentIntent照合、金額・通貨・注文ID検査、成功時の在庫消費、失敗時の引当解放をDBトランザクション化。
 - **依存**：T29、T30。
 - **受け入れ条件**：戻りURLだけで成功にせず、重複・逆順・偽署名・金額不一致に安全に対応する。DB失敗時は再送で回復できる。
-- **テスト**：Stripe CLI/テストイベント、偽署名、同一イベント2回、逆順、異額、DB障害・再送。
+- **テスト**：署名付きテストイベント、偽署名、同一イベント2回、逆順、異額、DB障害・再送。実Stripe通知の公開テスト環境接続はT49。
 
 ### [T32 期限切れ照合と補償ジョブ](../tickets/T32-payment-expiry-reconciliation.md)
 - **目的**：未完了の引当を安全に回収する。
@@ -408,9 +409,16 @@
 - **受け入れ条件**：PreviewがProductionの個人情報・秘密・DBを共有せず、PR必須チェック失敗でmain反映できない。Productionにライブ決済鍵なし。
 - **テスト**：PR Preview、mainのテストデプロイ、環境変数差分・DB適用順・ロールバック演習。
 
+### [T49 公開テスト環境でのStripe Webhook接続・実通知検証](../tickets/T49-deployed-stripe-webhook-validation.md)
+- **目的**：T31の実Stripe通知をVercel Preview・Supabase Preview・Stripeテストモードで検証する。ローカルDocker/Stripe CLIは前提にしない。
+- **内容・範囲**：T46の分離済みPreviewへWebhookを登録し、環境別秘密を設定。架空データのテストCheckout、実通知、DB状態、失敗・再送・遅延の境界を突合し、証拠と復旧手順を残す。
+- **依存**：T31、T32、T46。外部ゲートG-Stripe/G-Vercel/G-Supabaseでは利用者本人の作成・認証・設定と費用判断を待つ。
+- **受け入れ条件**：実Stripeテスト通知がPreviewで署名検証され、注文・試行・在庫と対応する。Productionやライブ鍵・実個人情報を使わない。
+- **テスト**：テスト決済成功・失敗、実Webhook配送、Dashboard再送、無効署名、DB照合、環境分離。実通知とCI合成ケースの証拠を区別する。
+
 ### [T47 公開・運用・ポートフォリオ説明](../tickets/T47-public-demo-operations-portfolio.md)
 - **目的**：採用担当者が操作できる公開デモを安全に提供する。
 - **内容・範囲**：公開前チェック、規約・個人情報案内、ヤマト公式リンク、実課金なし表示、利用ガイド、監視・障害・30日削除・バックアップ手順、AI駆動開発の人間による判断とAIの役割を記録。
-- **依存**：T22、T42–T46。外部ゲートG-Publication（利用者が公開先・アカウントを設定）。
+- **依存**：T22、T42–T46、T49。外部ゲートG-Publication（利用者が公開先・アカウントを設定）。
 - **受け入れ条件**：PC/スマホで購入体験と異常系を操作でき、実課金・実SMS・実発送なし、個人情報削除、CI/CDの証拠を確認できる。
 - **テスト**：公開URLのスモーク、全主要シナリオ、監視通知、削除ジョブ、秘密・環境分離の最終確認。
