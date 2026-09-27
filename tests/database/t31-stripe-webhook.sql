@@ -193,7 +193,14 @@ do $$ declare r jsonb; begin
      or (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000319')<>'released'
      or (select on_hand from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>18
      or (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310')<>2 then
-    raise exception 'late success after allocation release was not held for review: %',r;
+    raise exception 'late success after allocation release was not held for review: %, order=%, attempt=%, allocation=%, intent=%, on_hand=%, allocated=%',
+      r,
+      (select status from public.orders where id='00000000-0000-4000-8000-000000000319'),
+      (select state from public.payment_attempts where id='00000000-0000-4000-8000-000000000320'),
+      (select state from public.stock_allocations where order_id='00000000-0000-4000-8000-000000000319'),
+      (select stripe_payment_intent_id from public.payment_attempts where id='00000000-0000-4000-8000-000000000320'),
+      (select on_hand from public.inventory where product_id='00000000-0000-4000-8000-000000000310'),
+      (select allocated from public.inventory where product_id='00000000-0000-4000-8000-000000000310');
   end if;
   r := pg_temp.t31_apply_event('evt_t31_expiry','checkout.session.expired','expired',
     '00000000-0000-4000-8000-000000000321','00000000-0000-4000-8000-000000000322',
