@@ -48,13 +48,13 @@ SupabaseのPRごとのBranchingは有料プランの可能性があるため採�
 
 **SMS**：公開Productionは`mock`固定で、電話番号をSMS送信用に収集しない。6桁コードを当該フローのデモ通知で示し、照合は省略しない。所有端末での実SMS試験はDevelopment/Testの別設定でのみ可能にする。ゲートウェイの選定・有料利用は利用者承認後。実端末検証が終わるまで「検証済み」とポートフォリオに記載しない。
 
-## 5. Stripeテスト決済（T30–T32）
+## 5. Stripeテスト決済（T30–T32、T49）
 
-利用者がStripeアカウントと**テストモード**の鍵を用意する。環境別に`sk_test_*`とWebhook署名秘密を設定し、`sk_live_*`と`pk_live_*`はビルド・起動・公開前検査で拒否する。Checkoutはホスト型。カード情報をサイト側で保存しない。Webhook URLはPreviewとProductionで分け、エンドポイント秘密も共有しない。Stripeには注文ID・試行IDと確定金額のみ送り、氏名・住所・メールをメタデータに含めない。ローカルはStripe CLIまたはテストイベントを使ってWebhookを試し、署名不正・重複・逆順・再試行を検証する。
+利用者がStripeアカウントと**テストモード**の鍵を用意する。環境別に`sk_test_*`とWebhook署名秘密を設定し、`sk_live_*`と`pk_live_*`はビルド・起動・公開前検査で拒否する。Checkoutはホスト型。カード情報をサイト側で保存しない。Webhook URLはPreviewとProductionで分け、エンドポイント秘密も共有しない。Stripeには注文ID・試行IDと確定金額のみ送り、氏名・住所・メールをメタデータに含めない。T31では署名付きテストイベント・DB統合テストで署名不正、重複、逆順、再試行を検証する。**実Stripe通知はT46で分離したVercel Preview/Supabase PreviewへT49で接続して確認し、ローカルDocker Desktop・Stripe CLIを前提にしない。**
 
-**利用者に提示する作業**：テストアカウント・テスト鍵・Webhookエンドポイントの作成／認証。ライブモードの有効化は求めない。費用が発生する外部機能が必要なら先に見積を示す。
+**利用者に提示する作業**：T49開始時に、Vercel/Supabase/Stripeの本人による作成・連携許可・認証、費用または公開範囲の判断が必要な部分だけを具体的に提示する。既存権限で安全に戻せるWebhook宛先登録、環境別秘密設定、テストと片付けは自律的に進める。ライブモードの有効化は求めない。費用が発生する外部機能が必要なら先に見積を示す。秘密の値はチャット・Gitへ貼らず環境別の秘密設定に保存する。
 
-## 6. VercelとGitHubの接続（T46–T47）
+## 6. VercelとGitHubの接続（T46、T49、T47）
 
 1. 利用者がVercelプロジェクトを作成し、対象GitHubリポジトリへのアクセスを許可する。Production Branchは`main`に設定する。PRでPreview、main反映でProductionが生成される構成を使う。
 2. VercelのDevelopment/Preview/Productionごとに環境変数を別値で設定する。`NEXT_PUBLIC_*`だけがブラウザに露出し得る。秘密鍵をその接頭辞に置かない。変数変更後は対象環境を再デプロイして反映を確認する。
@@ -87,11 +87,11 @@ SupabaseのPRごとのBranchingは有料プランの可能性があるため採�
 | ゲート | 発生時点 | 利用者に提示する具体的な作業 | 未完了時にできること |
 | --- | --- | --- | --- |
 | G-GitHub | T01/T05/T46 | リポジトリ作成、所有者・公開範囲・連携許可、利用可能な保護ルールの確認 | ローカルGitとCI定義の作成 |
-| G-Supabase | T17/T32/T46 | Preview/Production別プロジェクト作成、リージョン・費用確認、鍵とProject Refの安全な登録 | ローカルDB、RLS、マイグレーション試験 |
+| G-Supabase | T17/T32/T46/T49 | Preview/Production別プロジェクト作成、リージョン・費用確認、鍵とProject Refの安全な登録 | CIのDB/RLS/マイグレーション試験。T49の実通知DB照合は未完了 |
 | G-Google | T18 | OAuthクライアント作成、環境別origin/callback URL登録、Supabase Provider設定 | callbackコードと模擬試験 |
 | G-SMTP | T20/T41 | SMTP送信先・送信元ドメイン・認証、料金と送信制限確認 | モック送信・Hook署名・UI試験 |
-| G-Stripe | T30–T32 | テストアカウント、テスト鍵、環境別Webhook登録 | SDKモックと状態機械試験 |
-| G-Vercel | T46 | プロジェクト作成、GitHub連携、環境変数、Preview/Production設定 | ローカルビルドとActions検証 |
+| G-Stripe | T30–T32/T49 | テストアカウント・テスト鍵。T49でPreview宛先のWebhook登録、署名秘密の安全な環境設定、本人認証 | T31/T32の署名付きイベント・状態機械・DB統合試験。実通知確認はT49まで未完了 |
+| G-Vercel | T46/T49 | プロジェクト作成、GitHub連携、環境変数、Preview/Production設定。T49でWebhookが届くPreview URLとアクセス保護を確認 | ローカルビルドとActions検証。実通知はT49まで未完了 |
 | G-Publication | T47 | 公開URL/ドメイン・公開範囲の最終選択 | Previewで最終スモーク |
 
 有料プラン、課金、契約、本人認証が必要になったら、LUNAはその時点で「何を作るか／なぜ必要か／費用見込み／無料代替／設定後の確認方法」を提示する。利用者の操作・承認が届くまで外部接続の完了を主張しない。
