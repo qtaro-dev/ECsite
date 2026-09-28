@@ -138,10 +138,12 @@ paths:
     get:
       operationId: get_checkout_status
       summary: Read order status for its owner; return URL never establishes success
+      description: Returns only the owner order state read from the database after Webhook or reconciliation. Stripe return query parameters are ignored as payment evidence. Unknown or other-member order IDs both return 404.
       security: [{ sessionCookies: [] }]
       parameters: [{ name: orderId, in: query, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200': { $ref: '#/components/responses/CheckoutStatus' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '503': { $ref: '#/components/responses/Unavailable' }
@@ -756,7 +758,7 @@ components:
       properties:
         status: { type: string, enum: [payment_pending, paid, payment_failed, expired, review_required] }
         guidance: { type: string, description: Status-specific user guidance and next action. }
-        retryEligible: { type: boolean }
+        retryEligible: { type: boolean, description: 'True only after a failed or expired order. Retry means starting a new quote from the cart, never charging the same order again.' }
     CartMergeResult:
       type: object
       required: [cart, adjustments]
