@@ -21,4 +21,4 @@
 
 - Vercel: `ecsite`プロジェクト作成、GitHub連携、Next.js/Node 22設定済み。初回Productionデプロイは環境変数未設定の段階で自動生成されたため、検収済みURLではない。
 - Supabase: 未使用の`ai-contact-support-console`は利用者の指示で削除済み。`ecsite-production`を東京の無料枠で作成し、2026-09-28時点の23件のマイグレーションと架空商品seedを適用、匿名サインインを有効化した。接続秘密はGit・文書に保存しない。
-- Vercelの一時停止は利用者が承認したが、CLIが本人による対話確認を要求する。完了の実確認が取れるまで「停止済み」と記録しない。
+- Vercelの初回Productionトラフィックは、利用者がCLIで`ecsite`を入力して一時停止した。検証用Previewとは別に、提示用へ切り替える時点で再開する。
