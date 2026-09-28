@@ -26,6 +26,7 @@ on:
       - 'tests/database/t31-stripe-webhook.sql'
       - 'tests/database/t32-payment-reconciliation.sql'
       - 'tests/database/t32-reconciliation-concurrency.py'
+      - 'tests/database/t35-demo-checkout-integration.py'
       - 'tests/database/t50-demo-auth-rls.sql'
       - 'tests/database/t51-demo-address-rls.sql'
       - 'tests/database/t22-demo-retention.sql'
@@ -64,6 +65,7 @@ on:
       - 'tests/database/t31-stripe-webhook.sql'
       - 'tests/database/t32-payment-reconciliation.sql'
       - 'tests/database/t32-reconciliation-concurrency.py'
+      - 'tests/database/t35-demo-checkout-integration.py'
       - 'tests/database/t50-demo-auth-rls.sql'
       - 'tests/database/t51-demo-address-rls.sql'
       - 'tests/database/t22-demo-retention.sql'
@@ -147,6 +149,8 @@ jobs:
         run: python3 tests/database/t33-cart-cleanup-concurrency.py
       - name: Check T29 checkout and stock concurrency
         run: python3 tests/database/t29-order-concurrency.py
+      - name: Check T35 demo checkout competition, mocked Stripe outcomes, and order isolation
+        run: python3 tests/database/t35-demo-checkout-integration.py
       - name: Check T40 shipping settings versions, validation, and audit
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t40-admin-shipping-settings.sql
       - name: Upload synthetic T37 product images
