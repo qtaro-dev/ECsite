@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/server/auth/supabase';
 import { ADDRESS_SELECT, type AddressRow } from '@/server/account/addresses';
 import { CheckoutAddressForm } from './CheckoutAddressForm';
+import { DemoCheckoutAddressForm } from './DemoCheckoutAddressForm';
+import { isDemoUser } from '@/lib/demo-auth';
 import styles from './page.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +20,7 @@ export default async function CheckoutAddressPage() {
     <p className={styles.eyebrow}>S12 / CHECKOUT ADDRESS</p>
     <h1>お届け先を選択</h1>
     <p className={styles.lead}>お届け先を確認してから、現在の商品価格・在庫・正式送料を再計算します。実際の販売・発送は行いません。</p>
-    {error ? <section className={styles.error} role="alert"><h2>配送先を読み込めませんでした</h2><p>時間をおいて再読み込みしてください。</p></section>
+    {isDemoUser(user) ? <DemoCheckoutAddressForm /> : error ? <section className={styles.error} role="alert"><h2>配送先を読み込めませんでした</h2><p>時間をおいて再読み込みしてください。</p></section>
       : <CheckoutAddressForm addresses={(data as AddressRow[]).map((row) => ({
         id: row.id, recipientName: row.recipient_name, postalCode: row.postal_code,
         prefectureCode: row.prefecture_code, city: row.city, street: row.street,

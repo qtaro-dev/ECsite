@@ -3,6 +3,7 @@ import { IdSchema } from '@/lib/schemas';
 import { authError, authSuccess, sameOrigin } from '@/server/auth/http';
 import { createSupabaseServerClient } from '@/server/auth/supabase';
 import { isAuthSessionMissing } from '@/server/auth/session-error';
+import { isDemoUser } from '@/lib/demo-auth';
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -15,6 +16,7 @@ export async function DELETE(request: NextRequest, context: Context) {
   const { data: { user }, error: authFailure } = await supabase.auth.getUser();
   if (authFailure && !isAuthSessionMissing(authFailure)) return authError(503, 'UNAVAILABLE', '現在サービスを利用できません。時間をおいて再度お試しください。');
   if (!user) return authError(401, 'UNAUTHORIZED', 'ログインしてください。');
+  if (isDemoUser(user)) return authError(403, 'FORBIDDEN', 'デモ会員は配送先を削除できません。');
   const { data, error } = await supabase.from('addresses').delete().eq('id', id).select('id').maybeSingle();
   if (error) return authError(503, 'UNAVAILABLE', '配送先を削除できませんでした。時間をおいて再度お試しください。');
   if (!data) return authError(404, 'NOT_FOUND', '配送先が見つかりません。');

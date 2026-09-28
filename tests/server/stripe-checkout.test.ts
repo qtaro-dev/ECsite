@@ -44,6 +44,18 @@ describe('Stripe Checkout test gateway', () => {
     expect(() => buildStripeCheckoutSessionParams({ ...input, siteOrigin: 'https://attacker.test/path' }, now)).toThrow(StripeCheckoutError);
   });
 
+  it('pre-fills only a synthetic demo email and never sends address or contact metadata', () => {
+    const demoUserId = '00000000-0000-4000-8000-000000000511';
+    const params = buildStripeCheckoutSessionParams({ ...input, demoUserId }, now);
+    expect(params.customer_email).toBe(`demo-${demoUserId}@example.invalid`);
+    expect(params.metadata).toEqual({ order_id: input.orderId, attempt_id: input.attemptId });
+    expect(params.payment_intent_data.metadata).toEqual(params.metadata);
+    expect(params).not.toHaveProperty('shipping_address_collection');
+    expect(params).not.toHaveProperty('billing_address_collection');
+    expect(params).not.toHaveProperty('phone_number_collection');
+    expect(() => buildStripeCheckoutSessionParams({ ...input, demoUserId: 'person@example.com' }, now)).toThrow(StripeCheckoutError);
+  });
+
   it('aborts before Stripe if the 5-minute setup window cannot fit a 30-minute Session inside the 35-minute stock hold', () => {
     const expiry = new Date(now + 35 * 60_000).toISOString();
     expect(sessionExpiryEpochSeconds(expiry, now + 4 * 60_000 + 50_000)).toBe(now / 1000 + 35 * 60);

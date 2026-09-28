@@ -9,7 +9,7 @@ const prefectures = ['北海道','青森県','岩手県','宮城県','秋田県'
 
 type ErrorEnvelope = { error?: { code?: string; message?: string }; requestId?: string };
 
-export function CheckoutReview() {
+export function CheckoutReview({ demo = false }: { demo?: boolean }) {
   const rawQuote = useSyncExternalStore(
     (notify) => {
       const listener = () => notify();
@@ -86,6 +86,7 @@ export function CheckoutReview() {
         <p>送料規則版: {quote.shippingSettingsVersion}</p>
         <p><a href={quote.shippingSourceUrl} target="_blank" rel="noreferrer">ヤマト運輸公式料金表</a>{quote.shippingSourceCheckedAt && <>（確認日 {new Date(quote.shippingSourceCheckedAt).toLocaleDateString('ja-JP')}）</>}</p>
         <p className={styles.note}>これはテスト環境の模擬購入です。実際の課金・発送はありません。</p>
+        {demo && <p className={styles.note}>Stripeのテスト画面には架空のメールが事前入力されます。編集できる欄があっても、実際の氏名・住所・電話番号・メールや実カード番号を入力しないでください。キャンセル時はこの画面に戻り、見積から再試行できます。</p>}
         {message && <p className={styles.error} role="alert">{message}</p>}
         <label className={styles.confirm}><input type="checkbox" checked={confirmed} disabled={expired} onChange={(event) => setConfirmed(event.target.checked)} /> 商品・配送先・正式な金額を確認しました。</label>
         <button className={styles.primary} type="button" disabled={!confirmed || expired || busy} onClick={startCheckout}>{busy ? '決済先を準備中…' : '内容を確認してテスト決済へ'}</button>
