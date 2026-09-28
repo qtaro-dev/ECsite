@@ -67,11 +67,11 @@ insert into public.order_items(id,order_id,product_id,sku_snapshot,name_snapshot
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         )
         assert holder.stdin is not None and holder.stdout is not None
-        holder.stdin.write(f"begin; select id from public.inventory where product_id={sql_literal(product_id)}::uuid for update;\n")
+        holder.stdin.write(f"begin; select product_id from public.inventory where product_id={sql_literal(product_id)}::uuid for update;\n")
         holder.stdin.flush()
-        if holder.stdout.readline().strip() != product_id:
-            raise AssertionError("inventory lock holder did not start")
         try:
+            if holder.stdout.readline().strip() != product_id:
+                raise AssertionError("inventory lock holder did not start")
             if cleanup() != "cleared":
                 raise AssertionError("cart cleanup waited on unrelated inventory lock")
         finally:
