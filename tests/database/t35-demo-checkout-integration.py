@@ -98,7 +98,10 @@ def webhook(order: dict, session_id: str, event_id: str, *, failed: bool) -> dic
     session_status = "complete"
     payment_status = "unpaid" if failed else "paid"
     intent_status = "requires_payment_method" if failed else "succeeded"
-    intent_id = "pi_t35_" + uuid.uuid4().hex
+    # A Checkout Session keeps the same PaymentIntent across webhook events.
+    # Derive a stable fixture ID so distinct events for one attempt exercise
+    # idempotent state handling rather than conflicting PaymentIntent checks.
+    intent_id = "pi_t35_" + order["attemptId"].replace("-", "")
     output = psql(f"""
 begin;
 set local role service_role;
@@ -181,8 +184,24 @@ commit;
             raise AssertionError("verified mock success did not settle the demo order")
         if webhook(success_order, success_session, success_event_id, failed=False).get("status") != "duplicate":
             raise AssertionError("Stripe webhook redelivery was not deduplicated")
-        if webhook(success_order, success_session, success_event_id + "_again", failed=False).get("status") != "processed":
-            raise AssertionError("distinct duplicate success event was not idempotent")
+        before_distinct_success = psql(f"""
+select (select status from public.orders where id={q(success_order['orderId'])}::uuid),
+       (select state from public.payment_attempts where id={q(success_order['attemptId'])}::uuid),
+       (select state from public.stock_allocations where order_id={q(success_order['orderId'])}::uuid),
+       (select on_hand||'/'||allocated from public.inventory where product_id={q(products[0])}::uuid);
+""").splitlines()[-1]
+        distinct_success = webhook(success_order, success_session, success_event_id + "_again", failed=False)
+        after_distinct_success = psql(f"""
+select (select status from public.orders where id={q(success_order['orderId'])}::uuid),
+       (select state from public.payment_attempts where id={q(success_order['attemptId'])}::uuid),
+       (select state from public.stock_allocations where order_id={q(success_order['orderId'])}::uuid),
+       (select on_hand||'/'||allocated from public.inventory where product_id={q(products[0])}::uuid);
+""").splitlines()[-1]
+        if distinct_success.get("status") != "processed" or after_distinct_success != before_distinct_success:
+            raise AssertionError(
+                "distinct success event did not remain idempotent: "
+                f"response={distinct_success}, before={before_distinct_success}, after={after_distinct_success}"
+            )
 
         # Give the losing demo buyer a fresh quote on a distinct one-unit item,
         # then model a definitive asynchronous payment failure and its retry.

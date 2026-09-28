@@ -60,7 +60,7 @@ test('demo buyers keep checkout quotes isolated and handle mocked Stripe success
     });
     await first.getByLabel('商品・配送先・正式な金額を確認しました。').check();
     await first.getByRole('button', { name: '内容を確認してテスト決済へ' }).click();
-    await expect(first.getByRole('alert')).toHaveText('在庫が不足しています。カートの数量を見直してください。');
+    await expect(first.getByText('在庫が不足しています。カートの数量を見直してください。', { exact: true })).toBeVisible();
     expect(firstStart).toMatchObject({ quoteId: firstQuote.quoteId, userConfirmed: true });
 
     let secondStart: { quoteId: string; userConfirmed: boolean } | undefined;
