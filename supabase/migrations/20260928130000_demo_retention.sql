@@ -41,7 +41,7 @@ begin
     select u.id,u.created_at from auth.users u
     where u.is_anonymous is true and u.created_at<=pg_catalog.clock_timestamp()-interval '30 days'
     order by u.created_at,u.id limit 100
-    on conflict (user_id) do nothing;
+    on conflict on constraint demo_retention_queue_pkey do nothing;
 
   return query
   with due as (
