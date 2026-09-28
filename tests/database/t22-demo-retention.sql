@@ -9,7 +9,7 @@ insert into public.addresses(user_id,recipient_name,postal_code,prefecture_code,
  ('00000000-0000-0000-0000-000000000522','デモ購入者','0000000',1,'架空市','デモ専用1番地');
 insert into public.carts(user_id) values ('00000000-0000-0000-0000-000000000521'),('00000000-0000-0000-0000-000000000522');
 insert into public.audit_logs(actor_id,action,entity_type,entity_id) values
- ('00000000-0000-0000-0000-000000000521','demo.test','account','00000000-0000-0000-0000-000000000521');
+ ('00000000-0000-0000-0000-000000000521','demo.test','account',null);
 
 do $$ declare claimed uuid; begin
   select user_id into claimed from public.claim_demo_retention(5,null);
@@ -22,6 +22,10 @@ do $$ declare claimed uuid; begin
     or exists(select 1 from public.audit_logs where actor_id=claimed)
     or exists(select 1 from public.demo_retention_queue where user_id=claimed) then
     raise exception 'demo cascade/audit deletion incomplete';
+  end if;
+  if not exists(select 1 from public.audit_logs where action='demo.test' and entity_type='account'
+      and actor_id is null and entity_id is null and change_summary='{"changed_fields":[]}'::jsonb) then
+    raise exception 'append-only audit fact was not preserved with its actor unlinked';
   end if;
   if not exists(select 1 from auth.users where id='00000000-0000-0000-0000-000000000522')
     or not exists(select 1 from auth.users where id='00000000-0000-0000-0000-000000000523') then

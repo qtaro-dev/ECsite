@@ -95,12 +95,8 @@ begin
   end if;
   delete from public.payment_events pe where pe.attempt_id in
     (select pa.id from public.payment_attempts pa join public.orders o on o.id=pa.order_id where o.user_id=p_user_id);
-  delete from public.audit_logs a where a.actor_id=p_user_id
-    or (a.entity_type in ('account','user','profile') and a.entity_id=p_user_id)
-    or (a.entity_type='order' and a.entity_id in (select o.id from public.orders o where o.user_id=p_user_id))
-    or (a.entity_type='address' and a.entity_id in (select ad.id from public.addresses ad where ad.user_id=p_user_id))
-    or (a.entity_type='cart' and a.entity_id in (select c.id from public.carts c where c.user_id=p_user_id))
-    or (a.entity_type='checkout_quote' and a.entity_id in (select q.id from public.checkout_quotes q where q.user_id=p_user_id));
+  -- Keep append-only audit facts. The existing auth.users BEFORE DELETE trigger
+  -- safely unlinks actor_id while preserving every other audit field.
   delete from auth.users where id=p_user_id and is_anonymous is true;
   return 'deleted';
 end;
