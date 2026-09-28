@@ -1,5 +1,7 @@
 # T46 GitHub Actions・Vercel・SupabaseのCI/CD
 
+**公開MVPの最新環境判断**：利用者承認の[単一Hosted DB運用](../docs/mvp-hosting-decision-2026-09-28.md)を適用する。以下の別Supabaseプロジェクト前提は後日拡張として扱い、今回の検証では1件を順次利用する。公開後のPR Previewに公開DBの秘密を渡さない。
+
 **状態**：未着手  
 **フェーズ**：M7 品質・CI/CD・公開  
 **推奨実装順**：47/49（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
