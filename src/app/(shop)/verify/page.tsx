@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { ResendConfirmationForm } from '@/features/auth/AuthForm';
 import { AuthPage } from '@/features/auth/AuthPage';
 import { safeReturnPath } from '@/server/auth/safe-return-path';
 
 export default async function VerifyPage({ searchParams }: { searchParams: Promise<{ email?: string; next?: string; result?: string; confirmed?: string }> }) {
+  if (process.env.NODE_ENV === 'production') redirect('/login');
   const query = await searchParams;
   const email = query.email ?? '';
   const returnTo = safeReturnPath(query.next);

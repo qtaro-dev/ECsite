@@ -46,6 +46,7 @@ jobs:
           supabase status --output json | jq -r '"NEXT_PUBLIC_SUPABASE_URL=\(.API_URL)\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\(.ANON_KEY)\nSUPABASE_URL=\(.API_URL)\nSUPABASE_ANON_KEY=\(.ANON_KEY)\nSUPABASE_SERVICE_ROLE_KEY=\(.SERVICE_ROLE_KEY)\nJWT_SECRET=\(.JWT_SECRET)"' >> "$GITHUB_ENV"
           echo 'NEXT_PUBLIC_SITE_URL=http://127.0.0.1:4173' >> "$GITHUB_ENV"
           echo 'SUPABASE_INBUCKET_URL=http://127.0.0.1:54324' >> "$GITHUB_ENV"
+          echo "ANON_CART_SIGNING_KEY=$(openssl rand -base64 48)" >> "$GITHUB_ENV"
 
       - name: Upload published and hidden image fixtures
         run: |
@@ -68,7 +69,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run catalog, authentication, member, checkout, and admin browser tests
-        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts tests/e2e/t17-email-auth.spec.ts tests/e2e/t21-member-address.spec.ts tests/e2e/t24-build-check.spec.ts tests/e2e/t26-cart.spec.ts tests/e2e/t28-checkout-quote.spec.ts tests/e2e/t36-admin-auth.spec.ts tests/e2e/t37-admin-products.spec.ts tests/e2e/t38-admin-inventory.spec.ts tests/e2e/t40-admin-shipping.spec.ts
+        run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts tests/e2e/t17-email-auth.spec.ts tests/e2e/t21-member-address.spec.ts tests/e2e/t24-build-check.spec.ts tests/e2e/t26-cart.spec.ts tests/e2e/t28-checkout-quote.spec.ts tests/e2e/t36-admin-auth.spec.ts tests/e2e/t37-admin-products.spec.ts tests/e2e/t38-admin-inventory.spec.ts tests/e2e/t40-admin-shipping.spec.ts tests/e2e/t50-demo-auth.spec.ts
 
   quality:
     name: Quality gates

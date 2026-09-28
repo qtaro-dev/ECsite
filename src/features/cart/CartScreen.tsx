@@ -205,8 +205,8 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
           : <p className={styles.estimateNote}>送料は配送先確定前の概算です。購入手続きでは配送先・梱包条件を確認して正式額を再計算します。</p>}
         <p><a href="https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html" target="_blank" rel="noreferrer">送料の算定根拠（ヤマト運輸）<span className={styles.visuallyHidden}>（新しいタブで開きます）</span></a></p>
         {checkoutBlocked && <p className={styles.checkoutBlocked}>在庫がない商品、販売終了の商品、または販売可能数を超える商品があります。数量を調整するか、該当商品を削除してください。</p>}
-        <Link className={styles.checkoutButton} aria-disabled={checkoutBlocked} href={checkoutBlocked ? '#cart-items-heading' : checkoutHref}>{isMember ? '購入手続きへ' : 'ログインして購入手続きへ'}</Link>
-        {!isMember && <p className={styles.registerLink}>会員登録がお済みでない方は <Link href="/register?next=%2Fcheckout%2Faddress">新規登録</Link></p>}
+        <Link className={styles.checkoutButton} aria-disabled={checkoutBlocked} href={checkoutBlocked ? '#cart-items-heading' : checkoutHref}>{isMember ? '購入手続きへ' : 'デモ会員を開始して購入手続きへ'}</Link>
+        {!isMember && <p className={styles.registerLink}>メールアドレスや電話番号は不要です。閲覧者ごとに独立したデモ会員を作成します。</p>}
         <Link className={styles.continueShopping} href="/search">買い物を続ける</Link>
       </aside>
     </div>}

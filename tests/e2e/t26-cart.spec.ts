@@ -70,7 +70,7 @@ test('anonymous cart adds an item, shows current and reference prices, and adapt
   await expect(page.getByText('追加時 ¥890 → 現在 ¥890。合計には現在価格を使用しています。')).toHaveCount(0);
   await expect(page.getByText('送料（概算）')).toBeVisible();
   await expect(page.getByText('税込合計見込み')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'ログインして購入手続きへ' })).toHaveAttribute('href', '/login?next=%2Fcheckout%2Faddress');
+  await expect(page.getByRole('link', { name: 'デモ会員を開始して購入手続きへ' })).toHaveAttribute('href', '/login?next=%2Fcheckout%2Faddress');
 
   await expect.poll(async () => page.evaluate(() => getComputedStyle(document.querySelector('main > div:last-of-type')!).gridTemplateColumns.split(' ').length)).toBe(2);
 
@@ -103,7 +103,7 @@ test('stock conflicts and unavailable items are shown per line and can be correc
   await expect(endedRow.getByText('販売終了', { exact: true })).toBeVisible();
   await expect(page.getByText('送料概算を表示できません')).toBeVisible();
   await expect(page.getByText('税込合計見込み')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'ログインして購入手続きへ' })).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByRole('link', { name: 'デモ会員を開始して購入手続きへ' })).toHaveAttribute('aria-disabled', 'true');
 
   await stockRow.getByRole('button', { name: '数量を更新' }).click();
   await expect(stockRow.getByRole('alert')).toContainText('販売可能数が更新されました');
