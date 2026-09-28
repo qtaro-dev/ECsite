@@ -1,6 +1,6 @@
 # T44 公開MVPセキュリティ監査結果
 
-**判定：部分完了。T44全体は未完了。** この記録はe26de50を基準にした監査結果であり、Hosted DBのDDL・設定は変更していない。
+**判定：部分完了。T44全体は未完了。** 初回のヘッダー監査はe26de50を基準とし、この追補は79f0924以降で確認した自動検証を記録する。Hosted DBのDDL・設定は変更していない。
 
 ## 実装したヘッダー
 
@@ -21,8 +21,10 @@
 
 ## 秘密、保持、残課題
 
-- tracked working treeを対象に、Stripe live key、AWS key、GitHub token、Supabase secret key、PEM private keyのパターンを値を表示せず走査し、該当なし。これは網羅的スキャナーでもGit履歴スキャンでもない。Gitleaks CLI取得はこの環境のTLS認証失敗で実行できなかった。無料かつ固定されたCIスキャンは未導入であり、CI workflowとの別作業が必要。
-- Productionで`AUTH_BYPASS_ENABLED=true`を拒否するテストは存在する。Stripeクライアントのテスト鍵専用チェックとlive Checkout応答拒否のテストも存在する。
+- 初回の手動走査はtracked working treeを対象に、Stripe live key、AWS key、GitHub token、Supabase secret key、PEM private keyのパターンを値を表示せず確認し、該当なし。網羅的スキャンではなく、Gitleaks CLI取得は当時のTLS認証失敗で実行できなかった。
+- CIのQuality gatesへGitleaks CLI v8.30.1のフルGit履歴スキャンを追加した。公式Linux x64 archiveのSHA-256を検証し、`--redact`を指定する。追加のGitHub token/権限を使わない。初回のCI実行結果は未確認であり、過去履歴の誤検知を含めてPR CIで確認する。
+- Productionで`AUTH_BYPASS_ENABLED=true`を拒否するVitestはQuality gatesのunit testで実行される。Stripeクライアントのテスト鍵専用チェックとlive Checkout応答拒否も同じunit testで実行される。
+- T50/T51の匿名会員RLS・管理拒否とT22の30日保持DB統合テストは`.github/workflows/t06-db.yml`に含まれ、対象migration/DB testの変更時にローカルSupabaseで実行される。これらのDBテストは今回再実行していない。
 - Hosted Supabaseのバックアップ保持・復元可能期間は未確認。T22のCron Vault secretも未設定の報告があり、30日削除のHosted実行・本人削除・失敗再試行は未確認。保持要件の合格根拠にしない。
 - Hosted Supabase Authのレート制限設定は未確認。アプリの正式見積APIにはユーザー単位のDBレート制限テストがあるが、Auth endpointの外部IP制限を代替しない。
 - 一般向けGoogle OAuth、SMTP確認メール、SMS認証、通知メール、SMTP管理は公開後範囲であり、T44の完了対象として表示しない。
@@ -36,4 +38,4 @@
 - `npm ci`：408 packages、npm auditで0 vulnerabilities。
 - 新規 `tests/config/security-headers.test.ts`：2 tests passed。
 
-この部分差分のレビュー・マージだけではT44を完了扱いにしない。CI secret scan、Hosted保持/Vaultと削除フローの確認、DB統合テスト再実行、設計書が求めるCSPのスクリプト制御方式の決定・実装が残る。
+この部分差分のレビュー・マージだけではT44を完了扱いにしない。新規Gitleaks CI結果、Hosted保持/Vaultと削除フローの確認、DB統合テスト再実行、設計書が求めるCSPのスクリプト制御方式の決定・実装が残る。
