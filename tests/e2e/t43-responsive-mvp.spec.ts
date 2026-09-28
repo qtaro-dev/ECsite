@@ -20,6 +20,9 @@ const publicRoutes = [
 ];
 
 test('MVP public pages fit mobile, 200%-equivalent, tablet, and desktop CSS viewports', async ({ page }) => {
+  // The full 30-navigation matrix can approach the default 30s test timeout when
+  // the T45 browser journeys run alongside it on a resource-limited CI worker.
+  test.setTimeout(90_000);
   await page.route('**/api/products**', (route) => route.fulfill({ json: emptyCatalog }));
   await page.route('**/api/cart**', (route) => route.fulfill({ json: emptyCart }));
   await page.route('**/api/checkout/status**', (route) => route.fulfill({ json: {
