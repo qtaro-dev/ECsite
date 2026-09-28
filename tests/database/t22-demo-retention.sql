@@ -39,9 +39,11 @@ do $$ declare claimed uuid; begin
   end if;
   update public.demo_retention_queue set next_attempt_at=clock_timestamp()+interval '15 minutes'
     where user_id='00000000-0000-0000-0000-000000000522';
-  if not public.request_demo_retention('00000000-0000-0000-0000-000000000522')
-     or (select next_attempt_at from public.demo_retention_queue
-         where user_id='00000000-0000-0000-0000-000000000522') > clock_timestamp() then
+  if not public.request_demo_retention('00000000-0000-0000-0000-000000000522') then
+    raise exception 'repeat deletion request was rejected';
+  end if;
+  if (select next_attempt_at from public.demo_retention_queue
+      where user_id='00000000-0000-0000-0000-000000000522') > clock_timestamp() then
     raise exception 'repeat deletion request did not safely shorten the retry time';
   end if;
 end $$;
