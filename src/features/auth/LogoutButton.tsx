@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import styles from './auth.module.css';
 
-export function LogoutButton() {
+export function LogoutButton({ demo = false }: { demo?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -17,7 +17,7 @@ export function LogoutButton() {
     } catch { setError('ログアウトできませんでした。時間をおいて再度お試しください。'); setBusy(false); }
   }
   return <>
-    <button className={styles.logout} type="button" onClick={logout} disabled={busy}>{busy ? '処理中…' : 'ログアウト'}</button>
+      <button className={styles.logout} type="button" onClick={logout} disabled={busy}>{busy ? '処理中…' : demo ? 'デモを終了' : 'ログアウト'}</button>
     {error && <p role="alert">{error}</p>}
   </>;
 }

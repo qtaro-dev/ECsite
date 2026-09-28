@@ -94,6 +94,20 @@ describe('cart routes', () => {
     expect(mergeCart).not.toHaveBeenCalled();
   });
 
+  it('merges a signed anonymous cart into the authenticated demo owner once and rejects cross-origin calls', async () => {
+    const cookie = createAnonymousCartCookieValue();
+    const memberClient = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'demo-1', is_anonymous: true } }, error: null }) } };
+    createSupabaseServerClient.mockResolvedValue(memberClient);
+    mergeCart.mockResolvedValue({ cart: projection, adjustments: [] });
+    const crossOrigin = await merge(request('/cart/merge', { method: 'POST', headers: { origin: 'https://unrelated.example', cookie: `ec_cart=${cookie}` } }));
+    expect(crossOrigin.status).toBe(403);
+    expect(mergeCart).not.toHaveBeenCalled();
+    const own = await merge(request('/cart/merge', { method: 'POST', headers: { origin: 'http://localhost:3000', cookie: `ec_cart=${cookie}` } }));
+    expect(own.status).toBe(200);
+    expect(mergeCart).toHaveBeenCalledExactlyOnceWith(memberClient, anonymousCartTokenHash(cookie));
+    expect(own.headers.get('set-cookie')).toContain('Max-Age=0');
+  });
+
   it('keeps member cart reads on the member SSR client instead of service role', async () => {
     const memberClient = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'member-1' } }, error: null }) } };
     createSupabaseServerClient.mockResolvedValueOnce(memberClient);

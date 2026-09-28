@@ -5,11 +5,12 @@ export type CheckoutIdentityState = {
   /** Trusted challenge state loaded by the server from T08 sms_challenges. */
   signupSmsVerified: boolean;
   /** Google OAuth accounts are exempt from SMS by the approved design. */
-  provider: 'email' | 'google';
+  provider: 'email' | 'google' | 'demo';
 };
 
 /** The caller must obtain all state from Supabase or a server-side challenge lookup. */
 export function canStartCheckout(identity: CheckoutIdentityState): boolean {
+  if (identity.provider === 'demo') return true;
   if (!identity.emailConfirmed && !isAuthBypassEnabled) return false;
   return identity.provider === 'google' || identity.signupSmsVerified || isAuthBypassEnabled;
 }

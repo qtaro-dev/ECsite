@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from '@/server/auth/supabase';
 
 export type AdminAccess = { kind: 'admin'; userId: string } | { kind: 'denied'; status: 401 | 403 | 503 };
 
-type AuthResult = { data: { user: { id: string } | null }; error: { name?: string; code?: string; message?: string } | null };
+type AuthResult = { data: { user: { id: string; is_anonymous?: boolean } | null }; error: { name?: string; code?: string; message?: string } | null };
 type MembershipResult = { data: { user_id: string } | null; error: unknown };
 type AdminDependencies = {
   getUser: () => Promise<AuthResult>;
@@ -24,6 +24,7 @@ export async function checkAdminAccess(dependencies: AdminDependencies): Promise
     return { kind: 'denied', status: missingSession(auth.error) ? 401 : 503 };
   }
   if (!auth.data.user) return { kind: 'denied', status: 401 };
+  if (auth.data.user.is_anonymous === true) return { kind: 'denied', status: 403 };
 
   let membership: MembershipResult;
   try { membership = await dependencies.hasMembership(auth.data.user.id); } catch { return { kind: 'denied', status: 503 }; }

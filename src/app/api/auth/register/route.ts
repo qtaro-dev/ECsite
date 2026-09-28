@@ -5,6 +5,7 @@ import { authError, authSuccess, authValidationError, sameOrigin } from '@/serve
 import { createSupabaseServerClient } from '@/server/auth/supabase';
 
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') return authError(403, 'FORBIDDEN', '公開デモの新規会員登録は提供していません。デモ会員を開始してください。');
   if (!sameOrigin(request)) return authError(403, 'FORBIDDEN', 'この操作を実行する権限がありません。');
   let body: unknown;
   try { body = await request.json(); } catch { return authError(400, 'BAD_REQUEST', '入力内容を確認してください。'); }
