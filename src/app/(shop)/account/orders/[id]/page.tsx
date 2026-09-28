@@ -6,6 +6,7 @@ import { IdSchema } from '@/lib/schemas';
 import { createSupabaseServerClient } from '@/server/auth/supabase';
 import { isAuthSessionMissing } from '@/server/auth/session-error';
 import { readOwnedOrderDetail } from '@/server/orders/order-read';
+import { PaidCartCleanup } from '@/features/orders/PaidCartCleanup';
 import styles from '@/features/orders/orders.module.css';
 
 const prefectures = ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'];
@@ -30,6 +31,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     <p className={styles.eyebrow}>ORDER DETAIL</p><h1>注文詳細</h1>
     <p className={styles.orderId}>注文ID: {order.id}</p><p>注文日時: <time dateTime={order.created_at}>{new Date(order.created_at).toLocaleString('ja-JP')}</time></p>
     <StatusMessage kind={state.kind} title={state.title}><p>{state.guidance}</p>{state.retryEligible && <Link href="/cart">カートを確認して再見積する</Link>}{(order.status === 'payment_pending' || order.status === 'review_required') && <Link href={`/checkout/result?orderId=${order.id}`}>最新の決済状況を確認する</Link>}</StatusMessage>
+    {order.status === 'paid' && <PaidCartCleanup orderId={order.id} />}
     <section className={styles.card}><h2>注文時の商品</h2><ul className={styles.itemList}>{items.map((item) => <li key={item.id}>
       <span><strong>{item.name_snapshot}</strong><small>{item.brand_snapshot} / {item.sku_snapshot}</small></span>
       <span>{item.unit_price_yen.toLocaleString('ja-JP')}円 × {item.quantity} = {item.line_total_yen.toLocaleString('ja-JP')}円</span>

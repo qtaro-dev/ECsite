@@ -4,6 +4,11 @@ const orderId = '00000000-0000-4000-8000-000000000033';
 
 test('Stripe success return stays pending until the database reports payment', async ({ page }) => {
   let status: 'payment_pending' | 'paid' = 'payment_pending';
+  let cleanupCalls = 0;
+  await page.route('**/api/checkout/cart-cleanup', async (route) => {
+    cleanupCalls += 1;
+    await route.fulfill({ json: { data: { status: 'cleared', clearedLines: 1 } } });
+  });
   await page.route('**/api/checkout/status?orderId=*', async (route) => {
     await route.fulfill({ json: { data: { status, guidance: status === 'paid' ? 'テスト決済が完了しました。' : '決済通知を待っています。', retryEligible: false } } });
   });
@@ -12,9 +17,11 @@ test('Stripe success return stays pending until the database reports payment', a
   await expect(page.getByRole('heading', { name: '決済結果' })).toBeVisible();
   await expect(page.getByText('決済結果を確認中です')).toBeVisible();
   await expect(page.getByText('テスト決済が完了しました')).toHaveCount(0);
+  expect(cleanupCalls).toBe(0);
   status = 'paid';
   await page.getByRole('button', { name: '最新の状態を確認' }).click();
   await expect(page.getByText('テスト決済が完了しました', { exact: true })).toBeVisible();
+  await expect.poll(() => cleanupCalls).toBe(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 });
 

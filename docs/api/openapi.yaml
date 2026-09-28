@@ -147,6 +147,30 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '503': { $ref: '#/components/responses/Unavailable' }
+  /checkout/cart-cleanup:
+    post:
+      operationId: post_paid_cart_cleanup
+      summary: Remove only unchanged purchased cart lines after DB-confirmed payment
+      description: Idempotent, owner-scoped cleanup in a separate transaction after the paid order state is confirmed. Later checkouts and cart lines changed after order creation are preserved. If the visitor closes the browser, cleanup is retried on the next paid result or order-detail visit.
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [orderId], additionalProperties: false, properties: { orderId: { type: string, format: uuid } } } } } }
+      responses:
+        '200':
+          description: Cart cleanup result after DB-confirmed payment.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/Envelope' }
+                  - type: object
+                    properties: { data: { $ref: '#/components/schemas/PaidCartCleanupResult' } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /webhooks/stripe:
     post:
       operationId: post_webhooks_stripe
@@ -759,6 +783,13 @@ components:
         status: { type: string, enum: [payment_pending, paid, payment_failed, expired, review_required] }
         guidance: { type: string, description: Status-specific user guidance and next action. }
         retryEligible: { type: boolean, description: 'True only after a failed or expired order. Retry means starting a new quote from the cart, never charging the same order again.' }
+    PaidCartCleanupResult:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        status: { type: string, enum: [cleared, unchanged, later_order] }
+        clearedLines: { type: integer, minimum: 0, description: Present for cleared and unchanged responses when a cart exists. }
     CartMergeResult:
       type: object
       required: [cart, adjustments]

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { CheckoutStatusResultSchema, describeOrderState } from '@/lib/order-display';
 import { IdSchema } from '@/lib/schemas';
 import { StatusMessage } from '@/components/StatusMessage';
+import { PaidCartCleanup } from './PaidCartCleanup';
 import styles from './orders.module.css';
 
 type Status = ReturnType<typeof CheckoutStatusResultSchema['parse']>;
@@ -68,6 +69,7 @@ export function CheckoutResult({ orderId }: { orderId: string | null }) {
       {status.status === 'review_required' && <button className={styles.secondary} onClick={() => void refresh()} disabled={loading}>最新の状態を確認</button>}
       {status.retryEligible && <Link href="/cart">カートを確認して再見積する</Link>}
     </StatusMessage>}
+    {status?.status === 'paid' && parsedId.success && <PaidCartCleanup orderId={parsedId.data} />}
     {parsedId.success && <p className={styles.orderId}>注文ID: {parsedId.data}</p>}
     <div className={styles.actions}><Link href={parsedId.success ? `/account/orders/${parsedId.data}` : '/account/orders'}>注文の詳細を見る</Link><Link href="/account/orders">注文履歴へ</Link><Link href="/products">商品を探す</Link></div>
     <p className={styles.note}>このサイトはポートフォリオ用の模擬販売です。実際の課金・発送はありません。</p>
