@@ -7,7 +7,9 @@
 **推奨実装順**：47/49（番号順ではなく[実装計画](../docs/implementation-plan.md)第3章の順序）
 **一覧へ戻る**：[implementation-tickets.md](../docs/implementation-tickets.md)
 
-**公開MVPでの追加設定**：[公開MVP計画](../docs/mvp-release-plan.md)によりPreview/Production各Supabase Authの匿名サインインを有効化し、レート制限、T50/T51のRLSと架空データ、環境分離を検証する。Productionの認証省略フラグを有効にしない。
+**公開MVPでの追加設定**：[単一Hosted DB運用](../docs/mvp-hosting-decision-2026-09-28.md)と[公開MVP計画](../docs/mvp-release-plan.md)に従い、検証中は固定Vercel Previewだけを単一Hosted Supabaseへ接続する。Productionへ切り替える際は未完了注文・Webhookを照合し、Hosted接続を順次移す。PRごとのPreviewにはHosted DB資格情報を渡さず、ActionsのローカルSupabaseでDB/RLS試験を行う。匿名Auth、レート制限、T50/T51のRLSと架空データを検証し、Productionの認証省略を有効にしない。
+
+**2026-09-29の監査更新**：GitHub mainはactive ruleset `main protection`でPR必須となり、required checks `Quality gates`と`Catalog UI browser tests`が設定済みであることを公開APIで確認した。required approvalsは0。Vercel固定Preview aliasは古い`f6d055a`基準で、新しいdeploymentへの更新が必要。Preview envの8変数（`ANON_CART_SIGNING_KEY`、`STRIPE_SECRET_KEY`、`SUPABASE_SERVICE_ROLE_KEY`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`AUTH_BYPASS_ENABLED`、`SMS_DELIVERY_MODE`、`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SITE_URL`）はすべて`codex/mvp-demo-preview` branch scopeにあり、これらのgeneric Preview entryは0件と確認済み。値はこの記録に含めない。deploymentへの反映とHosted Supabase疎通は未確認。Productionは最新main基準のReady deploymentがあるがProduction環境変数一覧は空で、稼働確認済みとは扱わない。Preview ProtectionはSSOリダイレクトが有効だが、方式変更はユーザー判断待ち。T49用の`STRIPE_WEBHOOK_SECRET`、`INTERNAL_JOB_SECRET`、`T22_INTERNAL_JOB_SECRET`は未確認で、Webhook/Cron接続も未完了。
 
 ## 目的
 
@@ -39,13 +41,13 @@
 
 ## 対象範囲
 
-- GitHub Actions、Vercel Git連携、別Supabase Preview/Production。
+- GitHub Actions、Vercel Git連携、単一Hosted Supabaseの検証・提示間の順次切替。
 
 ## 実装内容
 
-- CIにDB/RLS/Playwrightを追加、PR Preview、main Production、別Supabaseプロジェクト、マイグレーション適用ゲート、環境別変数、失敗時ロールバック手順。アプリはVercel Git連携でデプロイし、Actionsから二重デプロイしない。
-- PRのDB/RLS/Playwright、main公開、環境別秘密、監督付きDB適用、復旧手順を整える。
-- T49へ引き渡すPreviewの実URL、Supabase Preview接続先、マイグレーション適用結果、環境別の秘密設定手順を整理する。StripeテストWebhookの実通知確認はT49で行う。
+- 既存のCI（quality、catalog-e2e、path-filtered DB integration）を確認し、PRの必須チェックとしてmainを保護する。Actionsでは隔離したローカルSupabaseを使い、Vercel Git連携にWebデプロイを任せる。Actionsから二重デプロイしない。
+- 検証中は固定Vercel Previewだけに必要なHosted接続情報を限定し、ProductionはHosted DBへ接続しない。提示用へ切替後はProductionのみを接続し、以後のPR PreviewからHosted秘密を外す。DBマイグレーションは対象Project Refと履歴を照合して監督付きで適用し、失敗時のアプリ復旧手順を記録する。
+- T49へ引き渡す固定Previewの実URL、Supabase Project Refと適用済みmigration、StripeテストWebhookの受信先、必要な環境変数名を整理する。実通知確認はT49で行う。秘密値を文書やログへ記録しない。
 - 入出力・DB・権限・画面に変更がある場合は、同じチケット内で対応するOpenAPI、Zod、マイグレーション、RLS、テスト、文書を整合させる。
 
 ## 対象外
@@ -55,14 +57,14 @@
 
 ## 受け入れ条件
 
-- PreviewがProductionの個人情報・秘密・DBを共有せず、PR必須チェック失敗でmain反映できない。Productionにライブ決済鍵なし。
-- PreviewがProductionの個人情報・鍵を共有せず、失敗チェックでmain反映を防ぐ。
+- 検証中にHosted Supabaseへ接続するのは固定Previewだけであり、Productionは同時接続しない。切替後はProductionだけが接続し、PRごとのPreviewにはHosted DB/サービスロール/Stripe Webhook/内部ジョブの資格情報を渡さない。
+- `main`で必要なCI status checksが必須となり、失敗時にmergeできない。Productionの決済鍵はStripeテスト鍵のみであることを確認する。
 - 設計との不整合、秘密・個人情報の露出、権限の迂回がない。外部設定が未完了なら接続確認を完了扱いにしない。
 
 ## 必要なテスト
 
-- PR Preview、mainのテストデプロイ、環境変数差分・DB適用順・ロールバック演習。
-- PR Preview、テストデプロイ、環境差分、マイグレーション/復旧演習を行う。
+- PR PreviewがHosted資格情報を受け取らないこと、固定Previewの該当branchへの資格情報の範囲、mainのテストデプロイを確認する。
+- 単一Hosted Supabaseを固定PreviewからProductionへ順次切替する環境変数差分、migration履歴と適用順、Webhook/Cron先、復旧・再接続手順を演習する。
 - 該当する境界・異常・権限のケースを実行し、既存の関連回帰テストも通す。実行できない場合は理由を記録する。
 
 ## 完了条件
