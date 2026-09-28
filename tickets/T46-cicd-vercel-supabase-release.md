@@ -9,7 +9,7 @@
 
 **公開MVPでの追加設定**：[単一Hosted DB運用](../docs/mvp-hosting-decision-2026-09-28.md)と[公開MVP計画](../docs/mvp-release-plan.md)に従い、検証中は固定Vercel Previewだけを単一Hosted Supabaseへ接続する。Productionへ切り替える際は未完了注文・Webhookを照合し、Hosted接続を順次移す。PRごとのPreviewにはHosted DB資格情報を渡さず、ActionsのローカルSupabaseでDB/RLS試験を行う。匿名Auth、レート制限、T50/T51のRLSと架空データを検証し、Productionの認証省略を有効にしない。
 
-**2026-09-29の読み取り監査**：GitHub `main`のbranch metadataは`protected: false`で、必須status checkが未設定。GitHub UIで設定が必要。Vercelの固定Preview aliasは古い`f6d055a`基準で更新が必要。Productionは最新main基準のReady deploymentがあるが、Production環境変数一覧は空で、動作確認済みとは扱わない。Preview ProtectionはSSOリダイレクトが有効だが、方式変更はユーザー判断待ち。現在のPreview環境変数一覧では`STRIPE_WEBHOOK_SECRET`、`INTERNAL_JOB_SECRET`、`T22_INTERNAL_JOB_SECRET`を確認できず、T49前に設定範囲を確認する。値はこの記録に含めない。VercelのPreview向け秘密変数が固定branch限定かPreview全体かも確認し、一般PR PreviewへHosted秘密を渡さない。
+**2026-09-29の監査更新**：GitHub mainはactive ruleset `main protection`でPR必須となり、required checks `Quality gates`と`Catalog UI browser tests`が設定済みであることを公開APIで確認した。required approvalsは0。Vercel固定Preview aliasは古い`f6d055a`基準で、新しいdeploymentへの更新が必要。Preview envの8変数（`ANON_CART_SIGNING_KEY`、`STRIPE_SECRET_KEY`、`SUPABASE_SERVICE_ROLE_KEY`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`AUTH_BYPASS_ENABLED`、`SMS_DELIVERY_MODE`、`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SITE_URL`）はすべて`codex/mvp-demo-preview` branch scopeにあり、これらのgeneric Preview entryは0件と確認済み。値はこの記録に含めない。deploymentへの反映とHosted Supabase疎通は未確認。Productionは最新main基準のReady deploymentがあるがProduction環境変数一覧は空で、稼働確認済みとは扱わない。Preview ProtectionはSSOリダイレクトが有効だが、方式変更はユーザー判断待ち。T49用の`STRIPE_WEBHOOK_SECRET`、`INTERNAL_JOB_SECRET`、`T22_INTERNAL_JOB_SECRET`は未確認で、Webhook/Cron接続も未完了。
 
 ## 目的
 

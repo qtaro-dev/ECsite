@@ -10,10 +10,10 @@
 ## T46 接続監査スナップショット（2026-09-29）
 
 - Supabaseは1 Hosted projectを検証専用で使い、T22 migrationまで適用済み、架空商品seed 18件との報告。検証中に固定Vercel Previewだけを接続し、Productionと同時接続しない。切替後は同じprojectを提示用へ移行し、以降のPR PreviewからHosted接続情報を外す。
-- Vercel `ecsite`の固定Preview aliasは古い`f6d055a`基準で再デプロイが必要。`NEXT_PUBLIC_SITE_URL`は`codex/mvp-demo-preview` branch向け。Productionには最新main基準のReady deploymentがあるがProduction environment variablesは未登録との監査結果で、MVPの稼働確認済みではない。
+- Vercel `ecsite`の固定Preview aliasは古い`f6d055a`基準で再デプロイが必要。Preview変数のscopeは確認済みで、対象8変数（`NEXT_PUBLIC_SITE_URL`を含む）はすべて`codex/mvp-demo-preview`限定、これらのgeneric Preview entryは0件。新しいdeploymentへの反映とHosted Supabase疎通は未確認。Productionには最新main基準のReady deploymentがあるがProduction environment variablesは未登録との監査結果で、MVPの稼働確認済みではない。
 - Preview ProtectionはSSO redirectを確認。Protection方式は利用者判断待ちで、設定を変更しない。
-- Vercel Preview environmentでT49用の`STRIPE_WEBHOOK_SECRET`、`INTERNAL_JOB_SECRET`、`T22_INTERNAL_JOB_SECRET`を確認できていない。Preview environmentの秘密が固定branch限定かPR Preview全体に適用されるかも確認し、一般PRからHosted Supabase・Stripe webhook・Cronへ到達できない構成にする。秘密値はこの文書に記録しない。
-- GitHub mainはbranch protectionとrequired status checksが無効。最新mainのCIは成功しているが、PR失敗をmerge時に阻止する条件は未設定。GitHub UIで設定が必要（UI操作可否は未確認）。
+- Vercel Preview environmentでT49用の`STRIPE_WEBHOOK_SECRET`、`INTERNAL_JOB_SECRET`、`T22_INTERNAL_JOB_SECRET`を確認できていない。branch scopeの値が新しいdeploymentで反映されること、Hosted疎通、Protection付きアクセス、T49の鍵とWebhook/Cron接続は未確認。秘密値はこの文書に記録しない。
+- GitHub mainは2026-09-29に保護設定を確認済み。active ruleset `main protection`でPR経由を必須とし、required checks `Quality gates`と`Catalog UI browser tests`を設定。required approvalsは0。公開APIで`protected: true`と規則を再確認した。
 
 ## 1. 環境の対応
 
@@ -30,7 +30,7 @@ PreviewとProductionを同じHosted DBへ同時接続しない。検証中は固
 
 1. 利用者がGitHubでリポジトリの所有者・公開範囲を選び、作成・認証する。既存の`docs/`、`output/pdf/`、`AGENTS.md`を保全してローカルGitを初期化し、`main`へ最初のコミットを作る。外部公開範囲の決定は利用者の操作で行う。
 2. `.gitignore`で`.env.local`、`.env.*.local`、`.vercel/`、`.next/`、`node_modules/`、Supabase CLIの`.temp/`、テスト結果を除外する。`.env.example`に**変数名とダミー値のみ**置く。
-3. 既存PR CIの成功を確認し、`main`への直接変更を制限してCI必須チェックとレビューを設定する。2026-09-29の監査時点ではmain branch protectionとrequired checksが無効。GitHub UIで設定が必要。未信頼PRに外部秘密を渡さず、`pull_request_target`でPRコードを秘密付き実行しない。
+3. 既存PR CIの成功を確認し、`main`への直接変更を制限してCI必須チェックとレビューを設定する。2026-09-29にactive ruleset `main protection`、PR必須、required checks `Quality gates`と`Catalog UI browser tests`を確認済み。required approvalsは0。未信頼PRに外部秘密を渡さず、`pull_request_target`でPRコードを秘密付き実行しない。
 4. GitHub Actionsの役割は検証と、承認されたDBマイグレーション適用ジョブに限定する。Vercel Git連携に任せるWebデプロイをActionsから二重に起動しない。
 
 **利用者に提示する作業**：リポジトリ作成、所有者・公開範囲の選択、必要なGitHub/Vercel連携認証。実施前に、公開されるファイルと秘密を含めないことを確認する。
@@ -69,7 +69,7 @@ PreviewとProductionを同じHosted DBへ同時接続しない。検証中は固
 
 ## 6. VercelとGitHubの接続（T46、T49、T47）
 
-1. Vercel `ecsite`はGitHub `qtaro-dev/ECsite`へ接続済み。Production Branchは`main`とし、Vercel Git連携がPR Previewとmain Productionを作る。Actionsから二重デプロイしない。GitHub mainのrequired status checksは2026-09-29時点で無効のため、PRをmerge前に止める設定はT46の未完了ゲート。
+1. Vercel `ecsite`はGitHub `qtaro-dev/ECsite`へ接続済み。Production Branchは`main`とし、Vercel Git連携がPR Previewとmain Productionを作る。Actionsから二重デプロイしない。GitHub mainはactive ruleset `main protection`でPRを必須にし、required checks `Quality gates`と`Catalog UI browser tests`を設定済み。required approvalsは0である。
 2. Hosted資格情報は固定Previewの検証branchだけに必要最小限設定し、Preview環境全体のSecretとして他PRへ継承されないことを確認する。未信頼PRのPreviewには`SUPABASE_SERVICE_ROLE_KEY`、`STRIPE_WEBHOOK_SECRET`、`INTERNAL_JOB_SECRET`、`T22_INTERNAL_JOB_SECRET`を渡さない。`NEXT_PUBLIC_*`のみ公開可能だが、Supabaseの公開URL/鍵もHosted DBへのアクセス権を持つので通常PR Previewには渡さず、ActionsのローカルSupabaseを使う。Production環境変数は提示切替時に初めて設定する。秘密鍵を`NEXT_PUBLIC_*`へ置かない。
 3. 検証中は固定PreviewのみHosted Supabase・StripeテストWebhookを使い、Productionから同じHosted DBへの接続を止める。切替時はPreview接続を外してからProductionへ同じSupabase projectを設定する。Preview Protection方式と自動Cronからの接続要件は利用者判断後に確認し、SSO設定を独断で変更しない。SMTPは公開MVPでは不要。Preview URLが複数できてもAuth Redirect URLを限定する。
 4. 公開前に一般閲覧者が実際の購入導線を操作できること、管理画面を非管理者が使えないこと、30日削除・監視・公式料金リンクを確認する。公開URLやドメインの最終選択は利用者が行う。
@@ -102,12 +102,12 @@ VercelのPreview environment variablesが特定branch限定でない場合、そ
 
 | ゲート | 発生時点 | 利用者に提示する具体的な作業 | 未完了時にできること |
 | --- | --- | --- | --- |
-| G-GitHub | T01/T05/T46 | mainの保護と必須CI status checksを有効化。監査時点では未設定のためGitHub UIで設定が必要（操作担当は未確定） | ローカルGitとCI定義の作成。merge保護は未完了 |
+| G-GitHub | T01/T05/T46 | mainのactive ruleset `main protection`、PR必須、required checks `Quality gates`/`Catalog UI browser tests`を設定・公開APIで確認済み。required approvalsは0 | 設定確認済み。PR必須CIの継続監視 |
 | G-Supabase | T17/T32/T46/T49 | 既存の単一Hosted projectを検証から提示へ逐次切替。Project Ref・migration履歴・匿名Auth・費用/保持を確認し、鍵は環境設定へ登録 | CIのローカルSupabaseでDB/RLS試験。Hosted T49実通知DB照合は未完了 |
 | G-Google | T18 | OAuthクライアント作成、環境別origin/callback URL登録、Supabase Provider設定 | callbackコードと模擬試験 |
 | G-SMTP | T20/T41 | SMTP送信先・送信元ドメイン・認証、料金と送信制限確認 | モック送信・Hook署名・UI試験 |
 | G-Stripe | T30–T32/T49 | テストアカウント・テスト鍵。T49で固定Preview endpoint登録、Webhook署名秘密を安全なPreview scopeへ設定 | T31/T32の署名付きイベント・状態機械・DB統合試験。実通知確認はT49まで未完了 |
-| G-Vercel | T46/T49 | 既存projectのGit連携・branch scope・env名・Preview URL・Protectionを確認。T49で実通知が届くことを検証。Protection方式は利用者判断後に限り変更 | ローカルビルドとActions検証。外部Preview接続は未完了 |
+| G-Vercel | T46/T49 | 既存projectのGit連携と8変数の固定Preview branch scopeを確認済み。新deploymentへの反映、Hosted疎通、Protection付きアクセス、T49鍵と実通知は未確認。Protection方式は利用者判断後に限り変更 | ローカルビルドとActions検証。PreviewのHosted接続・実通知は未完了 |
 | G-Publication | T47 | 公開URL/ドメイン・公開範囲の最終選択 | Previewで最終スモーク |
 
 有料プラン、課金、契約、本人認証が必要になったら、LUNAはその時点で「何を作るか／なぜ必要か／費用見込み／無料代替／設定後の確認方法」を提示する。利用者の操作・承認が届くまで外部接続の完了を主張しない。
