@@ -16,6 +16,12 @@ insert into public.orders(user_id,status,goods_total_yen,shipping_base_yen,shipp
   tax_total_yen,grand_total_yen,shipping_rule_version,origin_snapshot,address_snapshot,checkout_key)
 values ('00000000-0000-0000-0000-000000000522','payment_pending',1000,0,0,0,90,1000,'t22-test','{}','{}',
   '00000000-0000-4000-8000-000000000522');
+-- Precreate the second order used later to test an active hold. The retention
+-- request guard intentionally blocks creating it after the request is queued.
+insert into public.orders(user_id,status,goods_total_yen,shipping_base_yen,shipping_heavy_yen,shipping_total_yen,
+  tax_total_yen,grand_total_yen,shipping_rule_version,origin_snapshot,address_snapshot,checkout_key)
+values ('00000000-0000-0000-0000-000000000522','expired',1000,0,0,0,90,1000,'t22-test','{}','{}',
+  '00000000-0000-0000-0000-000000000525') returning id \gset active_hold_
 
 do $$ declare claimed uuid; begin
   select user_id into claimed from public.claim_demo_retention(5,null);
@@ -70,11 +76,7 @@ do $$ begin
   if (select last_error_code from public.demo_retention_queue where user_id='00000000-0000-0000-0000-000000000522') <> 'payment_pending'
     then raise exception 'failure not monitorable'; end if;
 end $$;
-delete from public.orders where user_id='00000000-0000-0000-0000-000000000522';
-insert into public.orders(user_id,status,goods_total_yen,shipping_base_yen,shipping_heavy_yen,shipping_total_yen,
-  tax_total_yen,grand_total_yen,shipping_rule_version,origin_snapshot,address_snapshot,checkout_key)
-values ('00000000-0000-0000-0000-000000000522','expired',1000,0,0,0,90,1000,'t22-test','{}','{}',
-  '00000000-0000-0000-0000-000000000525') returning id \gset active_hold_
+delete from public.orders where user_id='00000000-0000-0000-0000-000000000522' and status='payment_pending';
 insert into public.stock_allocations(order_id,product_id,quantity,state,expires_at)
 values (:'active_hold_id',null,1,'active',now()+interval '1 hour');
 do $$ begin
