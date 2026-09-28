@@ -33,6 +33,11 @@ test('two demo browsers use owned fictional addresses and quotes without free-fo
       await expect(page.getByLabel('お名前')).toHaveCount(0);
       await expect(page.getByLabel('郵便番号（ハイフンなし）')).toHaveCount(0);
       await expect(page.getByLabel('送料を試す地域')).toBeVisible();
+      for (const width of [320, 640, 767, 768, 1199, 1200]) {
+        await page.setViewportSize({ width, height: 900 });
+        expect(await page.evaluate(() => document.documentElement.scrollWidth),
+          `demo address page should not overflow at ${width}px CSS width`).toBeLessThanOrEqual(width);
+      }
     }
     await a.getByLabel('送料を試す地域').selectOption('13');
     await b.getByLabel('送料を試す地域').selectOption('1');
@@ -52,6 +57,15 @@ test('two demo browsers use owned fictional addresses and quotes without free-fo
     expect(bQuote.address).toMatchObject({ recipientName: 'デモ購入者', postalCode: '0000000', prefectureCode: 1 });
     const crossed = await b.request.post('/api/checkout/quote', { headers: { origin }, data: { addressId: aQuote.address.id } });
     expect(crossed.status()).toBe(404);
+
+    for (const page of [a, b]) {
+      for (const width of [320, 640, 767, 768, 1199, 1200]) {
+        await page.setViewportSize({ width, height: 900 });
+        expect(await page.evaluate(() => document.documentElement.scrollWidth),
+          `demo checkout review should not overflow at ${width}px CSS width`).toBeLessThanOrEqual(width);
+      }
+    }
+    await b.setViewportSize({ width: 320, height: 800 });
     expect(await b.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   } finally {
     await first.close();
