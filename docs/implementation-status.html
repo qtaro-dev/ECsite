@@ -161,7 +161,7 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T22-account-retention-deletion.md">T22</a></th>
             <td>アカウント削除と30日消去</td><td>F6 / W27</td><td>LUNA-B</td>
-            <td>T17、T21、T31、T32、T34</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T17、T21、T31、T32、T34</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/74">公開MVP向け匿名デモ削除コード PR #74</a> マージ済み。CI #190・DB integration #110成功。Hosted Supabase（ecsite-production）へT22 migration適用済み。Cron用Vault URL/秘密は未設定のためジョブはno-opで、Hosted接続・実動作は未確認。公開MVPの対象外としてT34通知ジョブを除外。通常会員削除、通知、バックアップの保持方針確認が残り、Stripe履歴・Supabaseバックアップの完全消去も保証できないため、元チケット全体は未完了</td><td class="updated">2026-09-28</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T23-compatibility-engine-api.md">T23</a></th>
