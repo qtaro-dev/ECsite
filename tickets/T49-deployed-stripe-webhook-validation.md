@@ -1,5 +1,7 @@
 # T49 公開テスト環境でのStripe Webhook接続・実通知検証
 
+**公開MVPの最新環境判断**：利用者承認の[単一Hosted DB運用](../docs/mvp-hosting-decision-2026-09-28.md)に従い、検証期間中の1件のSupabaseで実通知を確認する。公開URLへ切り替える前に未処理決済を照合し、同じDBに向けたPreview/ProductionのWebhookを同時稼働させない。
+
 **公開MVPの検証対象**：[公開MVP計画](../docs/mvp-release-plan.md)のT50/T51デモ会員と架空データによる実Stripeテスト通知を使用する。実住所・実メール・ライブ決済鍵を使わず、Hosted Checkoutが求める入力項目も確認する。
 
 **状態**：未着手
