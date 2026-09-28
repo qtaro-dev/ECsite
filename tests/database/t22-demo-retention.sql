@@ -10,6 +10,12 @@ insert into public.addresses(user_id,recipient_name,postal_code,prefecture_code,
 insert into public.carts(user_id) values ('00000000-0000-0000-0000-000000000521'),('00000000-0000-0000-0000-000000000522');
 insert into public.audit_logs(actor_id,action,entity_type,entity_id) values
  ('00000000-0000-0000-0000-000000000521','demo.test','account',null);
+-- Existing pending orders must predate the retention request. The production
+-- order guard intentionally rejects any new order once the request is queued.
+insert into public.orders(user_id,status,goods_total_yen,shipping_base_yen,shipping_heavy_yen,shipping_total_yen,
+  tax_total_yen,grand_total_yen,shipping_rule_version,origin_snapshot,address_snapshot,checkout_key)
+values ('00000000-0000-0000-0000-000000000522','payment_pending',1000,0,0,0,90,1000,'t22-test','{}','{}',
+  '00000000-0000-4000-8000-000000000522');
 
 do $$ declare claimed uuid; begin
   select user_id into claimed from public.claim_demo_retention(5,null);
@@ -37,6 +43,14 @@ do $$ declare claimed uuid; begin
   if not public.request_demo_retention('00000000-0000-0000-0000-000000000522') then
     raise exception 'self-request queue failed';
   end if;
+  begin
+    insert into public.orders(user_id,status,goods_total_yen,shipping_base_yen,shipping_heavy_yen,shipping_total_yen,
+      tax_total_yen,grand_total_yen,shipping_rule_version,origin_snapshot,address_snapshot,checkout_key)
+    values ('00000000-0000-0000-0000-000000000522','payment_pending',1000,0,0,0,90,1000,'t22-test','{}','{}',
+      '00000000-0000-4000-8000-000000000526');
+    raise exception 'order accepted after deletion was requested';
+  exception when check_violation then null;
+  end;
   update public.demo_retention_queue set next_attempt_at=clock_timestamp()+interval '15 minutes'
     where user_id='00000000-0000-0000-0000-000000000522';
   if not public.request_demo_retention('00000000-0000-0000-0000-000000000522') then
@@ -47,11 +61,6 @@ do $$ declare claimed uuid; begin
     raise exception 'repeat deletion request did not safely shorten the retry time';
   end if;
 end $$;
-
-insert into public.orders(user_id,status,goods_total_yen,shipping_base_yen,shipping_heavy_yen,shipping_total_yen,
-  tax_total_yen,grand_total_yen,shipping_rule_version,origin_snapshot,address_snapshot,checkout_key)
-values ('00000000-0000-0000-0000-000000000522','payment_pending',1000,0,0,0,90,1000,'t22-test','{}','{}',
-  '00000000-0000-4000-8000-000000000522');
 do $$ begin
   if public.finish_demo_retention('00000000-0000-0000-0000-000000000522') <> 'payment_pending'
     then raise exception 'pending order cascaded'; end if;
