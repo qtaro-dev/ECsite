@@ -5,6 +5,7 @@ import { LogoutButton } from '@/features/auth/LogoutButton';
 import { createSupabaseServerClient } from '@/server/auth/supabase';
 import styles from './account.module.css';
 import { isDemoUser } from '@/lib/demo-auth';
+import { DeleteDemoAccount } from '@/features/account/DeleteDemoAccount';
 
 export default async function AccountPage() {
   let supabase;
@@ -25,6 +26,7 @@ export default async function AccountPage() {
       <Link className={styles.card} href="/account/addresses"><span className={styles.cardTitle}>配送先</span><span>{addressError ? '確認できません' : `${addressCount ?? 0} 件登録`}</span><span className={styles.action}>配送先を管理 →</span></Link>
       <Link className={styles.card} href="/account/orders"><span className={styles.cardTitle}>注文履歴</span><span>{orderError ? '確認できません' : `${orderCount ?? 0} 件`}</span><span className={styles.action}>注文履歴を見る →</span></Link>
     </div>
-    <StatusMessage kind="info" title="公開デモの個人情報について"><p>実際の商品販売・課金・発送はありません。配送先には架空の情報を入力してください。デモの会員情報は30日以内に削除されます。</p></StatusMessage>
+    <StatusMessage kind="info" title="公開デモの個人情報について"><p>実際の商品販売・課金・発送はありません。デモ配送先は架空データだけを自動作成します。デモ会員の情報は作成から30日後に削除ジョブの対象となります。</p></StatusMessage>
+    {isDemoUser(user) && <DeleteDemoAccount />}
   </main>;
 }
