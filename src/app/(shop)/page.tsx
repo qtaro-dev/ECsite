@@ -23,7 +23,7 @@ export default function HomePage() {
           <p className={styles.eyebrow}>BUILD YOUR PC, STEP BY STEP</p>
           <h1 id="home-title">自分に合うパーツから、<br />PCづくりを始めよう。</h1>
           <p>用途からも、知りたい仕様からも。必要なパーツをひとつずつ探せます。</p>
-          <form className={styles.heroSearch} action="/search" role="search">
+          <form className={styles.heroSearch} action="/search" role="search" aria-label="トップページから商品を検索">
             <label htmlFor="home-search">商品名・型番で検索</label>
             <div><input id="home-search" name="q" type="search" placeholder="例：Ryzen、GeForce、DDR5" maxLength={100} />
               <button type="submit">商品を検索</button></div>

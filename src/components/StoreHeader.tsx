@@ -17,7 +17,7 @@ export function StoreHeader() {
             <span className={styles.brandMark} aria-hidden="true">PC</span>
             <span>PCパーツ</span>
           </Link>
-          <form className={styles.search} action="/search" role="search">
+          <form className={styles.search} action="/search" role="search" aria-label="サイト全体の商品検索">
             <label className={styles.visuallyHidden} htmlFor="site-search">商品を検索</label>
             <input id="site-search" name="q" type="search" placeholder="商品名・型番で検索" />
             <button type="submit">検索</button>

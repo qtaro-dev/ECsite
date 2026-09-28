@@ -153,7 +153,7 @@ export function CatalogExplorer({ category }: ExplorerProps) {
     <nav className={styles.breadcrumb} aria-label="パンくずリスト"><Link href="/">トップ</Link><span aria-hidden="true">/</span><span aria-current="page">{title}</span></nav>
     <header className={styles.pageHeader}><p className={styles.eyebrow}>{category ? "COMPONENTS" : "SEARCH PRODUCTS"}</p><h1>{title}</h1>
       <p>{category ? `${categoryNames[category]}の仕様や価格で絞り込めます。` : "条件を組み合わせて、公開中の商品を探せます。"}</p></header>
-    <form className={styles.topSearch} action="/search" role="search"><label htmlFor="catalog-q">キーワード</label><input id="catalog-q" name="q" type="search" maxLength={100} defaultValue={params.get("q") ?? ""} placeholder="商品名・型番・キーワード" /><button type="submit">検索</button></form>
+    <form className={styles.topSearch} action="/search" role="search" aria-label="検索ページの商品キーワード検索"><label htmlFor="catalog-q">キーワード</label><input id="catalog-q" name="q" type="search" maxLength={100} defaultValue={params.get("q") ?? ""} placeholder="商品名・型番・キーワード" /><button type="submit">検索</button></form>
     <div className={styles.explorer}>
       <button className={styles.filterToggle} type="button" aria-expanded={filterOpen} aria-controls="catalog-filters" onClick={() => setFilterOpen(!filterOpen)}>{filterOpen ? "絞り込みを閉じる" : "絞り込み条件を表示"}</button>
       <div id="catalog-filters" className={`${styles.filters} ${filterOpen ? styles.filtersOpen : ""}`}>
