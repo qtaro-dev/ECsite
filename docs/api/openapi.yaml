@@ -114,11 +114,36 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/Unavailable' }
+  /checkout/demo-address:
+    post:
+      operationId: post_checkout_demo_address
+      summary: Provision the signed-in demo member's fixed fictional address for a selected shipping region
+      description: Accepts only a prefecture code. Names, postal codes, street, telephone and email cannot be supplied. The returned address belongs to the current anonymous Auth user. Ordinary members use the address API.
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prefectureCode]
+              additionalProperties: false
+              properties:
+                prefectureCode: { type: integer, minimum: 1, maximum: 47 }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '201': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /checkout/start:
     post:
       operationId: post_checkout_start
       summary: Revalidate quote and create a 30-minute Stripe test Checkout session
-      description: Creates the order and 35-minute stock allocation atomically, then opens a test-mode Checkout Session with the server-confirmed JPY amount. Same-key retries resume the existing order; uncertain Stripe or database results retain the allocation for safe recovery.
+      description: Creates the order and 35-minute stock allocation atomically, then opens a test-mode Checkout Session with the server-confirmed JPY amount. Demo members require a fixed fictional address; their Checkout Session pre-fills a synthetic example.invalid email and sends only non-personal IDs in metadata. Same-key retries resume the existing order; uncertain Stripe or database results retain the allocation for safe recovery.
       security: [{ sessionCookies: [] }]
       x-origin-check: required
       parameters:
@@ -337,7 +362,7 @@ paths:
     post:
       operationId: post_account_addresses
       summary: Add domestic address owned by the current member
-      description: Setting a new default address atomically clears the previous default. No default address is required.
+      description: Setting a new default address atomically clears the previous default. No default address is required. Anonymous demo members are forbidden from creating free-form addresses.
       security: [{ sessionCookies: [] }]
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
@@ -352,7 +377,7 @@ paths:
     patch:
       operationId: patch_account_addresses
       summary: Update a current member-owned address; a non-owned address is 404
-      description: Setting an address as default atomically clears the previous default. No default address is required.
+      description: Setting an address as default atomically clears the previous default. No default address is required. Anonymous demo members cannot update addresses.
       security: [{ sessionCookies: [] }]
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]

@@ -75,6 +75,15 @@ describe('checkout quote route', () => {
     expect(insert).not.toHaveBeenCalled();
   });
 
+  it('refuses a demo quote using a non-fictional address before calculation or persistence', async () => {
+    mocks.createSupabaseServerClient.mockResolvedValue({ auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: user.id, is_anonymous: true } }, error: null }) } });
+    mocks.loadCheckoutQuoteSource.mockResolvedValue({ address: quote.address });
+    const response = await POST(request({ addressId }));
+    expect(response.status).toBe(403);
+    expect(mocks.calculateCheckoutQuote).not.toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();
+  });
+
   it('returns 429 with Retry-After before expensive cart and quote reads when the member limit is exceeded', async () => {
     rateLimit.mockResolvedValueOnce({ data: [{ allowed: false, retry_after_seconds: 17 }], error: null });
     const response = await POST(request({ addressId }));

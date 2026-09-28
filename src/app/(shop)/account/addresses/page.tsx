@@ -5,6 +5,7 @@ import { AddressManager } from '@/features/account/AddressManager';
 import { createSupabaseServerClient } from '@/server/auth/supabase';
 import { safeReturnPath } from '@/server/auth/safe-return-path';
 import { ADDRESS_SELECT, type AddressRow } from '@/server/account/addresses';
+import { isDemoUser } from '@/lib/demo-auth';
 import styles from './page.module.css';
 
 export default async function AddressesPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
@@ -18,7 +19,8 @@ export default async function AddressesPage({ searchParams }: { searchParams: Pr
   return <main className={styles.page} id="main-content" tabIndex={-1}>
     <nav aria-label="パンくず"><Link href="/account">会員メニュー</Link> / 配送先</nav>
     <p className={styles.eyebrow}>DELIVERY DETAILS</p><h1>配送先の管理</h1>
-    {error ? <StatusMessage kind="error" title="配送先を読み込めませんでした"><p>時間をおいて再読み込みしてください。</p></StatusMessage>
+    {isDemoUser(user) ? <StatusMessage kind="info" title="デモ配送先は購入時に用意します"><p>氏名や実住所を登録せず、<Link href="/checkout/address">デモの地域選択</Link>から架空配送先を選んでください。販売・課金・発送は行いません。</p></StatusMessage>
+      : error ? <StatusMessage kind="error" title="配送先を読み込めませんでした"><p>時間をおいて再読み込みしてください。</p></StatusMessage>
       : <AddressManager initialAddresses={(data as AddressRow[]).map((row) => ({ id: row.id, recipientName: row.recipient_name, postalCode: row.postal_code, prefectureCode: row.prefecture_code, city: row.city, street: row.street, building: row.building, isDefault: row.is_default }))} returnTo={returnTo} />}
   </main>;
 }

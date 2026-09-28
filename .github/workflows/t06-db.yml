@@ -27,6 +27,7 @@ on:
       - 'tests/database/t32-payment-reconciliation.sql'
       - 'tests/database/t32-reconciliation-concurrency.py'
       - 'tests/database/t50-demo-auth-rls.sql'
+      - 'tests/database/t51-demo-address-rls.sql'
       - 'tests/database/t33-order-cart-cleanup.sql'
       - 'tests/database/t33-cart-cleanup-concurrency.py'
       - 'tests/database/t40-admin-shipping-settings.sql'
@@ -63,6 +64,7 @@ on:
       - 'tests/database/t32-payment-reconciliation.sql'
       - 'tests/database/t32-reconciliation-concurrency.py'
       - 'tests/database/t50-demo-auth-rls.sql'
+      - 'tests/database/t51-demo-address-rls.sql'
       - 'tests/database/t33-order-cart-cleanup.sql'
       - 'tests/database/t33-cart-cleanup-concurrency.py'
       - 'tests/database/t40-admin-shipping-settings.sql'
@@ -133,6 +135,8 @@ jobs:
         run: python3 tests/database/t32-reconciliation-concurrency.py
       - name: Check T50 isolated demo users and anonymous-admin denial
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t50-demo-auth-rls.sql
+      - name: Check T51 demo address write denial and owner isolation
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t51-demo-address-rls.sql
       - name: Check T33 paid cart cleanup and order isolation
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t33-order-cart-cleanup.sql
       - name: Check T33 cart cleanup concurrency

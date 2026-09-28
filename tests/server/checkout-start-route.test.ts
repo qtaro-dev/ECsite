@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(), createCartServiceClient: vi.fn(), getCart: vi.fn(),
   loadCheckoutQuoteSource: vi.fn(), calculateCheckoutQuote: vi.fn(), buildCheckoutOrderSnapshot: vi.fn(),
   allocateCheckoutOrder: vi.fn(), getStripeCheckoutGateway: vi.fn(),
-  authUser: { id: 'member-1' as string | null }, replayOrder: null as unknown,
+  authUser: { id: 'member-1' as string | null, isDemo: false }, replayOrder: null as unknown,
   quoteRow: null as unknown, pendingAttempt: null as unknown,
 }));
 
@@ -84,10 +84,11 @@ describe('POST /api/checkout/start', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.authUser.id = userId;
+    mocks.authUser.isDemo = false;
     mocks.replayOrder = null;
     mocks.quoteRow = { ...quoteRow, expires_at: new Date(Date.now() + 10 * 60_000).toISOString() };
     mocks.pendingAttempt = { id: attemptId, state: 'created', amount_yen: grandTotalYen, expires_at: new Date(Date.now() + 35 * 60_000).toISOString() };
-    mocks.createSupabaseServerClient.mockResolvedValue({ auth: { getUser: vi.fn(async () => ({ data: { user: mocks.authUser.id ? { id: mocks.authUser.id } : null }, error: null })) } });
+    mocks.createSupabaseServerClient.mockResolvedValue({ auth: { getUser: vi.fn(async () => ({ data: { user: mocks.authUser.id ? { id: mocks.authUser.id, is_anonymous: mocks.authUser.isDemo } : null }, error: null })) } });
     mocks.getCart.mockResolvedValue(cart);
     mocks.loadCheckoutQuoteSource.mockResolvedValue({ products: [] });
     mocks.calculateCheckoutQuote.mockReturnValue({ ok: true, quote });
@@ -129,6 +130,16 @@ describe('POST /api/checkout/start', () => {
       expect(mocks.allocateCheckoutOrder).not.toHaveBeenCalled();
       expect(mocks.getCart).not.toHaveBeenCalled();
     } finally { vi.useRealTimers(); }
+  });
+
+  it('refuses to replay a demo order with an earlier free-form address snapshot', async () => {
+    mocks.authUser.isDemo = true;
+    mocks.replayOrder = { id: orderId, user_id: userId, checkout_key: checkoutKey, checkout_quote_id: quoteId,
+      status: 'payment_pending', grand_total_yen: grandTotalYen,
+      address_snapshot: { recipientName: '実名', postalCode: '1000001', prefectureCode: 13, city: '実在市', street: '実住所' } };
+    const response = await POST(request());
+    expect(response.status).toBe(409);
+    expect(createSession).not.toHaveBeenCalled();
   });
 
   it('retains the allocation on an uncertain Stripe response and compensates only a definitive rejection', async () => {

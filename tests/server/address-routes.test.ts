@@ -51,4 +51,15 @@ describe('member address route authentication', () => {
     expect(response.status).toBe(403);
     expect(createSupabaseServerClient).not.toHaveBeenCalled();
   });
+
+  it('rejects demo member free-form writes through every address mutation API', async () => {
+    auth.getUser.mockResolvedValue({ data: { user: { id: addressId, is_anonymous: true } }, error: null });
+    const responses = [
+      await POST(request('/account/addresses', 'POST', address)),
+      await PATCH(request('/account/addresses', 'PATCH', { addressId, city: '実在市' })),
+      await DELETE(request(`/account/addresses/${addressId}`, 'DELETE'), { params: Promise.resolve({ id: addressId }) }),
+    ];
+    expect(responses.map((response) => response.status)).toEqual([403, 403, 403]);
+    expect((await Promise.all(responses.map((response) => response.json()))).map((body) => body.error.code)).toEqual(['FORBIDDEN', 'FORBIDDEN', 'FORBIDDEN']);
+  });
 });

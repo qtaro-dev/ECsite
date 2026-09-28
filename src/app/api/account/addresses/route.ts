@@ -4,6 +4,7 @@ import { authError, authSuccess, authValidationError, sameOrigin } from '@/serve
 import { createSupabaseServerClient } from '@/server/auth/supabase';
 import { isAuthSessionMissing } from '@/server/auth/session-error';
 import { ADDRESS_SELECT, toAddress, type AddressRow } from '@/server/account/addresses';
+import { isDemoUser } from '@/lib/demo-auth';
 
 export async function GET() {
   let supabase;
@@ -27,6 +28,7 @@ export async function POST(request: NextRequest) {
   const { data: { user }, error: authFailure } = await supabase.auth.getUser();
   if (authFailure && !isAuthSessionMissing(authFailure)) return authError(503, 'UNAVAILABLE', '現在サービスを利用できません。時間をおいて再度お試しください。');
   if (!user) return authError(401, 'UNAUTHORIZED', 'ログインしてください。');
+  if (isDemoUser(user)) return authError(403, 'FORBIDDEN', 'デモ会員は架空配送先だけを利用できます。');
   const value = parsed.data;
   const { data, error } = await supabase.from('addresses').insert({
     user_id: user.id, recipient_name: value.recipientName, postal_code: value.postalCode,
@@ -48,6 +50,7 @@ export async function PATCH(request: NextRequest) {
   const { data: { user }, error: authFailure } = await supabase.auth.getUser();
   if (authFailure && !isAuthSessionMissing(authFailure)) return authError(503, 'UNAVAILABLE', '現在サービスを利用できません。時間をおいて再度お試しください。');
   if (!user) return authError(401, 'UNAUTHORIZED', 'ログインしてください。');
+  if (isDemoUser(user)) return authError(403, 'FORBIDDEN', 'デモ会員は配送先を変更できません。');
   const { addressId, ...input } = parsed.data;
   const columns = { recipientName: 'recipient_name', postalCode: 'postal_code', prefectureCode: 'prefecture_code', city: 'city', street: 'street', building: 'building', isDefault: 'is_default' } as const;
   const values = Object.fromEntries(Object.entries(input).map(([key, value]) => [columns[key as keyof typeof columns], value]));

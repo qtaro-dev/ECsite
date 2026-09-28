@@ -19,6 +19,7 @@ export async function startStripeSession(input: {
   allocationExpiresAt: string;
   idempotencyKey: string;
   siteOrigin: string;
+  demoUserId?: string;
 }): Promise<StartStripeSessionResult> {
   let prepared;
   try {
@@ -57,6 +58,7 @@ export async function startStripeSession(input: {
       allocationExpiresAt: input.allocationExpiresAt,
       expiresAtEpochSeconds: prepared.expiresAtEpochSeconds,
       siteOrigin: prepared.siteOrigin,
+      demoUserId: input.demoUserId,
     }, input.idempotencyKey);
   } catch (error) {
     if (!(error instanceof StripeCheckoutError) || error.kind !== 'definitive_failure') return { ok: false, reason: 'ambiguous' };

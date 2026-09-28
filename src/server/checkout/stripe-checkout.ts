@@ -8,6 +8,7 @@ export type StripeCheckoutSessionInput = {
   /** Frozen by checkout_session_prepare before the first Stripe call. */
   expiresAtEpochSeconds?: number;
   siteOrigin: string;
+  demoUserId?: string;
 };
 
 export type StripeCheckoutSession = { id: string; url: string; createdAtEpochSeconds: number; expiresAtEpochSeconds: number };
@@ -26,6 +27,7 @@ export type StripeCheckoutSessionParams = {
   expires_at: number;
   success_url: string;
   cancel_url: string;
+  customer_email?: string;
 };
 
 export type StripeCheckoutSdk = {
@@ -90,6 +92,9 @@ export function buildStripeCheckoutSessionParams(input: StripeCheckoutSessionInp
     throw new StripeCheckoutError('definitive_failure', 'ALLOCATION_WINDOW_ELAPSED');
   }
   const metadata = { order_id: input.orderId, attempt_id: input.attemptId };
+  if (input.demoUserId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.demoUserId)) {
+    throw new StripeCheckoutError('configuration', 'CONFIGURATION');
+  }
   return {
     mode: 'payment',
     currency: 'jpy',
@@ -108,6 +113,7 @@ export function buildStripeCheckoutSessionParams(input: StripeCheckoutSessionInp
     expires_at: expiresAtEpochSeconds,
     success_url: `${origin.origin}/checkout/status?orderId=${encodeURIComponent(input.orderId)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin.origin}/checkout/review?orderId=${encodeURIComponent(input.orderId)}&payment=cancelled`,
+    ...(input.demoUserId ? { customer_email: `demo-${input.demoUserId}@example.invalid` } : {}),
   };
 }
 

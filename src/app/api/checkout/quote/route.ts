@@ -7,6 +7,8 @@ import { getCart, CartApiError } from '@/server/cart/cart-api';
 import { createCartServiceClient } from '@/server/cart/service-client';
 import { CheckoutQuoteSourceError, loadCheckoutQuoteSource } from '@/server/checkout/quote-source';
 import { calculateCheckoutQuote } from '@/server/checkout/quote-calculation';
+import { isDemoUser } from '@/lib/demo-auth';
+import { isDemoAddress } from '@/lib/demo-address';
 
 const message = '現在サービスを利用できません。時間をおいて再度お試しください。';
 
@@ -53,6 +55,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof CheckoutQuoteSourceError && error.code === 'SHIPPING_UNAVAILABLE') return authError(503, 'UNAVAILABLE', '有効な送料設定がないため正式な送料を計算できません。管理者が送料設定を登録するまで購入手続きを進められません。');
     return authError(503, 'UNAVAILABLE', message);
   }
+  if (isDemoUser(user) && !isDemoAddress(source.address)) return authError(403, 'FORBIDDEN', 'デモ用の架空配送先を選び直してください。');
   const calculated = calculateCheckoutQuote({ ...source, cart });
   if (!calculated.ok) {
     const failure = calculated.failure;
