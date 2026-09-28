@@ -99,6 +99,12 @@ export async function POST(request: NextRequest) {
   let serviceClient;
   try { serviceClient = createCartServiceClient(); }
   catch { return authError(503, 'UNAVAILABLE', unavailableMessage); }
+  if (isDemoUser(user)) {
+    const pendingDeletion = await serviceClient.from('demo_retention_queue').select('user_id')
+      .eq('user_id', user.id).maybeSingle();
+    if (pendingDeletion.error) return authError(503, 'UNAVAILABLE', unavailableMessage);
+    if (pendingDeletion.data) return authError(409, 'CONFLICT', 'デモ会員の削除を受け付けています。新しい注文は開始できません。');
+  }
 
   // Recover an uncertain Stripe or DB response by the stable checkout key
   // before requiring a still-live quote or rereading mutable cart data.

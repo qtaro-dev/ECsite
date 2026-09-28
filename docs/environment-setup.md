@@ -79,6 +79,7 @@ SupabaseのPRごとのBranchingは有料プランの可能性があるため採�
 | `STRIPE_WEBHOOK_SECRET` | Local専用 | Preview専用 | Production専用 | サーバーのみ、相互に異なる |
 | `AUTH_EMAIL_HOOK_SECRET` | Local専用 | Preview専用 | Production専用 | サーバーのみ。Supabase Hook署名検証 |
 | `INTERNAL_JOB_SECRET` | Local専用 | Preview専用 | Production専用 | サーバーのみ。Cron→Vercel内部API |
+| `T22_INTERNAL_JOB_SECRET` | Local専用 | 検証用 | 提示用 | サーバーのみ。匿名デモ30日削除Cron専用の32バイト以上の乱数 |
 | `ANON_CART_SIGNING_KEY` | Local専用 | Preview専用 | Production専用 | サーバーのみ。匿名カートCookie |
 | `SMS_DELIVERY_MODE` | `mock`／試験時のみ`real` | `mock` | `mock`固定 | 公開デモの実SMSを防ぐ |
 | `AUTH_BYPASS_ENABLED` | 必要時のみ`true` | `false` | `false`固定 | Productionで`true`なら起動拒否 |
@@ -105,6 +106,14 @@ SupabaseのPRごとのBranchingは有料プランの可能性があるため採�
 T32マイグレーションは5分間隔の`pg_cron`ジョブ`t32-payment-reconciliation`を登録する。`pg_net`がHTTPS POSTをVercelへ送る。各Supabase環境のVaultへ`t32_reconciliation_url`（その環境の安定したHTTPS URLに`/api/internal/reconcile-payments`を付けた値）と`t32_internal_job_secret`（対応するVercel環境の`INTERNAL_JOB_SECRET`と同じ専用32バイト以上の乱数）を個別登録する。空欄ならジョブは安全に何も送らず、片方だけ／不正な値はCron実行エラーになる。Stripe秘密鍵はVercelだけに置き、Supabase VaultやCronに入れない。APIは3件以内を並列処理し、Function最大実行時間を60秒に設定するため、T46でPreviewとProductionの実行上限がこの設定を受け入れることを確認する。
 
 接続時はSupabase Cron画面または`cron.job`でジョブ登録を確認し、`cron.job_run_details`の実行成功とVercel側で署名付き`POST`が処理されることを確認する。期限切れSessionの実照合はStripeのテスト環境で行い、その接続確認はT49のPreview受け入れに含める。Vault値・HTTP署名・秘密鍵をPRやログへ貼らない。
+
+### T22 匿名デモ会員の30日削除
+
+T22マイグレーションは15分間隔の`pg_cron`ジョブ`t22-demo-retention`を登録する。単一Hosted DBの検証中は、Supabase Vaultへ`t22_retention_url`（検証用の固定HTTPS URLに`/api/internal/delete-expired-demos`を付けた値）と`t22_internal_job_secret`（Vercel検証環境の`T22_INTERNAL_JOB_SECRET`と同一の専用32バイト以上の乱数）を登録する。Preview deployment protectionで保護されたVercel Previewへ送る場合は、Vercel Project SettingsのDeployment Protectionで発行した専用のAutomation Protection Bypass secretも`t22_vercel_bypass_secret`としてVaultに登録する。pg_netはその値を`x-vercel-protection-bypass` HTTPヘッダーにのみ設定する。Vercel公式が推奨するヘッダー方式を使い、URLには秘密を埋め込まない。Preview運用ではこのsecretを必須設定として確認し、未設定のままCronを成功扱いにしない。ローカルや保護されていない接続先では省略でき、未設定時は従来どおりVercel用ヘッダーを送らない。公開URLへ切り替えるときは、未完了ジョブと接続先を照合したうえでURLと各秘密を切り替える。URLとHMAC秘密が両方未設定なら送信せず、片方だけ／不正な値はCron実行エラーとする。Stripeテスト鍵とSupabaseサービスロール鍵はVercelサーバーにだけ置く。
+
+`public.demo_retention_queue`はサービスロールだけが読める。`last_error_code`は個人情報を含まない固定値で、`payment_pending`はT32決済照合を待つ。`stripe_unavailable`、`auth_unavailable`、`db_unavailable`、`unexpected`は外部・DB障害として調査する。Cron成功だけで削除成功とせず、署名付き内部APIの`checked/deleted/deferred`件数とキューの滞留・最古`requested_at`、`cron.job_run_details`の失敗を監視する。未解決決済または有効在庫引当が残る間はAuthユーザーを消さず、15分後に再試行する。30日を超えて保留が続く場合は公開条件未達として原因を調べる。秘密や利用者IDをログへ出さない。
+
+本人削除は匿名デモAuthの有効セッションをサーバーで再確認し、同一Originと明示確認文言を要求する。通常会員の再認証付き削除とT34通知ジョブの削除は元T22の残件。Stripe CustomerはテストSessionの所有関係とテストモードを確認して削除するが、Checkout Sessionや決済履歴そのものはStripe APIから削除できない。Supabaseバックアップを含む30日以内の実保持条件は、公開前に提供プランと復元可能期間を確認するまで合格扱いにしない。本人操作・期限ジョブ・失敗からの再試行をHosted環境で検証し、結果を記録する。
 
 ## 9. リリース前の確認
 

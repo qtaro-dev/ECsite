@@ -409,16 +409,31 @@ paths:
   /account/delete:
     post:
       operationId: post_account_delete
-      summary: Delete account after reauthentication and safe payment handling
+      summary: Request deletion of the current anonymous demo account
+      description: MVP scope only. The server rechecks the signed Supabase Auth user and Origin, requires an explicit confirmation phrase, and queues safe deletion. Pending payment or unavailable Stripe prevents cascading order/stock deletion until reconciliation. Password-based reauthentication and regular-member deletion remain outside the MVP.
       security: [{ sessionCookies: [] }]
       x-origin-check: required
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AccountDelete' } } } }
       responses:
         '200': { $ref: '#/components/responses/GenericSuccess' }
+        '202': { $ref: '#/components/responses/GenericSuccess' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /internal/delete-expired-demos:
+    post:
+      operationId: post_internal_delete_expired_demos
+      summary: Signed internal 15-minute anonymous demo retention job
+      description: HMAC-SHA256 authenticates timestamp plus LF plus exact JSON bytes. Supabase Cron may add x-vercel-protection-bypass when targeting a deployment protected by Vercel Preview protection. The service-role process claims at most five due demo users, validates terminal payment and test Stripe customer state, then atomically removes Auth and dependent application rows. Failures remain in a service-only queue for retry and monitoring.
+      security: [{ internalJobHmac: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, properties: { limit: { type: integer, minimum: 1, maximum: 5 } } } } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '503': { $ref: '#/components/responses/Unavailable' }
   /admin/products:
     get:
@@ -584,7 +599,7 @@ components:
       type: apiKey
       in: header
       name: X-Internal-Job-Signature
-      description: HMAC-SHA256; see reconcile-payments operation for canonical bytes and timestamp contract. Uses environment-specific INTERNAL_JOB_SECRET.
+      description: HMAC-SHA256 over timestamp, LF and exact body bytes. Reconciliation uses INTERNAL_JOB_SECRET; demo retention uses a separate T22_INTERNAL_JOB_SECRET.
   parameters:
     Q: { name: q, in: query, schema: { type: string, maxLength: 100 } }
     Origin: { name: Origin, in: header, required: true, schema: { type: string, format: uri } }
@@ -871,9 +886,9 @@ components:
       minProperties: 2
     AccountDelete:
       type: object
-      required: [reauthenticated, confirmed]
+      required: [confirmation]
       additionalProperties: false
-      properties: { reauthenticated: { type: boolean, const: true }, confirmed: { type: boolean, const: true } }
+      properties: { confirmation: { type: string, const: 'アカウントを削除' } }
     SmsStart:
       type: object
       required: [purpose, flow]
