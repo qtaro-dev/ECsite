@@ -22,7 +22,7 @@ begin
     return false;
   end if;
   insert into public.demo_retention_queue(user_id) values (p_user_id)
-    on conflict (user_id) do update set next_attempt_at=pg_catalog.least(public.demo_retention_queue.next_attempt_at,now());
+    on conflict (user_id) do update set next_attempt_at=least(public.demo_retention_queue.next_attempt_at,now());
   return true;
 end;
 $$;
