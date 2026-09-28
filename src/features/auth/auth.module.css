@@ -10,3 +10,7 @@
 .checkbox input { width: 20px; height: 20px; }
 .error { margin: 0; color: var(--color-danger); }
 .page { width: min(100% - 2rem, 42rem); margin: 2rem auto; padding: clamp(1.25rem, 4vw, 2rem); border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }
+.demoPanel { display: grid; gap: .75rem; }
+.demoPanel p { margin: 0; line-height: 1.7; }
+.demoButton { min-height: 48px; padding: .75rem 1rem; border: 0; border-radius: 8px; background: var(--color-primary); color: white; font: inherit; font-weight: 700; cursor: pointer; }
+.demoButton:disabled { opacity: .65; cursor: wait; }

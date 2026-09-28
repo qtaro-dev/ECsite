@@ -27,6 +27,15 @@ describe('admin membership authorization', () => {
     expect(hasMembership).toHaveBeenCalledExactlyOnceWith(userId);
   });
 
+  it('denies an anonymous Auth user before querying administrator membership', async () => {
+    const hasMembership = vi.fn();
+    await expect(checkAdminAccess({
+      getUser: async () => ({ data: { user: { id: userId, is_anonymous: true } }, error: null }),
+      hasMembership,
+    })).resolves.toEqual({ kind: 'denied', status: 403 });
+    expect(hasMembership).not.toHaveBeenCalled();
+  });
+
   it('returns 403 for missing or revoked membership and 503 on database failure', async () => {
     const getUser = async () => ({ data: { user }, error: null });
     await expect(checkAdminAccess({ getUser, hasMembership: async () => ({ data: null, error: null }) }))

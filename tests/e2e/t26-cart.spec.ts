@@ -70,7 +70,7 @@ test('anonymous cart adds an item, shows current and reference prices, and adapt
   await expect(page.getByText('追加時 ¥890 → 現在 ¥890。合計には現在価格を使用しています。')).toHaveCount(0);
   await expect(page.getByText('送料（概算）')).toBeVisible();
   await expect(page.getByText('税込合計見込み')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'ログインして購入手続きへ' })).toHaveAttribute('href', '/login?next=%2Fcheckout%2Faddress');
+  await expect(page.getByRole('link', { name: 'デモ会員を開始して購入手続きへ' })).toHaveAttribute('href', '/login?next=%2Fcheckout%2Faddress');
 
   await expect.poll(async () => page.evaluate(() => getComputedStyle(document.querySelector('main > div:last-of-type')!).gridTemplateColumns.split(' ').length)).toBe(2);
 

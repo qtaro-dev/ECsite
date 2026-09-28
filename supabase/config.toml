@@ -23,6 +23,10 @@ enabled = true
 site_url = "http://127.0.0.1:3000"
 additional_redirect_urls = ["http://localhost:3000/**", "http://127.0.0.1:4173/**"]
 enable_signup = true
+enable_anonymous_sign_ins = true
+
+[auth.rate_limit]
+anonymous_users = 30
 
 [auth.email]
 enable_signup = true
