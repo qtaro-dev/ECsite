@@ -161,7 +161,7 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T22-account-retention-deletion.md">T22</a></th>
             <td>アカウント削除と30日消去</td><td>F6 / W27</td><td>LUNA-B</td>
-            <td>T17、T21、T31、T32、T34</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T17、T21、T31、T32、T34</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/74">公開MVP向け匿名デモ削除コード PR #74</a> マージ済み。CI #190・DB integration #110成功。Hosted Supabase（ecsite-production）へT22 migration適用済み。Cron用Vault URL/秘密は未設定のためジョブはno-opで、Hosted接続・実動作は未確認。公開MVPの対象外としてT34通知ジョブを除外。通常会員削除、通知、バックアップの保持方針確認が残り、Stripe履歴・Supabaseバックアップの完全消去も保証できないため、元チケット全体は未完了</td><td class="updated">2026-09-28</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T23-compatibility-engine-api.md">T23</a></th>
@@ -226,7 +226,7 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T35-checkout-integration-acceptance.md">T35</a></th>
             <td>注文系の統合検収</td><td>F6 / W28</td><td>LUNA-B</td>
-            <td>T26、T28、T29、T30、T31、T32、T33、T34</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T26、T28、T29、T30、T31、T32、T33、T34</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/77">T35 PR #77</a> マージ済み（main <code>b4b4cdf</code>）、CI #197・DB integration #113成功。公開MVPのDB/Browser統合試験を確認。Hosted実Stripe通知はT49待ち。購入から結果・履歴までの単一E2E統合は未検証のため、T35全体は未完了</td><td class="updated">2026-09-29</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T36-admin-auth-shell.md">T36</a></th>
@@ -266,17 +266,17 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T43-responsive-accessibility-final.md">T43</a></th>
             <td>レスポンシブ・アクセシビリティ仕上げ</td><td>F7 / W32</td><td>LUNA-B</td>
-            <td>T14、T15、T16、T21、T24、T26、T28、T33、T36、T37、T38、T39、T40、T41</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T14、T15、T16、T21、T24、T26、T28、T33、T36、T37、T38、T39、T40、T41</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/79">T43 PR #79</a> マージ済み（main <code>4f6a7be</code>）、CI #201成功。公開MVPの5ルートで320/640/767/768/1199/1200px CSS幅、横溢れ、検索操作部44px、skip link・キーボード操作を検証。T51の架空住所・購入確認画面も同幅で検証。実ブラウザ200%ズーム、axe/スクリーンリーダー、管理画面等は未確認のため、T43全体は未完了</td><td class="updated">2026-09-29</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T44-security-rls-retention-audit.md">T44</a></th>
             <td>セキュリティ・RLS・削除の横断検証</td><td>F7 / W32</td><td>LUNA-A</td>
-            <td>T09、T10、T17、T18、T20、T19、T21、T29、T30、T31、T32、T33、T34、T22、T36、T37、T38、T39、T40、T41</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T09、T10、T17、T18、T20、T19、T21、T29、T30、T31、T32、T33、T34、T22、T36、T37、T38、T39、T40、T41</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/76">T44 PR #76</a> マージ済み。CI #194成功。安全な一部ヘッダーと監査項目を実装・検証。厳格CSP script、CI secret scan、Hosted保持設定・Vault等は未確認のため、T44全体は未完了</td><td class="updated">2026-09-29</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T45-full-e2e-performance.md">T45</a></th>
             <td>全体E2Eと性能検収</td><td>F7 / W33</td><td>LUNA-B</td>
-            <td>T35、T42、T43、T44</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T35、T42、T43、T44</td><td class="status">保留（部分実装）</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/82">T45 PR #82</a> マージ済み。CI #207成功。2デモ会員の探索・カート・正式見積と性能参考値を検証。Checkout実開始、Stripe実通知、決済結果・注文履歴の統合、Hosted性能は未検証のためT49待ち。T45全体は未完了</td><td class="updated">2026-09-29</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T46-cicd-vercel-supabase-release.md">T46</a></th>

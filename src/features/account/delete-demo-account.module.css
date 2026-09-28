@@ -1,0 +1,5 @@
+.section{display:grid;gap:.75rem;padding:1.25rem;border:1px solid #f4c7c3;border-radius:.75rem;background:#fff}
+.section h2,.section p{margin:0}.section label{font-weight:600}
+.section input{min-height:44px;max-width:24rem;padding:.5rem;border:1px solid #94a3b8;border-radius:.375rem;font:inherit}
+.section button{min-height:44px;justify-self:start;padding:.5rem 1rem;border:0;border-radius:.375rem;background:#b42318;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.section button:disabled{opacity:.55;cursor:not-allowed}.section input:focus-visible,.section button:focus-visible{outline:3px solid #155eef;outline-offset:2px}

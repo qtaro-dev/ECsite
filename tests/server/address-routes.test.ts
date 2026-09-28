@@ -37,8 +37,27 @@ describe('member address route authentication', () => {
     for (const response of responses) expect(JSON.parse(await response.text()).error.code).toBe('UNAUTHORIZED');
   });
 
+  it('treats a session whose Auth user was deleted as unauthenticated', async () => {
+    const deletedUser = Object.assign(new Error('User from sub claim in JWT does not exist'), {
+      name: 'AuthApiError', code: 'user_not_found', status: 404,
+    });
+    auth.getUser.mockResolvedValue({ data: { user: null }, error: deletedUser });
+    const response = await GET();
+    expect(response.status).toBe(401);
+    expect(JSON.parse(await response.text()).error.code).toBe('UNAUTHORIZED');
+  });
+
   it('keeps actual session lookup failures as 503', async () => {
     auth.getUser.mockResolvedValue({ data: { user: null }, error: new Error('provider unavailable') });
+    const response = await GET();
+    expect(response.status).toBe(503);
+    expect(JSON.parse(await response.text()).error.code).toBe('UNAVAILABLE');
+  });
+
+  it('keeps other Supabase Auth API errors as 503', async () => {
+    auth.getUser.mockResolvedValue({ data: { user: null }, error: Object.assign(new Error('unexpected auth response'), {
+      name: 'AuthApiError', code: 'unexpected_failure', status: 500,
+    }) });
     const response = await GET();
     expect(response.status).toBe(503);
     expect(JSON.parse(await response.text()).error.code).toBe('UNAVAILABLE');
