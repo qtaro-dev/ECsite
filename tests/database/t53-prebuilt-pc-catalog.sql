@@ -30,7 +30,7 @@ do $$ declare result record; components jsonb; begin
       and not (s.components ?& array['cpu','gpu','memory','ssd'])) then
     raise exception 'T53 configuration must contain CPU, GPU, memory, and SSD';
   end if;
-  select * into result from public.search_published_products(category_slug='prebuilt-pc',usage_case='gaming');
+  select * into result from public.search_published_products(category_slug => 'prebuilt-pc',usage_case => 'gaming');
   if result.total <> 2 or jsonb_array_length(result.items) <> 2
      or not (result.items->0->'specifications'->'components' ?& array['cpu','gpu','memory','ssd']) then
     raise exception 'T53 public search omitted the complete prebuilt configuration';
