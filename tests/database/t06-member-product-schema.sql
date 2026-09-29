@@ -84,10 +84,14 @@ do $$ begin
   if not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname='addresses' and c.relrowsecurity) then
     raise exception 'RLS not enabled for addresses';
   end if;
-  if (select count(*) from public.categories) <> 8 then raise exception 'expected eight categories'; end if;
-  if (select array_agg(slug order by sort_order) from public.categories) <>
-     array['cpu','gpu','motherboard','memory','ssd','power-supply','pc-case','cpu-cooler']::text[] then
-    raise exception 'category slugs do not match public routes';
+  if (select count(*) from public.categories) <> 9 then raise exception 'expected eight component categories plus prebuilt PCs'; end if;
+  if (select array_agg(slug||':'||name||':'||sort_order::text order by sort_order) from public.categories) <>
+     array['cpu:CPU:1','gpu:GPU:2','motherboard:マザーボード:3','memory:メモリ:4',
+       'ssd:SSD:5','power-supply:電源:6','pc-case:PCケース:7','cpu-cooler:CPUクーラー:8','prebuilt-pc:構成済みPC:9']::text[] then
+    raise exception 'component category identity, content, order, or appended prebuilt category changed';
+  end if;
+  if (select count(distinct id) from public.categories) <> 9 then
+    raise exception 'each catalog category must retain a distinct stable identity';
   end if;
 end $$;
 
