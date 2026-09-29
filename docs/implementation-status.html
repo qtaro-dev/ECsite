@@ -316,12 +316,12 @@
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T53-prebuilt-pc-catalog.md">T53</a></th>
             <td>構成済みPCの商品・在庫・注文基盤</td><td>MVP拡張</td><td>LUNA-A</td>
-            <td>T09、T11、T15、T21、T26、T28、T29、T30、T31、T35、T49、T51</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/97">PR #97</a> マージ済み。Database integration #119・Quality gates #250成功。GitHub ActionsでmigrationとT53 DB/RLS/注文検証済み。Hosted Supabaseへのmigration適用が未実施のため、T53全体は保留</td><td class="updated">2026-09-29</td>
+            <td>T09、T11、T15、T21、T26、T28、T29、T30、T31、T35、T49、T51</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/97">PR #97</a> マージ済み。Database integration #119・Quality gates #250成功。Hosted Supabase migrationは26/26で一致し、anon権限でgaming/daily/editing各2商品の公開検索・詳細RPCを確認</td><td class="updated">2026-09-30</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T54-prebuilt-pc-storefront.md">T54</a></th>
             <td>用途別の構成済みPC導線・商品画面</td><td>MVP拡張</td><td>LUNA-B</td>
-            <td>T14、T15、T16、T26、T43、T52、T53</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T14、T15、T16、T26、T43、T52、T53</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/100">PR #100</a> マージ済み（<code>bfa0cd8</code>）。Quality gatesとCatalog UI browser tests成功。CIでgaming/daily/editing各2件の導線を検証。公開 <a href="https://ecsite-jade.vercel.app/">Production</a> でゲーミングPC一覧2件・詳細構成・完成PCのカート投入を確認</td><td class="updated">2026-09-30</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T55-home-layout-alignment.md">T55</a></th>
