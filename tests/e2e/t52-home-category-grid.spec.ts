@@ -2,13 +2,16 @@ import { expect, test } from "@playwright/test";
 
 const viewportWidths = [320, 768, 1199, 1200, 1440, 1920];
 
-test("home category cards use the available width and preserve responsive columns", async ({ page }) => {
+test("home category section aligns with purpose content and preserves responsive columns", async ({ page }) => {
   const section = page.locator('section[aria-labelledby="category-title"]');
+  const purposeSection = page.locator('section[aria-labelledby="use-title"]');
   const cards = section.locator('a[href^="/categories/"]');
 
   for (const width of viewportWidths) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
+    await expect(page.getByRole("heading", { name: "用途別から探す" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "パーツ一覧" })).toBeVisible();
     await expect(cards).toHaveCount(8);
     await expect(cards.first()).toBeVisible();
 
@@ -23,12 +26,17 @@ test("home category cards use the available width and preserve responsive column
         viewportWidth: document.documentElement.clientWidth,
         documentWidth: document.documentElement.scrollWidth,
         section: sectionElement ? box(sectionElement) : null,
+        purposeSection: document.querySelector<HTMLElement>('[aria-labelledby="use-title"]')
+          ? box(document.querySelector<HTMLElement>('[aria-labelledby="use-title"]')!)
+          : null,
         cards: cardElements.map(box),
       };
     });
 
     expect(geometry.cards).toHaveLength(8);
     expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+    expect(geometry.section?.x).toBeCloseTo(geometry.purposeSection?.x ?? -1, 0);
+    expect(geometry.section?.width).toBeCloseTo(geometry.purposeSection?.width ?? -1, 0);
 
     const distinct = (values: number[]) => values
       .sort((left, right) => left - right)
@@ -38,8 +46,6 @@ test("home category cards use the available width and preserve responsive column
     const cardWidths = geometry.cards.map((card) => card.width);
 
     if (width >= 1200) {
-      expect(geometry.section?.x).toBeCloseTo(0, 0);
-      expect(geometry.section?.width).toBeCloseTo(geometry.viewportWidth, 0);
       expect(columns).toHaveLength(4);
       expect(rows).toHaveLength(2);
       expect(Math.max(...cardWidths) - Math.min(...cardWidths)).toBeLessThanOrEqual(1);
