@@ -6,7 +6,13 @@ do $$ declare fixture_count integer; category_count integer; begin
   if fixture_count <> 18 then raise exception 'expected 18 T11 products after repeat seed, found %',fixture_count; end if;
   select count(distinct c.slug) into category_count
   from public.products p join public.categories c on c.id=p.category_id where p.slug like 't11-%';
-  if category_count <> 8 then raise exception 'expected all 8 categories, found %',category_count; end if;
+  if category_count <> 8 then raise exception 'T11 fixtures must continue covering all 8 component categories, found %',category_count; end if;
+  if (select count(*) from public.categories) <> 9
+     or (select array_agg(slug order by sort_order) from public.categories) <>
+       array['cpu','gpu','motherboard','memory','ssd','power-supply','pc-case','cpu-cooler','prebuilt-pc']::text[]
+     or (select sort_order from public.categories where slug='prebuilt-pc') <> 9 then
+    raise exception 'catalog must preserve the ordered eight component categories and append prebuilt PCs';
+  end if;
   if exists(select 1 from public.products p left join public.product_images i on i.product_id=p.id
       where p.slug like 't11-%' and (p.status <> 'published' or i.storage_path is null)) then
     raise exception 'every T11 published fixture must have product image metadata';

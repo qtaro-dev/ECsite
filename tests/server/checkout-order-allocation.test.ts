@@ -44,6 +44,24 @@ describe('checkout order allocation contract', () => {
     expect(snapshot.grandTotalYen).toBe(10000);
   });
 
+  it('preserves the assembled PC configuration in the order read-set for the database snapshot', () => {
+    const components = {
+      cpu: { label: 'Synthetic CPU', details: '8 core class' },
+      gpu: { label: 'Synthetic GPU', details: '12 GB class' },
+      memory: { label: 'Synthetic memory', details: '32 GB DDR5 class' },
+      ssd: { label: 'Synthetic SSD', details: '1 TB NVMe class' },
+    };
+    const pc: CheckoutCatalogProduct = { ...product, sku: 'ECD-GAME-01', name: 'Synthetic assembled PC',
+      category: 'prebuilt-pc', weightG: 15000, packLengthMm: 600, packWidthMm: 250, packHeightMm: 550,
+      specs: { components } };
+    const pcQuote: CheckoutQuoteCalculation = { ...quote,
+      items: [{ ...quote.items[0], sku: pc.sku, name: pc.name, category: 'prebuilt-pc' }],
+    };
+    const snapshot = buildCheckoutOrderSnapshot(pcQuote, [pc]);
+    expect(snapshot.items[0].category).toBe('prebuilt-pc');
+    expect(snapshot.items[0].specs).toEqual({ components });
+  });
+
   it('rejects inconsistent server-calculated tax before reaching the database', () => {
     expect(() => buildCheckoutOrderSnapshot({ ...quote, taxTotalYen: 908 }, [product])).toThrow();
   });

@@ -1,4 +1,4 @@
-import type { Address, CartProjection, CompatibilityFinding, ProductCategory } from '@/lib/schemas';
+import type { Address, CartProjection, CatalogCategory, CompatibilityFinding, ProductCategory } from '@/lib/schemas';
 import { evaluateCompatibility, type CompatibilityProduct } from '@/server/catalog/compatibility';
 import { calculateShippingAndTax, type ShippingSettings } from '@/server/shipping/calculator';
 
@@ -7,7 +7,7 @@ export type CheckoutCatalogProduct = {
   sku: string;
   name: string;
   brand: string;
-  category: ProductCategory;
+  category: CatalogCategory;
   priceTaxIncludedYen: number;
   taxRateBasisPoints: number;
   weightG: number | null;
@@ -32,7 +32,7 @@ export type CheckoutQuoteCalculation = {
     sku: string;
     name: string;
     brand: string;
-    category: ProductCategory;
+    category: CatalogCategory;
     quantity: number;
     unitPriceYen: number;
     lineTotalYen: number;
@@ -98,6 +98,7 @@ export function calculateCheckoutQuote(input: {
   const compatibilityProducts: CompatibilityProduct[] = [];
   const seenCategories = new Set<ProductCategory>();
   currentProducts.forEach((product) => {
+    if (product.category === 'prebuilt-pc') return;
     if (seenCategories.has(product.category)) return;
     seenCategories.add(product.category);
     compatibilityProducts.push({ id: product.id, category: product.category, specs: product.specs });

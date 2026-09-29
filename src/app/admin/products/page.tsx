@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 const labels: Record<string, string> = {
   cpu: 'CPU', gpu: 'GPU', motherboard: 'マザーボード', memory: 'メモリ', ssd: 'SSD',
   'power-supply': '電源', 'pc-case': 'PCケース', 'cpu-cooler': 'CPUクーラー',
+  'prebuilt-pc': '構成済みPC（シード管理）',
 };
 const statusLabels = { draft: '下書き', published: '公開中', hidden: '非公開' };
 
@@ -29,11 +30,11 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           <thead><tr><th>商品</th><th>カテゴリ</th><th>SKU</th><th>税込価格</th><th>状態</th><th>更新日</th><th><span className="sr-only">操作</span></th></tr></thead>
           <tbody>{products.map((product) => <tr key={product.id}>
             <td><strong>{product.name || '名称未設定'}</strong><small>{product.brand} · {product.slug}</small></td>
-            <td>{labels[product.category]}</td><td>{product.sku}</td>
+            <td>{labels[product.category] ?? product.category}</td><td>{product.sku}</td>
             <td>{product.priceTaxIncludedYen === null ? '未設定' : `¥${product.priceTaxIncludedYen.toLocaleString('ja-JP')}`}</td>
             <td><span className={`${styles.status} ${styles[product.status]}`}>{statusLabels[product.status]}</span></td>
             <td><time dateTime={product.updatedAt}>{new Date(product.updatedAt).toLocaleDateString('ja-JP')}</time></td>
-            <td><Link href={`/admin/products/${product.id}`}>編集</Link></td>
+            <td>{product.category === 'prebuilt-pc' ? <span>SQL管理</span> : <Link href={`/admin/products/${product.id}`}>編集</Link>}</td>
           </tr>)}</tbody>
         </table></div>
       )}

@@ -36,6 +36,7 @@ describe('published product detail service', () => {
 
   it('builds the private authenticated Storage delivery URL and safely encodes path segments', () => {
     expect(productImageUrl('folder/a b#.webp')).toBe('/api/product-images/folder/a%20b%23.webp');
+    expect(productImageUrl('placeholders/prebuilt-pc/demo-gaming-pc-01.svg')).toBe('/images/prebuilt-pc-placeholder.svg');
   });
 
   it('proxies private images with only the publishable key and rejects unsafe paths', async () => {

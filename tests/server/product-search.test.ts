@@ -33,6 +33,11 @@ describe('public product search service', () => {
     expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toMatchObject({ category_slug: 'pc-case', min_gpu_clearance_mm: 300 });
   });
 
+  it('allows the assembled system category in public search without admitting it to component filters', () => {
+    expect(parseProductSearch({ category: 'prebuilt-pc', usage: 'editing' })).toMatchObject({ category: 'prebuilt-pc', usage: 'editing' });
+    expect(() => parseProductSearch({ category: 'prebuilt-pc', spec: '{"socket_code":"AM5"}' })).toThrow();
+  });
+
   it('rejects invalid price bounds and malformed specification filters before fetching', () => {
     expect(() => parseProductSearch({ minPrice: '200', maxPrice: '100' })).toThrow();
     expect(() => parseProductSearch({ spec: '{invalid' })).toThrow();

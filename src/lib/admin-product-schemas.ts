@@ -8,6 +8,7 @@ export const AdminProductCategorySchema = z.enum([
   'cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler',
 ]);
 export const AdminProductStatusSchema = z.enum(['draft', 'published', 'hidden']);
+export const AdminProductListCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler', 'prebuilt-pc']);
 export const AdminProductUseCaseSchema = z.enum(['gaming', 'daily', 'editing']);
 
 const ProductFields = {
@@ -137,7 +138,7 @@ export const AdminProductSaveFormSchema = z.object({
 });
 
 export const AdminProductListItemSchema = z.object({
-  id: z.uuid(), category: AdminProductCategorySchema, slug: z.string(), sku: z.string(),
+  id: z.uuid(), category: AdminProductListCategorySchema, slug: z.string(), sku: z.string(),
   name: z.string(), brand: z.string(), status: AdminProductStatusSchema,
   priceTaxIncludedYen: z.number().int().nonnegative().nullable(), version: z.number().int().nonnegative(),
   updatedAt: z.string().datetime({ offset: true }),
