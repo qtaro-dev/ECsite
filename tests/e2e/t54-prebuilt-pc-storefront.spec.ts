@@ -22,9 +22,10 @@ test("home purpose cards open two configured PCs per use case and their detail e
 
     await products.first().getByRole("link", { name: "構成と購入方法を見る" }).click();
     const productName = await page.getByRole("heading", { level: 1 }).textContent();
-    await expect(page.getByRole("heading", { name: "採用構成" })).toBeVisible();
+    const configuration = page.locator('section[aria-labelledby="spec-title"]');
+    await expect(configuration.getByRole("heading", { name: "採用構成" })).toBeVisible();
     for (const part of ["CPU", "GPU（グラフィックボード）", "メモリ", "SSD"]) {
-      await expect(page.getByText(part, { exact: true })).toBeVisible();
+      await expect(configuration.getByText(part, { exact: true })).toBeVisible();
     }
     await expect(page.getByRole("link", { name: "構成に追加" })).toHaveCount(0);
     await page.getByRole("link", { name: "この完成PCをカートに入れる" }).click();
