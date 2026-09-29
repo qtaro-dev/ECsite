@@ -2,7 +2,7 @@
 begin;
 
 do $$ declare result record; components jsonb; begin
-  if (select array_agg(sort_order order by sort_order) from public.categories where sort_order <= 8) <> array[1,2,3,4,5,6,7,8] then
+  if (select array_agg(sort_order::integer order by sort_order) from public.categories where sort_order <= 8) <> array[1,2,3,4,5,6,7,8]::integer[] then
     raise exception 'T53 changed the established eight category order';
   end if;
   if (select sort_order from public.categories where slug='prebuilt-pc') <> 9 then
