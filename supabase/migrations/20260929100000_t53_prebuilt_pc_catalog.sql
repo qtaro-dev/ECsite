@@ -347,7 +347,7 @@ begin
       when 'ssd' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.ssd_specs s where s.product_id=v_product.id for share;
       when 'power-supply' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.psu_specs s where s.product_id=v_product.id for share;
       when 'pc-case' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.case_specs s where s.product_id=v_product.id for share;
-      when 'cpu-cooler' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.cooler_specs s where s.product_id=v_product.id
+      when 'cpu-cooler' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.cooler_specs s where s.product_id=v_product.id for share;
       when 'prebuilt-pc' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.prebuilt_pc_specs s where s.product_id=v_product.id for share;
       else return jsonb_build_object('status','product_unavailable','productId',v_cart_line.product_id,'nextAction','review_cart');
     end case;
@@ -525,7 +525,7 @@ begin
       when 'ssd' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.ssd_specs s where s.product_id=v_product.id;
       when 'power-supply' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.psu_specs s where s.product_id=v_product.id;
       when 'pc-case' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.case_specs s where s.product_id=v_product.id;
-      when 'cpu-cooler' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.cooler_specs s where s.product_id=v_product.id
+      when 'cpu-cooler' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.cooler_specs s where s.product_id=v_product.id;
       when 'prebuilt-pc' then select coalesce(pg_catalog.to_jsonb(s)-'product_id','{}'::jsonb) into v_specs from public.prebuilt_pc_specs s where s.product_id=v_product.id;
     end case;
     v_specs := coalesce(v_specs,'{}'::jsonb);
