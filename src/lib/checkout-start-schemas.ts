@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AddressSchema, CompatibilityFindingSchema, IdSchema, ProductCategorySchema, YenSchema } from './schemas';
+import { AddressSchema, CatalogCategorySchema, CompatibilityFindingSchema, IdSchema, YenSchema } from './schemas';
 
 export const CheckoutStartRequestSchema = z.object({
   quoteId: IdSchema,
@@ -14,7 +14,7 @@ export const CheckoutOrderSnapshotSchema = z.object({
     sku: z.string().min(1),
     name: z.string().min(1),
     brand: z.string().min(1),
-    category: ProductCategorySchema,
+    category: CatalogCategorySchema,
     quantity: z.number().int().min(1).max(10),
     unitPriceYen: YenSchema,
     lineTotalYen: YenSchema,

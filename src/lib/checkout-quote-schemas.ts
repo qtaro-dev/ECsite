@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AddressSchema, CompatibilityFindingSchema, IdSchema, ProductCategorySchema } from '@/lib/schemas';
+import { AddressSchema, CatalogCategorySchema, CompatibilityFindingSchema, IdSchema } from '@/lib/schemas';
 
 export const CheckoutQuoteRequestSchema = z.object({
   addressId: IdSchema,
@@ -16,7 +16,7 @@ export const CheckoutQuoteResultSchema = z.object({
     sku: z.string().min(1),
     name: z.string().min(1),
     brand: z.string().min(1),
-    category: ProductCategorySchema,
+    category: CatalogCategorySchema,
     quantity: z.number().int().min(1).max(10),
     unitPriceYen: z.number().int().safe().nonnegative(),
     lineTotalYen: z.number().int().safe().nonnegative(),

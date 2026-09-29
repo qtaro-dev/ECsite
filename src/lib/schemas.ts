@@ -13,6 +13,8 @@ const SearchIntegerSchema = z.preprocess((value) => {
 export const ProductSortSchema = z.enum(['price_asc', 'price_desc', 'newest']);
 export const ProductUseCaseSchema = z.enum(['gaming', 'daily', 'editing']);
 export const ProductCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler']);
+/** Catalog category includes assembled systems; component compatibility remains limited to ProductCategorySchema. */
+export const CatalogCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler', 'prebuilt-pc']);
 const ProductSpecKeysByCategory: Record<z.infer<typeof ProductCategorySchema>, readonly string[]> = {
   cpu: ['socket_code', 'core_count', 'base_clock_mhz', 'tdp_w'],
   gpu: ['chipset', 'vram_gb', 'card_length_mm'],
@@ -37,7 +39,7 @@ export const ProductSpecFilterSchema = z.record(
 ).refine((value) => Object.keys(value).length <= 8, 'At most 8 specification filters are supported');
 export const SearchQuerySchema = z.object({
   q: z.string().max(100).optional(),
-  category: ProductCategorySchema.optional(),
+  category: CatalogCategorySchema.optional(),
   usage: ProductUseCaseSchema.optional(),
   manufacturer: z.string().max(100).optional(),
   minPrice: SearchIntegerSchema.optional(),
@@ -61,7 +63,7 @@ export const SearchQuerySchema = z.object({
   { path: ['maxPrice'], message: 'maxPrice must be greater than or equal to minPrice' },
 ).refine(({ category, spec }) => !spec || Object.entries(spec).every(([key, value]) => {
   const supported = category
-    ? ProductSpecKeysByCategory[category].includes(key)
+    ? (category in ProductSpecKeysByCategory && ProductSpecKeysByCategory[category as z.infer<typeof ProductCategorySchema>].includes(key))
     : Object.values(ProductSpecKeysByCategory).some((keys) => keys.includes(key));
   const fieldType = ProductSpecFieldTypes[key];
   const valueTypeMatches = fieldType === 'text' ? typeof value === 'string' && value.length > 0
@@ -206,6 +208,7 @@ export type Quantity = z.infer<typeof QuantitySchema>;
 export type SearchQuery = z.infer<typeof SearchQuerySchema>;
 export type ProductUseCase = z.infer<typeof ProductUseCaseSchema>;
 export type ProductCategory = z.infer<typeof ProductCategorySchema>;
+export type CatalogCategory = z.infer<typeof CatalogCategorySchema>;
 export type ProductSpecFilter = z.infer<typeof ProductSpecFilterSchema>;
 export type Address = z.infer<typeof AddressSchema>;
 export type AddressPatch = z.infer<typeof AddressPatchSchema>;

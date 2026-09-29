@@ -1,9 +1,9 @@
-import { SearchQuerySchema, type SearchQuery } from '../../lib/schemas';
+import { SearchQuerySchema, type CatalogCategory, type SearchQuery } from '../../lib/schemas';
 
 export const PRODUCTS_PER_PAGE = 24;
 
 export type ProductSearchItem = {
-  id: string; slug: string; sku: string; name: string; brand: string; category: string;
+  id: string; slug: string; sku: string; name: string; brand: string; category: CatalogCategory;
   description: string; beginnerNote: string; priceYen: number;
   images: Array<{ path: string; altText: string }>;
   useCases: string[];

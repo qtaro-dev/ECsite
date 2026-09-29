@@ -1,5 +1,5 @@
 import 'server-only';
-import type { Address, CartProjection, ProductCategory } from '@/lib/schemas';
+import type { Address, CartProjection, CatalogCategory, ProductCategory } from '@/lib/schemas';
 import { createCartServiceClient } from '@/server/cart/service-client';
 import type { CheckoutCatalogProduct } from './quote-calculation';
 import type { ShippingSettings } from '@/server/shipping/calculator';
@@ -22,6 +22,7 @@ const PRODUCT_SELECT = [
   'motherboard_specs(socket_code,ddr_generation,form_factor)', 'memory_specs(ddr_generation)',
   'ssd_specs(capacity_gb)', 'psu_specs(rated_w)',
   'case_specs(max_gpu_length_mm,supported_form_factors)', 'cooler_specs(supported_socket_codes)',
+  'prebuilt_pc_specs(components)',
 ].join(',');
 const CATEGORY_SPEC_TABLE: Record<ProductCategory, string> = {
   cpu: 'cpu_specs', gpu: 'gpu_specs', motherboard: 'motherboard_specs', memory: 'memory_specs',
@@ -36,14 +37,16 @@ function relationRow(value: unknown): Record<string, unknown> | null {
 export function mapCheckoutCatalogProduct(row: Record<string, unknown>): CheckoutCatalogProduct | null {
   const categoryRow = relationRow(row.category);
   const category = categoryRow?.slug;
-  if (typeof category !== 'string' || !Object.hasOwn(CATEGORY_SPEC_TABLE, category)) return null;
-  const specs = relationRow(row[CATEGORY_SPEC_TABLE[category as ProductCategory]]) ?? {};
+  if (typeof category !== 'string' || !(category === 'prebuilt-pc' || Object.hasOwn(CATEGORY_SPEC_TABLE, category))) return null;
+  const specs = category === 'prebuilt-pc'
+    ? relationRow(row.prebuilt_pc_specs) ?? {}
+    : relationRow(row[CATEGORY_SPEC_TABLE[category as ProductCategory]]) ?? {};
   const nullableNumber = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) ? value : null;
   if (typeof row.id !== 'string' || typeof row.sku !== 'string' || typeof row.name !== 'string'
     || typeof row.brand !== 'string' || typeof row.status !== 'string'
     || typeof row.price_tax_included_yen !== 'number' || typeof row.tax_rate_basis_points !== 'number') return null;
   return {
-    id: row.id, sku: row.sku, name: row.name, brand: row.brand, category: category as ProductCategory,
+    id: row.id, sku: row.sku, name: row.name, brand: row.brand, category: category as CatalogCategory,
     priceTaxIncludedYen: row.price_tax_included_yen, taxRateBasisPoints: row.tax_rate_basis_points,
     weightG: nullableNumber(row.weight_g), packLengthMm: nullableNumber(row.pack_length_mm),
     packWidthMm: nullableNumber(row.pack_width_mm), packHeightMm: nullableNumber(row.pack_height_mm),

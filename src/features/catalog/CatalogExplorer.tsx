@@ -5,20 +5,21 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Skeleton } from "@/components/Skeleton";
 import { StatusMessage } from "@/components/StatusMessage";
-import type { ProductCategory } from "@/lib/schemas";
+import type { CatalogCategory } from "@/lib/schemas";
 import type { ProductSearchItem, ProductSearchResult } from "@/server/catalog/product-search";
 import styles from "./CatalogExplorer.module.css";
 
-const categories: Array<{ slug: ProductCategory; name: string }> = [
+const categories: Array<{ slug: CatalogCategory; name: string }> = [
   { slug: "cpu", name: "CPU" }, { slug: "gpu", name: "グラフィックボード" },
   { slug: "motherboard", name: "マザーボード" }, { slug: "memory", name: "メモリ" },
   { slug: "ssd", name: "SSD" }, { slug: "power-supply", name: "電源ユニット" },
   { slug: "pc-case", name: "PCケース" }, { slug: "cpu-cooler", name: "CPUクーラー" },
+  { slug: "prebuilt-pc", name: "構成済みPC" },
 ];
-const categoryNames = Object.fromEntries(categories.map((item) => [item.slug, item.name])) as Record<ProductCategory, string>;
+const categoryNames = Object.fromEntries(categories.map((item) => [item.slug, item.name])) as Record<CatalogCategory, string>;
 const usageOptions = [{ id: "gaming", name: "ゲーム" }, { id: "daily", name: "普段使い" }, { id: "editing", name: "動画編集" }] as const;
 type SpecField = { key: string; label: string; type: "text" | "number" | "list" };
-const specFields: Partial<Record<ProductCategory, SpecField[]>> = {
+const specFields: Partial<Record<CatalogCategory, SpecField[]>> = {
   cpu: [{ key: "socket_code", label: "ソケット", type: "text" }, { key: "core_count", label: "コア数", type: "number" }, { key: "base_clock_mhz", label: "基本クロック（MHz）", type: "number" }, { key: "tdp_w", label: "TDP（W）", type: "number" }],
   gpu: [{ key: "chipset", label: "チップセット", type: "text" }, { key: "vram_gb", label: "VRAM（GB）", type: "number" }, { key: "card_length_mm", label: "カード長（mm）", type: "number" }],
   motherboard: [{ key: "socket_code", label: "ソケット", type: "text" }, { key: "ddr_generation", label: "メモリ規格", type: "text" }, { key: "form_factor", label: "フォームファクター", type: "text" }],
@@ -29,7 +30,7 @@ const specFields: Partial<Record<ProductCategory, SpecField[]>> = {
   "cpu-cooler": [{ key: "supported_socket_codes", label: "対応ソケット（カンマ区切り）", type: "list" }, { key: "height_mm", label: "高さ（mm）", type: "number" }, { key: "cooling_type", label: "冷却方式", type: "text" }],
 };
 
-type ExplorerProps = { category?: ProductCategory };
+type ExplorerProps = { category?: CatalogCategory };
 
 function displayPrice(price: number) {
   return new Intl.NumberFormat("ja-JP").format(price);
@@ -47,7 +48,7 @@ function specDisplayValue(value: string | number | string[] | undefined) {
 function ProductCard({ product }: { product: ProductSearchItem }) {
   return <article className={styles.productCard}>
     <Link className={styles.productLink} href={`/products/${product.slug}`} aria-label={`${product.name}の商品詳細`}>
-      <div className={styles.productVisual} aria-hidden="true"><span>{categoryNames[product.category as ProductCategory] ?? "PC PARTS"}</span><strong>{product.name.slice(0, 1)}</strong></div>
+      <div className={styles.productVisual} aria-hidden="true"><span>{categoryNames[product.category] ?? "PC PARTS"}</span><strong>{product.name.slice(0, 1)}</strong></div>
       <div className={styles.productBody}><p className={styles.brand}>{product.brand} <span>／</span> {product.sku}</p>
         <h3>{product.name}</h3><p className={styles.productNote}>{productSubtitle(product)}</p>
         <p className={styles.price}>¥{displayPrice(product.priceYen)}<small>（税込）</small></p>
@@ -105,7 +106,7 @@ export function CatalogExplorer({ category }: ExplorerProps) {
     return () => controller.abort();
   }, [requestParams, requestKey]);
 
-  const currentCategory = category ?? (categories.some((item) => item.slug === params.get("category")) ? params.get("category") as ProductCategory : undefined);
+  const currentCategory = category ?? (categories.some((item) => item.slug === params.get("category")) ? params.get("category") as CatalogCategory : undefined);
   const hasNarrowingFilter = ["q", "category", "usage", "manufacturer", "minPrice", "maxPrice", "minGpuClearanceMm", "spec"]
     .some((key) => Boolean(params.get(key)));
   const fields = currentCategory ? specFields[currentCategory] ?? [] : [];

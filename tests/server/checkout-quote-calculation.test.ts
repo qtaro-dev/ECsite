@@ -98,4 +98,21 @@ describe('checkout formal quote calculation', () => {
     expect(result.quote.compatibility.find((finding) => finding.rule === 'cpu_motherboard_socket')?.status).toBe('incompatible');
     expect(result.quote.grandTotalYen).toBeGreaterThan(0);
   });
+
+  it('quotes a complete PC as one SKU and excludes it from component compatibility selection', () => {
+    const prebuilt: CheckoutCatalogProduct = {
+      ...product, category: 'prebuilt-pc', priceTaxIncludedYen: 169800, weightG: 15000,
+      packLengthMm: 600, packWidthMm: 250, packHeightMm: 550,
+      specs: { components: { cpu: { label: 'Synthetic CPU' }, gpu: { label: 'Synthetic GPU' },
+        memory: { label: 'Synthetic memory' }, ssd: { label: 'Synthetic SSD' } } },
+    };
+    const prebuiltCart: CartProjection = { ...cart, items: [{ ...cart.items[0], unitPriceYen: prebuilt.priceTaxIncludedYen,
+      lineTotalYen: prebuilt.priceTaxIncludedYen, unitPriceAtAddYen: prebuilt.priceTaxIncludedYen }], goodsTotalYen: prebuilt.priceTaxIncludedYen };
+    const result = calculate({ products: [prebuilt], cart: prebuiltCart });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.quote.items).toHaveLength(1);
+    expect(result.quote.items[0]).toMatchObject({ category: 'prebuilt-pc', unitPriceYen: 169800, quantity: 1 });
+    expect(result.quote.compatibility.every(({ status }) => status === 'not_applicable')).toBe(true);
+  });
 });

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="title desc">
+  <title id="title">構成済みPCのプレースホルダー</title>
+  <desc id="desc">架空の構成例を表すデスクトップPCのイラスト</desc>
+  <rect width="800" height="600" rx="32" fill="#f1f5fb"/>
+  <rect x="245" y="95" width="310" height="410" rx="26" fill="#ffffff" stroke="#155eef" stroke-width="12"/>
+  <rect x="278" y="128" width="244" height="314" rx="15" fill="#eaf1ff"/>
+  <circle cx="400" cy="285" r="92" fill="#155eef" opacity=".12"/>
+  <path d="M350 285h100M400 235v100" stroke="#155eef" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="400" cy="473" r="10" fill="#067647"/>
+  <text x="400" y="555" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#172033">SYNTHETIC DEMO BUILD</text>
+</svg>
