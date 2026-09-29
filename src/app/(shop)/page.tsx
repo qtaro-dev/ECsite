@@ -3,9 +3,9 @@ import styles from "./page.module.css";
 import { StatusMessage } from "@/components/StatusMessage";
 
 const uses = [
-  { id: "gaming", title: "ゲームを楽しみたい", description: "グラフィック性能や冷却を重視して、遊びたいゲームに合うパーツを探せます。", icon: "01" },
-  { id: "daily", title: "普段使いのPCを作りたい", description: "仕事や学習、日々の作業に使いやすいパーツを見つけましょう。", icon: "02" },
-  { id: "editing", title: "動画編集をしたい", description: "編集作業を快適にするCPU、メモリ、ストレージなどを比較できます。", icon: "03" },
+  { id: "gaming", title: "ゲーミングPC", description: "ゲーム向けにショップが構成した完成PCを比較できます。", icon: "01" },
+  { id: "daily", title: "一般用途向けPC", description: "仕事や学習、日々の作業に使いやすい完成PCを探せます。", icon: "02" },
+  { id: "editing", title: "クリエイターPC", description: "動画編集などの制作作業向けに構成した完成PCを比較できます。", icon: "03" },
 ] as const;
 
 const categories = [
@@ -34,9 +34,9 @@ export default function HomePage() {
 
       <section className={styles.section} aria-labelledby="use-title">
         <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>START WITH YOUR PURPOSE</p><h2 id="use-title">用途別から探す</h2></div><p>パーツに詳しくなくても大丈夫。使い方に合う商品を見つけましょう。</p></div>
-        <div className={styles.useGrid}>{uses.map((item) => <Link className={styles.useCard} href={`/search?usage=${item.id}`} key={item.id}>
+        <div className={styles.useGrid}>{uses.map((item) => <Link className={styles.useCard} href={`/prebuilt-pc/${item.id}`} key={item.id}>
           <span className={styles.cardNumber}>{item.icon}</span><span className={styles.arrow} aria-hidden="true">↗</span>
-          <h3>{item.title}</h3><p>{item.description}</p><span className={styles.textLink}>この用途で探す <span aria-hidden="true">→</span></span>
+          <h3>{item.title}</h3><p>{item.description}</p><span className={styles.textLink}>完成PCを見る <span aria-hidden="true">→</span></span>
         </Link>)}</div>
       </section>
 
