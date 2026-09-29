@@ -28,7 +28,7 @@
 .useCard h3 { margin: 1.25rem 0 0.375rem; font-size: 1.125rem; }
 .useCard p { margin: 0 0 1rem; color: var(--color-muted); font-size: var(--font-size-small); }
 .textLink { margin-top: auto; color: var(--color-primary); font-size: var(--font-size-small); font-weight: 700; }
-.categorySection { margin-inline: calc(50% - 50vw); padding-inline: clamp(1rem, 3vw, 2.5rem); padding-bottom: 3rem; background: #eef3fb; }
+.categorySection { padding-bottom: 3rem; background: #eef3fb; }
 .categoryGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
 .categoryCard { position: relative; display: flex; min-height: 5.5rem; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: #fff; color: var(--color-text); text-decoration: none; }
 .categoryCard:hover { border-color: var(--color-primary); color: var(--color-text); }
@@ -52,7 +52,6 @@
   .useGrid { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
   .useCard { min-height: 10rem; padding: 1.125rem; }
   .useCard h3 { margin-top: 0.75rem; }
-  .categorySection { margin-inline: -0.5rem; padding-inline: 0.5rem; }
   .categoryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
   .categoryCard { min-height: 6.5rem; align-items: start; flex-direction: column; gap: 0.25rem; padding: 0.75rem; }
   .categoryCard > span:nth-child(2) { gap: 0.125rem; padding-right: 0; }

@@ -33,7 +33,7 @@ export default function HomePage() {
       </section>
 
       <section className={styles.section} aria-labelledby="use-title">
-        <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>START WITH YOUR PURPOSE</p><h2 id="use-title">何をしたいかから探す</h2></div><p>パーツに詳しくなくても大丈夫。使い方に合う商品を見つけましょう。</p></div>
+        <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>START WITH YOUR PURPOSE</p><h2 id="use-title">用途別から探す</h2></div><p>パーツに詳しくなくても大丈夫。使い方に合う商品を見つけましょう。</p></div>
         <div className={styles.useGrid}>{uses.map((item) => <Link className={styles.useCard} href={`/search?usage=${item.id}`} key={item.id}>
           <span className={styles.cardNumber}>{item.icon}</span><span className={styles.arrow} aria-hidden="true">↗</span>
           <h3>{item.title}</h3><p>{item.description}</p><span className={styles.textLink}>この用途で探す <span aria-hidden="true">→</span></span>
@@ -41,7 +41,7 @@ export default function HomePage() {
       </section>
 
       <section className={styles.categorySection} aria-labelledby="category-title">
-        <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>BROWSE COMPONENTS</p><h2 id="category-title">パーツから探す</h2></div><Link href="/search">すべての商品を見る <span aria-hidden="true">→</span></Link></div>
+        <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>BROWSE COMPONENTS</p><h2 id="category-title">パーツ一覧</h2></div><Link href="/search">すべての商品を見る <span aria-hidden="true">→</span></Link></div>
         <div className={styles.categoryGrid}>{categories.map(([name, slug, description], index) => <Link className={styles.categoryCard} href={`/categories/${slug}`} key={slug}>
           <span className={styles.categoryIndex}>{String(index + 1).padStart(2, "0")}</span><span><strong>{name}</strong><small>{description}</small></span><span className={styles.arrow} aria-hidden="true">↗</span>
         </Link>)}</div>

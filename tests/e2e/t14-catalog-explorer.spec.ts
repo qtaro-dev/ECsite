@@ -4,7 +4,7 @@ const emptyResult = { data: { items: [], total: 0, page: 1, pageSize: 24 }, requ
 
 test("home offers all three use cases and eight category destinations", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "何をしたいかから探す" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "用途別から探す" })).toBeVisible();
   await expect(page.getByRole("link", { name: /ゲームを楽しみたい/ })).toHaveAttribute("href", "/search?usage=gaming");
   await expect(page.getByRole("link", { name: /普段使いのPCを作りたい/ })).toHaveAttribute("href", "/search?usage=daily");
   await expect(page.getByRole("link", { name: /動画編集をしたい/ })).toHaveAttribute("href", "/search?usage=editing");
