@@ -9,10 +9,10 @@
 
 ## T46 接続監査スナップショット（2026-09-29）
 
-- Supabaseは1 Hosted projectを検証専用で使い、T22 migrationまで適用済み、架空商品seed 18件との報告。検証中に固定Vercel Previewだけを接続し、Productionと同時接続しない。切替後は同じprojectを提示用へ移行し、以降のPR PreviewからHosted接続情報を外す。
-- Vercel `ecsite`の固定Preview aliasは古い`f6d055a`基準で再デプロイが必要。Preview変数のscopeは確認済みで、対象8変数（`NEXT_PUBLIC_SITE_URL`を含む）はすべて`codex/mvp-demo-preview`限定、これらのgeneric Preview entryは0件。新しいdeploymentへの反映とHosted Supabase疎通は未確認。Productionには最新main基準のReady deploymentがあるがProduction environment variablesは未登録との監査結果で、MVPの稼働確認済みではない。
+- Hosted読み取り結果は[T46監査記録](t46-hosted-audit-results.md)を参照。25 migrationsがrepoと一致し、匿名Auth公開設定が有効、匿名RLSでpublished商品18件を確認。T22/T32 Cron関連Vault secret名5件は0件で、外部ジョブ実行は未確認。
+- Vercel `ecsite`の固定Preview deploymentはReady、SHA `ac7c42696c935700b36b7d25263ac605ea8cd30a`。Preview変数8件（`NEXT_PUBLIC_SITE_URL`を含む）はすべて`codex/mvp-demo-preview`限定で、これらのgeneric Preview entryは0件。Productionには最新main基準のReady deploymentがあるが、Production environment variablesは未登録との監査結果で、MVPの稼働確認済みではない。
 - Preview ProtectionはSSO redirectを確認。Protection方式は利用者判断待ちで、設定を変更しない。
-- Vercel Preview environmentでT49用の`STRIPE_WEBHOOK_SECRET`、`INTERNAL_JOB_SECRET`、`T22_INTERNAL_JOB_SECRET`を確認できていない。branch scopeの値が新しいdeploymentで反映されること、Hosted疎通、Protection付きアクセス、T49の鍵とWebhook/Cron接続は未確認。秘密値はこの文書に記録しない。
+- Vercel Preview environmentでT49用の`STRIPE_WEBHOOK_SECRET`、`INTERNAL_JOB_SECRET`、`T22_INTERNAL_JOB_SECRET`を確認できていない。固定PreviewのSSO越しアプリ疎通、Hosted商品一覧/匿名Auth動作、T49の鍵とStripe Webhook接続は未確認。秘密値はこの文書に記録しない。
 - GitHub mainは2026-09-29に保護設定を確認済み。active ruleset `main protection`でPR経由を必須とし、required checks `Quality gates`と`Catalog UI browser tests`を設定。required approvalsは0。公開APIで`protected: true`と規則を再確認した。
 
 ## 1. 環境の対応
