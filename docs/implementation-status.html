@@ -35,21 +35,21 @@
 <body>
   <main>
     <h1>実装チケット進捗一覧</h1>
-    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 51件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
+    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 54件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
     <div class="summary" aria-label="進捗件数">
-      <span>全件 <output id="count-all">51</output></span>
-      <span>未実装 <output id="count-not-started">16</output></span>
+      <span>全件 <output id="count-all">54</output></span>
+      <span>未実装 <output id="count-not-started">8</output></span>
       <span>実装中 <output id="count-active">0</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">32</output></span>
-      <span>保留 <output id="count-blocked">3</output></span>
+      <span>完了 <output id="count-done">34</output></span>
+      <span>保留 <output id="count-blocked">12</output></span>
     </div>
     <div class="controls">
       <label>チケット検索<input id="query" type="search" placeholder="番号・名称・依存"></label>
       <label>担当<select id="owner"><option value="">すべて</option><option>LUNA-A</option><option>LUNA-B</option></select></label>
       <label>状態<select id="state"><option value="">すべて</option><option>未実装</option><option>実装中</option><option>レビュー中</option><option>完了</option><option>保留</option></select></label>
     </div>
-    <div class="table-wrap" role="region" aria-label="51件の実装チケット" tabindex="0">
+    <div class="table-wrap" role="region" aria-label="54件の実装チケット" tabindex="0">
       <table>
         <thead><tr><th scope="col">番号</th><th scope="col">チケット</th><th scope="col">フェーズ / Wave</th><th scope="col">担当</th><th scope="col">依存</th><th scope="col">状態</th><th scope="col">根拠 PR / commit</th><th scope="col">更新日</th></tr></thead>
         <tbody>
@@ -276,12 +276,12 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T45-full-e2e-performance.md">T45</a></th>
             <td>全体E2Eと性能検収</td><td>F7 / W33</td><td>LUNA-B</td>
-            <td>T35、T42、T43、T44</td><td class="status">保留（部分実装）</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/82">T45 PR #82</a> マージ済み。CI #207成功。2デモ会員の探索・カート・正式見積と性能参考値を検証。Checkout実開始、Stripe実通知、決済結果・注文履歴の統合、Hosted性能は未検証のためT49待ち。T45全体は未完了</td><td class="updated">2026-09-29</td>
+            <td>T35、T42、T43、T44</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/82">T45 PR #82</a> マージ済み。CI #207成功。2デモ会員の探索・カート・正式見積と性能参考値を検証。Checkout実開始、Stripe実通知、決済結果・注文履歴の統合、Hosted性能は未検証のためT49待ち。T45全体は未完了</td><td class="updated">2026-09-29</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T46-cicd-vercel-supabase-release.md">T46</a></th>
             <td>GitHub Actions・Vercel・SupabaseのCI/CD</td><td>F7 / W34</td><td>LUNA-A</td>
-            <td>T05、T45</td><td class="status">保留（部分実装）</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/81">T46 PR #81</a> マージ済み。CI #209成功。GitHub main ruleset「main protection」でPR必須・必須check 2件を設定。Vercel固定Preview（branch <code>codex/mvp-demo-preview</code>）は8変数・generic 0。deployment <code>dpl_Gwq5TPfDV1V5oA59fF23tmmVw9rs</code> がReady、SHA <code>ac7c426…</code>、alias更新済み。Hostedアプリ疎通、SSO実操作、Protection方式、T49 webhook/Cron、Production切替は未検証のためT46全体は未完了</td><td class="updated">2026-09-29</td>
+            <td>T05、T45</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/81">T46 PR #81</a> マージ済み。CI #209成功。GitHub main ruleset「main protection」でPR必須・必須check 2件を設定。Vercel固定Preview（branch <code>codex/mvp-demo-preview</code>）は8変数・generic 0。deployment <code>dpl_Gwq5TPfDV1V5oA59fF23tmmVw9rs</code> がReady、SHA <code>ac7c426…</code>、alias更新済み。Hostedアプリ疎通、SSO実操作、Protection方式、T49 webhook/Cron、Production切替は未検証のためT46全体は未完了</td><td class="updated">2026-09-29</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T47-public-demo-operations-portfolio.md">T47</a></th>
@@ -295,8 +295,8 @@
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T49-deployed-stripe-webhook-validation.md">T49</a></th>
-            <td>公開テスト環境でのStripe Webhook接続・実通知検証</td><td>F7 / W36</td><td>LUNA-A</td>
-            <td>T31、T32、T46</td><td class="status">未実装</td><td class="evidence">Vercel Preview・Supabase Preview・Stripeテストモード。外部設定時に利用者確認</td><td class="updated">2026-09-27</td>
+            <td>ProductionでのStripe Webhook接続・実通知検証</td><td>F7 / W36</td><td>LUNA-A</td>
+            <td>T31、T32、T46</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/95">PR #95</a> / merge <code>436cb18</code>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36532779588">CI #242成功</a>。公開Stripeテスト成功通知で注文paid・在庫5→4、期限切れ通知で引当解放・在庫復帰、無署名POST 400を確認。再送・失敗カード等は未検証のためT49全体は未完了</td><td class="updated">2026-09-29</td>
           </tr>
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T50-isolated-demo-auth.md">T50</a></th>
@@ -307,6 +307,21 @@
             <th scope="row"><a href="../tickets/T51-fictional-demo-checkout.md">T51</a></th>
             <td>架空データだけで進めるデモ購入導線</td><td>MVP</td><td>LUNA-B</td>
             <td>T21、T28、T29、T30、T31、T33、T50</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/72">PR #72</a> / <a href="https://github.com/qtaro-dev/ECsite/commit/c43b761">c43b761</a>; CI・DB統合・ブラウザ試験合格。MVP実装済・Hosted検証待ち。Stripe Checkoutの実画面で残る入力欄と実通知を通した購入結果はT49で確認</td><td class="updated">2026-09-28</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T52-home-category-grid.md">T52</a></th>
+            <td>ホームカテゴリカードの均等幅レイアウト</td><td>M7 / MVP拡張</td><td>LUNA-B</td>
+            <td>T14、T43</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/93">PR #93</a> / merge <code>d026f01</code>; <a href="https://github.com/qtaro-dev/ECsite/actions/runs/36531348503">CI #234成功</a>。Playwrightで320/768/1199/1200/1440/1920pxの配置・横はみ出し、T14 catalog 7/7、typecheck・lint合格。既存design-system spec 3件の失敗はPRで記録</td><td class="updated">2026-09-29</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T53-prebuilt-pc-catalog.md">T53</a></th>
+            <td>構成済みPCの商品・在庫・注文基盤</td><td>MVP拡張</td><td>LUNA-A</td>
+            <td>T09、T11、T15、T21、T26、T28、T29、T30、T31、T35、T49、T51</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T54-prebuilt-pc-storefront.md">T54</a></th>
+            <td>用途別の構成済みPC導線・商品画面</td><td>MVP拡張</td><td>LUNA-B</td>
+            <td>T14、T15、T16、T26、T43、T52、T53</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
           </tr>
         </tbody>
       </table>
