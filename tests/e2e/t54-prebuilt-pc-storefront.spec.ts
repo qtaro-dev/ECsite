@@ -21,9 +21,9 @@ test("home purpose cards open two configured PCs per use case and their detail e
     }
 
     await products.first().getByRole("link", { name: "構成と購入方法を見る" }).click();
-    const productName = await page.getByRole("heading", { level: 1 }).textContent();
     const configuration = page.locator('section[aria-labelledby="spec-title"]');
     await expect(configuration.getByRole("heading", { name: "採用構成" })).toBeVisible();
+    const productName = await page.getByRole("heading", { level: 1 }).textContent();
     for (const part of ["CPU", "GPU（グラフィックボード）", "メモリ", "SSD"]) {
       await expect(configuration.getByText(part, { exact: true })).toBeVisible();
     }
