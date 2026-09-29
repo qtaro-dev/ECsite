@@ -23,6 +23,7 @@
 
 - 初回の手動走査はtracked working treeを対象に、Stripe live key、AWS key、GitHub token、Supabase secret key、PEM private keyのパターンを値を表示せず確認し、該当なし。網羅的スキャンではなく、Gitleaks CLI取得は当時のTLS認証失敗で実行できなかった。
 - CIのQuality gatesへGitleaks CLI v8.30.1のフルGit履歴スキャンを追加した。公式Linux x64 archiveのSHA-256を検証し、`--redact`を指定する。追加のGitHub token/権限を使わない。初回のCI実行結果は未確認であり、過去履歴の誤検知を含めてPR CIで確認する。
+- 初回のCI走査で`generic-api-key`が6件検出された。ログから値を採取せず該当ソースを調べ、保持migration内のVault secret名参照・検証式、T22 SQLの合成Cron secret fixture、Stripeテスト内の合成idempotency fixtureと確認した。実資格情報の埋込みは確認されなかった。`.gitleaksignore`には該当する6 fingerprintだけを登録した。除外根拠はこの段落と対応ファイル・行に限定し、パスやルール全体は除外していない。PR CIの再実行で除外の動作と残りの全履歴を確認する。
 - Productionで`AUTH_BYPASS_ENABLED=true`を拒否するVitestはQuality gatesのunit testで実行される。Stripeクライアントのテスト鍵専用チェックとlive Checkout応答拒否も同じunit testで実行される。
 - T50/T51の匿名会員RLS・管理拒否とT22の30日保持DB統合テストは`.github/workflows/t06-db.yml`に含まれ、対象migration/DB testの変更時にローカルSupabaseで実行される。これらのDBテストは今回再実行していない。
 - Hosted Supabaseのバックアップ保持・復元可能期間は未確認。T22のCron Vault secretも未設定の報告があり、30日削除のHosted実行・本人削除・失敗再試行は未確認。保持要件の合格根拠にしない。
