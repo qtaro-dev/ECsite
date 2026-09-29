@@ -35,21 +35,21 @@
 <body>
   <main>
     <h1>実装チケット進捗一覧</h1>
-    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 54件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
+    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 55件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
     <div class="summary" aria-label="進捗件数">
-      <span>全件 <output id="count-all">54</output></span>
-      <span>未実装 <output id="count-not-started">8</output></span>
+      <span>全件 <output id="count-all">55</output></span>
+      <span>未実装 <output id="count-not-started">7</output></span>
       <span>実装中 <output id="count-active">0</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">34</output></span>
-      <span>保留 <output id="count-blocked">12</output></span>
+      <span>完了 <output id="count-done">35</output></span>
+      <span>保留 <output id="count-blocked">13</output></span>
     </div>
     <div class="controls">
       <label>チケット検索<input id="query" type="search" placeholder="番号・名称・依存"></label>
       <label>担当<select id="owner"><option value="">すべて</option><option>LUNA-A</option><option>LUNA-B</option></select></label>
       <label>状態<select id="state"><option value="">すべて</option><option>未実装</option><option>実装中</option><option>レビュー中</option><option>完了</option><option>保留</option></select></label>
     </div>
-    <div class="table-wrap" role="region" aria-label="54件の実装チケット" tabindex="0">
+    <div class="table-wrap" role="region" aria-label="55件の実装チケット" tabindex="0">
       <table>
         <thead><tr><th scope="col">番号</th><th scope="col">チケット</th><th scope="col">フェーズ / Wave</th><th scope="col">担当</th><th scope="col">依存</th><th scope="col">状態</th><th scope="col">根拠 PR / commit</th><th scope="col">更新日</th></tr></thead>
         <tbody>
@@ -316,12 +316,17 @@
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T53-prebuilt-pc-catalog.md">T53</a></th>
             <td>構成済みPCの商品・在庫・注文基盤</td><td>MVP拡張</td><td>LUNA-A</td>
-            <td>T09、T11、T15、T21、T26、T28、T29、T30、T31、T35、T49、T51</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+            <td>T09、T11、T15、T21、T26、T28、T29、T30、T31、T35、T49、T51</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/97">PR #97</a> マージ済み。Database integration #119・Quality gates #250成功。GitHub ActionsでmigrationとT53 DB/RLS/注文検証済み。Hosted Supabaseへのmigration適用が未実施のため、T53全体は保留</td><td class="updated">2026-09-29</td>
           </tr>
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T54-prebuilt-pc-storefront.md">T54</a></th>
             <td>用途別の構成済みPC導線・商品画面</td><td>MVP拡張</td><td>LUNA-B</td>
             <td>T14、T15、T16、T26、T43、T52、T53</td><td class="status">未実装</td><td class="evidence">—</td><td class="updated">—</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T55-home-layout-alignment.md">T55</a></th>
+            <td>ホーム見出しとカテゴリ欄の幅合わせ</td><td>MVP改善</td><td>LUNA-B</td>
+            <td>T52</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/98">PR #98</a> マージ済み（<code>b6743ee</code>）。CI全成功。指定見出し、カテゴリ欄の幅合わせ、既存の列数とレスポンシブを検証</td><td class="updated">2026-09-29</td>
           </tr>
         </tbody>
       </table>
