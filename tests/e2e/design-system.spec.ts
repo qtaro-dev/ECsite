@@ -7,9 +7,9 @@ test("public shell shows the demo boundary and the required search destinations"
   await expect(page.getByRole("heading", { name: "自作PCパーツECサイト" })).toBeVisible();
   await expect(page.getByText("実際の商品販売・課金・発送は行いません。").first()).toBeVisible();
   await expect(page.getByRole("navigation", { name: "商品カテゴリ・用途・構成" }).locator('a[href^="/categories/"]')).toHaveCount(8);
-  await expect(page.getByRole("link", { name: "ゲーム向け" })).toHaveAttribute("href", "/search?usage=gaming");
-  await expect(page.getByRole("link", { name: "普段使い" })).toHaveAttribute("href", "/search?usage=daily");
-  await expect(page.getByRole("link", { name: "動画編集" })).toHaveAttribute("href", "/search?usage=editing");
+  await expect(page.getByRole("link", { name: /ゲーミングPC/ })).toHaveAttribute("href", "/prebuilt-pc/gaming");
+  await expect(page.getByRole("link", { name: /一般用途向けPC/ })).toHaveAttribute("href", "/prebuilt-pc/daily");
+  await expect(page.getByRole("link", { name: /クリエイターPC/ })).toHaveAttribute("href", "/prebuilt-pc/editing");
   await expect(page.getByRole("link", { name: "ヤマト運輸 料金表（公式・別タブで開く）" })).toHaveAttribute("href", "https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html");
 });
 

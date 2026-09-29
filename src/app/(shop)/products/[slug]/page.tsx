@@ -17,8 +17,13 @@ const labels: Record<string, string> = {
 };
 const categoryNames: Record<string, string> = {
   cpu: "CPU", gpu: "グラフィックボード", motherboard: "マザーボード", memory: "メモリ",
-  ssd: "SSD", "power-supply": "電源ユニット", "pc-case": "PCケース", "cpu-cooler": "CPUクーラー",
+  ssd: "SSD", "power-supply": "電源ユニット", "pc-case": "PCケース", "cpu-cooler": "CPUクーラー", "prebuilt-pc": "構成済みPC",
 };
+const prebuiltPartLabels: Array<[string, string]> = [
+  ["cpu", "CPU"], ["gpu", "GPU（グラフィックボード）"], ["memory", "メモリ"], ["ssd", "SSD"],
+  ["motherboard", "マザーボード"], ["powerSupply", "電源ユニット"], ["pcCase", "PCケース"],
+];
+const prebuiltUseCases: Record<string, string> = { gaming: "ゲーミングPC", daily: "一般用途向けPC", editing: "クリエイターPC" };
 const categorySpecFields: Record<string, string[]> = {
   cpu: ["socket_code", "core_count", "base_clock_mhz", "tdp_w"],
   gpu: ["chipset", "vram_gb", "card_length_mm"],
@@ -41,14 +46,31 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (!product) notFound();
 
   const category = categoryNames[product.category] ?? product.category;
-  const specifications = Object.entries(product.specifications ?? {}).filter(([, value]) => value !== null);
+  const isPrebuilt = product.category === "prebuilt-pc";
+  const specifications = Object.entries(product.specifications ?? {}).filter(([key, value]) =>
+    value !== null && (!isPrebuilt || key !== "components"),
+  );
+  const rawComponents = (product.specifications as Record<string, unknown> | null)?.components;
+  const componentRows = typeof rawComponents === "object" && rawComponents !== null && !Array.isArray(rawComponents)
+    ? prebuiltPartLabels.flatMap(([key, label]) => {
+      const component = (rawComponents as Record<string, unknown>)[key];
+      if (typeof component !== "object" || component === null || Array.isArray(component)) return [];
+      const value = component as Record<string, unknown>;
+      return typeof value.label === "string" && typeof value.details === "string"
+        ? [{ key, label, text: `${value.label} — ${value.details}` }]
+        : [];
+    })
+    : [];
+  const usage = product.useCases.find((item) => Object.hasOwn(prebuiltUseCases, item));
+  const categoryHref = isPrebuilt && usage ? `/prebuilt-pc/${usage}` : `/categories/${product.category}`;
+  const categoryLabel = isPrebuilt && usage ? prebuiltUseCases[usage] : category;
   const missingSpecifications = (categorySpecFields[product.category] ?? [])
     .filter((key) => product.specifications?.[key] == null)
     .map((key) => labels[key] ?? key);
 
   return <main className={styles.main} id="main-content" tabIndex={-1}>
     <nav className={styles.breadcrumb} aria-label="パンくずリスト">
-      <Link href="/">トップ</Link><span aria-hidden="true">/</span><Link href={`/categories/${product.category}`}>{category}</Link>
+      <Link href="/">トップ</Link><span aria-hidden="true">/</span><Link href={categoryHref}>{categoryLabel}</Link>
       <span aria-hidden="true">/</span><span aria-current="page">{product.name}</span>
     </nav>
     <div className={styles.layout}>
@@ -67,8 +89,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <ProductActions productId={product.id} slug={product.slug} availableQuantity={product.availableQuantity} category={product.category} />
       </section>
       <section className={styles.specifications} aria-labelledby="spec-title">
-        <h2 id="spec-title">主な仕様</h2>
+        <h2 id="spec-title">{isPrebuilt ? "採用構成" : "主な仕様"}</h2>
+        {isPrebuilt && componentRows.length > 0 && <dl>{componentRows.map((component) => <div key={component.key}><dt>{component.label}</dt><dd>{component.text}</dd></div>)}</dl>}
         {specifications.length > 0 && <dl>{specifications.map(([key, value]) => <div key={key}><dt>{labels[key] ?? key}</dt><dd>{formatValue(value)}</dd></div>)}</dl>}
+        {isPrebuilt && componentRows.length === 0 && <p>構成情報を表示できません。時間をおいて再度お試しください。</p>}
         {missingSpecifications.length > 0 && <div className={styles.specificationNotice}>
           <p>次の仕様は登録されていません：{missingSpecifications.join("、")}。</p>
           <p>不足した仕様を使う互換性は「判定できません」と表示されます。仕様がそろった商品をお探しの場合は<Link href={`/categories/${product.category}`}>同じカテゴリの商品一覧</Link>をご覧ください。</p>
