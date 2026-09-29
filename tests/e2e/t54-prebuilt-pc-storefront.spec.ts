@@ -11,7 +11,7 @@ test("home purpose cards open two configured PCs per use case and their detail e
     await page.goto("/");
     await page.getByRole("link", { name: new RegExp(useCase.title) }).click();
     await expect(page).toHaveURL(`/prebuilt-pc/${useCase.slug}`);
-    await expect(page.getByRole("heading", { level: 1, name: useCase.title })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: useCase.title, exact: true })).toBeVisible();
 
     const products = page.locator('section[aria-label$="の商品一覧"] > article');
     await expect(products).toHaveCount(2);
@@ -22,7 +22,7 @@ test("home purpose cards open two configured PCs per use case and their detail e
 
     await products.first().getByRole("link", { name: "構成と購入方法を見る" }).click();
     const configuration = page.locator('section[aria-labelledby="spec-title"]');
-    await expect(configuration.getByRole("heading", { name: "採用構成" })).toBeVisible();
+    await expect(configuration.getByRole("heading", { level: 2, name: "採用構成", exact: true })).toBeVisible();
     const productName = await page.getByRole("heading", { level: 1 }).textContent();
     for (const part of ["CPU", "GPU（グラフィックボード）", "メモリ", "SSD"]) {
       await expect(configuration.getByText(part, { exact: true })).toBeVisible();
@@ -30,9 +30,10 @@ test("home purpose cards open two configured PCs per use case and their detail e
     await expect(page.getByRole("link", { name: "構成に追加" })).toHaveCount(0);
     await page.getByRole("link", { name: "この完成PCをカートに入れる" }).click();
     await expect(page).toHaveURL(/\/cart\?productId=.*quantity=1/);
-    await expect(page.getByRole("heading", { name: "カート" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "カート", exact: true })).toBeVisible();
     await expect(page.getByText("商品をカートに追加しました。現在の価格と販売可能数を確認してください。")).toBeVisible();
-    await expect(page.getByText(productName ?? "", { exact: false })).toBeVisible();
+    await expect(page.locator('section[aria-labelledby="cart-items-heading"]')
+      .getByRole("heading", { level: 3, name: productName ?? "", exact: true })).toBeVisible();
   }
 });
 
