@@ -35,21 +35,21 @@
 <body>
   <main>
     <h1>実装チケット進捗一覧</h1>
-    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 56件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
+    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 59件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
     <div class="summary" aria-label="進捗件数">
-      <span>全件 <output id="count-all">56</output></span>
-      <span>未実装 <output id="count-not-started">7</output></span>
-      <span>実装中 <output id="count-active">0</output></span>
+      <span>全件 <output id="count-all">59</output></span>
+      <span>未実装 <output id="count-not-started">6</output></span>
+      <span>実装中 <output id="count-active">1</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">35</output></span>
-      <span>保留 <output id="count-blocked">13</output></span>
+      <span>完了 <output id="count-done">40</output></span>
+      <span>保留 <output id="count-blocked">12</output></span>
     </div>
     <div class="controls">
       <label>チケット検索<input id="query" type="search" placeholder="番号・名称・依存"></label>
       <label>担当<select id="owner"><option value="">すべて</option><option>LUNA-A</option><option>LUNA-B</option></select></label>
       <label>状態<select id="state"><option value="">すべて</option><option>未実装</option><option>実装中</option><option>レビュー中</option><option>完了</option><option>保留</option></select></label>
     </div>
-    <div class="table-wrap" role="region" aria-label="56件の実装チケット" tabindex="0">
+    <div class="table-wrap" role="region" aria-label="59件の実装チケット" tabindex="0">
       <table>
         <thead><tr><th scope="col">番号</th><th scope="col">チケット</th><th scope="col">フェーズ / Wave</th><th scope="col">担当</th><th scope="col">依存</th><th scope="col">状態</th><th scope="col">根拠 PR / commit</th><th scope="col">更新日</th></tr></thead>
         <tbody>
@@ -332,6 +332,21 @@
             <th scope="row"><a href="../tickets/T56-first-admin-setup.md">T56</a></th>
             <td>初回管理者アカウントのサイト内セットアップ</td><td>MVP追加</td><td>LUNA-A</td>
             <td>T06、T10、T17、T20、T36、T44、T50</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/102">PR #102</a> マージ済み（<code>2df5b51</code>）、必須CI成功。Hosted Supabase migration <code>20261001090000</code>適用・履歴確認済み。2026-10-01、所有者提供スクリーンショットで公開サイトの管理者ログインと管理ダッシュボード表示を確認。所有者報告によりVercel Productionの一時<code>ADMIN_SETUP_CODE</code>を削除して再デプロイ済み。公開<code>/admin-setup</code>で初回セットアップが閉じていることを確認</td><td class="updated">2026-10-01</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T57-product-slug-help.md">T57</a></th>
+            <td>商品登録フォームのslug説明</td><td>MVP改善</td><td>LUNA-A</td>
+            <td>T37</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/105">PR #105</a> マージ済み。CI成功</td><td class="updated">2026-10-01</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T58-prebuilt-pc-admin-backend.md">T58</a></th>
+            <td>構成済みPCの管理API・DB保存</td><td>MVP拡張</td><td>LUNA-B</td>
+            <td>T37、T53、T56</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/107">PR #107</a> マージ済み。Quality gates、Catalog UI browser tests、DB integration成功。Hosted Supabase migration <code>20261001120000</code>適用・履歴確認済み</td><td class="updated">2026-10-01</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T59-prebuilt-pc-admin-ui.md">T59</a></th>
+            <td>構成済みPCの管理画面</td><td>MVP拡張</td><td>LUNA-A</td>
+            <td>T58、T57、T56、T37、T38、T53</td><td class="status">実装中</td><td class="evidence">LUNA-A担当で実装開始</td><td class="updated">2026-10-01</td>
           </tr>
         </tbody>
       </table>
