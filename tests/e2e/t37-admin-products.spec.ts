@@ -29,9 +29,12 @@ test('A02 creates a draft, edits it, and remains usable on desktop and mobile', 
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole('link', { name: '新規商品' }).click();
   await expect(page.getByRole('heading', { name: '新規商品' })).toBeVisible();
+  const slugInput = page.getByLabel('商品ページURL（slug）', { exact: true });
+  await expect(slugInput).toHaveAttribute('aria-describedby', 'slug-description');
+  await expect(page.locator('#slug-description')).toContainText('ryzen-7-7700 → /products/ryzen-7-7700');
   const suffix = `${Date.now()}`;
   const slug = `t37-e2e-${suffix}`;
-  await page.getByLabel('slug', { exact: true }).fill(slug);
+  await slugInput.fill(slug);
   await page.getByLabel('SKU', { exact: true }).fill(`T37-${suffix}`);
   await page.getByRole('button', { name: '商品を作成' }).click();
   await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]+$/i);
@@ -93,7 +96,7 @@ test('T48 automatically optimizes uploads and keeps the stored object at or belo
   await page.getByRole('link', { name: '新規商品' }).click();
 
   const suffix = `${Date.now()}`;
-  await page.getByLabel('slug', { exact: true }).fill(`t48-image-${suffix}`);
+  await page.getByLabel('商品ページURL（slug）', { exact: true }).fill(`t48-image-${suffix}`);
   await page.getByLabel('SKU', { exact: true }).fill(`T48-${suffix}`);
   await page.getByRole('button', { name: '商品を作成' }).click();
   await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]+$/i);
