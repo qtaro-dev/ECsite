@@ -43,9 +43,18 @@ export async function getAdminPrebuiltPcs(query = '') {
   if (search) request = request.or(`name.ilike.%${search}%,brand.ilike.%${search}%,slug.ilike.%${search}%,sku.ilike.%${search}%`);
   const { data, error } = await request;
   if (error) throw new Error('Prebuilt PC list unavailable');
+  const ids = (data ?? []).map((row) => row.id);
+  const [specs, refs] = ids.length ? await Promise.all([
+    client.from('prebuilt_pc_specs').select('product_id').in('product_id', ids),
+    client.from('prebuilt_pc_component_parts').select('prebuilt_product_id').in('prebuilt_product_id', ids),
+  ]) : [{ data: [], error: null }, { data: [], error: null }];
+  if (specs.error || refs.error) throw new Error('Prebuilt PC legacy state unavailable');
+  const specified = new Set((specs.data ?? []).map((row) => row.product_id));
+  const selected = new Set((refs.data ?? []).map((row) => row.prebuilt_product_id));
   return AdminPrebuiltPcListSchema.parse((data ?? []).map((row) => ({
     id: row.id, slug: row.slug, sku: row.sku, name: row.name, brand: row.brand,
     priceTaxIncludedYen: row.price_tax_included_yen, status: row.status, version: row.version, updatedAt: row.updated_at,
+    legacyComponents: specified.has(row.id) && !selected.has(row.id),
   })));
 }
 
@@ -86,7 +95,7 @@ export async function saveAdminPrebuiltPc(input: SaveInput) {
   }
   if (fields.status === 'published' && imageRows.length === 0) throw new PrebuiltPcSaveError('BAD_REQUEST', { images: ['公開には少なくとも1枚の商品画像が必要です。'] });
 
-  const { data, error } = await client.rpc('admin_save_prebuilt_pc', {
+  const { data, error } = await client.rpc('admin_save_prebuilt_pc_v2', {
     p_product_id: productId,
     p_expected_version: expectedVersion,
     p_fields: {
@@ -96,7 +105,7 @@ export async function saveAdminPrebuiltPc(input: SaveInput) {
       weight_g: fields.weightG ?? null, pack_length_mm: fields.packLengthMm ?? null,
       pack_width_mm: fields.packWidthMm ?? null, pack_height_mm: fields.packHeightMm ?? null,
     },
-    p_components: fields.components ?? null,
+    p_part_ids: fields.partIds ?? null,
     p_use_cases: fields.useCases,
     p_images: imageRows.map(({ storagePath, altText, sortOrder }) => ({ storage_path: storagePath, alt_text: altText, sort_order: sortOrder })),
     p_actor_id: input.actorId,

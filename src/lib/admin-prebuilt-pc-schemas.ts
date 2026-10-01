@@ -14,6 +14,13 @@ export const PrebuiltPcComponentsSchema = z.object({
   motherboard: component.optional(),
   powerSupply: component.optional(),
   pcCase: component.optional(),
+  cpuCooler: component.optional(),
+}).strict();
+
+export const PrebuiltPcPartIdsSchema = z.object({
+  cpu: z.uuid(), gpu: z.uuid(), memory: z.uuid(), ssd: z.uuid(),
+  motherboard: z.uuid().optional(), powerSupply: z.uuid().optional(),
+  pcCase: z.uuid().optional(), cpuCooler: z.uuid().optional(),
 }).strict();
 
 const PrebuiltPcFields = z.object({
@@ -30,7 +37,7 @@ const PrebuiltPcFields = z.object({
   packWidthMm: z.number().int().positive().max(2_147_483_647).nullable().optional(),
   packHeightMm: z.number().int().positive().max(2_147_483_647).nullable().optional(),
   useCases: z.array(AdminProductUseCaseSchema).max(3).default([]),
-  components: PrebuiltPcComponentsSchema.nullable().optional(),
+  partIds: PrebuiltPcPartIdsSchema.nullable().optional(),
 }).strict();
 
 function validatePublishedFields(value: z.infer<typeof PrebuiltPcFields>, context: z.RefinementCtx) {
@@ -42,7 +49,7 @@ function validatePublishedFields(value: z.infer<typeof PrebuiltPcFields>, contex
     if (!value[field].trim()) context.addIssue({ code: 'custom', path: [field], message: '公開には入力が必要です。' });
   }
   if (value.priceTaxIncludedYen == null) context.addIssue({ code: 'custom', path: ['priceTaxIncludedYen'], message: '公開には税込価格が必要です。' });
-  if (!value.components) context.addIssue({ code: 'custom', path: ['components'], message: '公開にはCPU・GPU・メモリ・SSDの構成が必要です。' });
+  if (!value.partIds) context.addIssue({ code: 'custom', path: ['partIds'], message: '公開にはCPU・グラフィックボード・メモリ・SSDの選択が必要です。' });
   if (value.useCases.length === 0) context.addIssue({ code: 'custom', path: ['useCases'], message: '公開には用途を1つ以上選択してください。' });
   for (const field of ['weightG', 'packLengthMm', 'packWidthMm', 'packHeightMm'] as const) {
     if (value[field] == null) context.addIssue({ code: 'custom', path: [field], message: '公開には梱包情報が必要です。' });
@@ -81,11 +88,12 @@ const AdminPrebuiltPcBaseSchema = z.object({
   weightG: z.number().int().positive().nullable(), packLengthMm: z.number().int().positive().nullable(),
   packWidthMm: z.number().int().positive().nullable(), packHeightMm: z.number().int().positive().nullable(),
   useCases: z.array(AdminProductUseCaseSchema), components: PrebuiltPcComponentsSchema.nullable(),
+  partIds: PrebuiltPcPartIdsSchema.nullable(), legacyComponents: z.boolean(),
   images: z.array(AdminPrebuiltPcImageInputSchema),
 }).strict();
 export const AdminPrebuiltPcListSchema = z.array(AdminPrebuiltPcBaseSchema.pick({
   id: true, version: true, updatedAt: true, slug: true, sku: true, name: true, brand: true,
-  priceTaxIncludedYen: true, status: true,
+  priceTaxIncludedYen: true, status: true, legacyComponents: true,
 })).max(100);
 export const AdminPrebuiltPcDetailSchema = AdminPrebuiltPcBaseSchema;
 

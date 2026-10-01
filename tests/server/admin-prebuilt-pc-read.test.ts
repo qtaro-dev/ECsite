@@ -12,7 +12,7 @@ const components = {
   memory: { label: 'Memory', details: '32 GB' }, ssd: { label: 'SSD', details: '1 TB' },
 };
 
-it('reads the prebuilt PC detail and exposes only its free-text component specification', async () => {
+it('reads a legacy prebuilt PC without part references', async () => {
   from.mockImplementation((table: string) => {
     const single = table === 'products'
       ? { id: productId, slug: 'demo-pc', sku: 'DEMO-PC', name: 'Demo PC', brand: 'Demo', description: 'Description', beginner_note: 'Note',
@@ -30,6 +30,6 @@ it('reads the prebuilt PC detail and exposes only its free-text component specif
   });
 
   await expect(getAdminPrebuiltPc(productId)).resolves.toMatchObject({
-    id: productId, version: 2, useCases: ['gaming'], components, images: [],
+    id: productId, version: 2, useCases: ['gaming'], components, partIds: null, legacyComponents: true, images: [],
   });
 });
