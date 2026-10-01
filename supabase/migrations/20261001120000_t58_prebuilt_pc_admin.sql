@@ -126,22 +126,22 @@ begin
       order by i.sort_order,i.storage_path),'[]'::jsonb) into v_old_images from public.product_images i where i.product_id=p_product_id;
     -- T53 forbids removing a published PC's configuration; move it to draft first inside this transaction.
     update public.products set status='draft' where id=p_product_id;
-    update public.products set slug=p_fields->>'slug',sku=p_fields->>'sku',name=coalesce(p_fields->>'name',''),
+    update public.products as product set slug=p_fields->>'slug',sku=p_fields->>'sku',name=coalesce(p_fields->>'name',''),
       brand=coalesce(p_fields->>'brand',''),description=coalesce(p_fields->>'description',''),
       beginner_note=coalesce(p_fields->>'beginner_note',''),
       price_tax_included_yen=nullif(p_fields->>'price_tax_included_yen','')::integer,
       weight_g=nullif(p_fields->>'weight_g','')::integer,pack_length_mm=nullif(p_fields->>'pack_length_mm','')::integer,
       pack_width_mm=nullif(p_fields->>'pack_width_mm','')::integer,pack_height_mm=nullif(p_fields->>'pack_height_mm','')::integer,
-      version=version+1 where id=p_product_id returning * into v_old;
+      version=product.version+1 where product.id=p_product_id returning product.* into v_old;
   end if;
 
   if v_components is null then
-    delete from public.prebuilt_pc_specs where product_id=v_id;
+    delete from public.prebuilt_pc_specs as spec where spec.product_id=v_id;
   else
     insert into public.prebuilt_pc_specs(product_id,components) values(v_id,v_components)
-      on conflict(product_id) do update set components=excluded.components;
+      on conflict on constraint prebuilt_pc_specs_pkey do update set components=excluded.components;
   end if;
-  delete from public.product_use_cases where product_id=v_id;
+  delete from public.product_use_cases as use_case where use_case.product_id=v_id;
   insert into public.product_use_cases(product_id,use_case)
     select v_id,cases.value from unnest(coalesce(p_use_cases,array[]::text[])) as cases(value);
 
