@@ -2,6 +2,13 @@
 .header { min-height: 64px; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 1px solid #d0d5dd; }
 .header a { color: #172033; font-weight: 700; font-size: 1.125rem; text-decoration: none; }
 .header span { color: #475467; font-size: .875rem; }
+.headerActions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 16px; }
+.adminSession { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.logoutButton { min-height: 44px; padding: 8px 12px; border: 1px solid #98a2b3; border-radius: 6px; background: #fff; color: #172033; font: inherit; cursor: pointer; }
+.logoutButton:hover, .logoutButton:focus-visible { border-color: #155eef; color: #155eef; }
+.logoutButton:focus-visible { outline: 2px solid #155eef; outline-offset: 2px; }
+.logoutButton:disabled { cursor: wait; opacity: .65; }
+.logoutError { margin: 0; color: #b42318; font-size: .875rem; }
 .body { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: calc(100vh - 64px); }
 .nav { padding: 20px 12px; display: flex; flex-direction: column; gap: 4px; background: #fff; border-right: 1px solid #d0d5dd; }
 .nav a { min-height: 44px; display: flex; align-items: center; padding: 8px 12px; border-radius: 6px; color: #344054; text-decoration: none; }
@@ -19,4 +26,4 @@
 .empty { display: block; margin-top: 4px; color: #667085; font-size: .875rem; }
 .audit { margin-top: 28px; color: #667085; font-size: .8125rem; overflow-wrap: anywhere; }
 @media (max-width: 1199px) { .body { grid-template-columns: 190px minmax(0, 1fr); } .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 767px) { .header { padding-inline: 16px; } .body { display: flex; flex-direction: column; } .nav { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid #d0d5dd; padding: 8px; } .nav a { flex: 0 0 auto; } .content { padding: 20px 16px; } .cards { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 767px) { .header { padding-inline: 16px; flex-wrap: wrap; gap: 8px; } .headerActions { flex: 1 1 auto; } .body { display: flex; flex-direction: column; } .nav { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid #d0d5dd; padding: 8px; } .nav a { flex: 0 0 auto; } .content { padding: 20px 16px; } .cards { grid-template-columns: minmax(0, 1fr); } }

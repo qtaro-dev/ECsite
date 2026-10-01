@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { forbidden } from 'next/navigation';
 import { requireAdminAccess } from '@/server/admin/authorization';
 import { AdminNavigation } from './AdminNavigation';
+import { AdminLogoutButton } from './AdminLogoutButton';
 import styles from './admin.module.css';
 
 export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -13,7 +14,10 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
   }
   return (
     <div className={styles.shell}>
-      <header className={styles.header}><Link href="/admin">管理コンソール</Link><span>管理者専用</span></header>
+      <header className={styles.header}>
+        <Link href="/admin">管理コンソール</Link>
+        <div className={styles.headerActions}><span>管理者専用</span><AdminLogoutButton /></div>
+      </header>
       <div className={styles.body}>
         <AdminNavigation />
         <div className={styles.content}>{children}</div>
