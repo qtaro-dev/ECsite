@@ -216,12 +216,15 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
     } finally { setBusy(false); }
   }
 
-  function textInput(name: keyof typeof initialText, label: string, type = 'text') {
+  function textInput(name: keyof typeof initialText, label: string, type = 'text', description?: { id: string; text: string; placeholder?: string }) {
     const errorsForField = fieldErrors(String(name));
+    const errorId = (index: number) => description ? `${String(name)}-error-${index}` : `${String(name)}-error`;
+    const describedBy = [description?.id, ...errorsForField.map((_, index) => errorId(index))].filter(Boolean).join(' ') || undefined;
     return <div className={styles.field} key={String(name)}>
       <label htmlFor={String(name)}>{label}</label>
-      <input id={String(name)} type={type} value={String(fields[name] ?? '')} onChange={(event) => updateField(name, (type === 'number' ? numericInput(event.target.value) : event.target.value) as never)} aria-invalid={errorsForField.length > 0} aria-describedby={errorsForField.length ? `${String(name)}-error` : undefined} />
-      {errorsForField.map((error, index) => <p className={styles.error} id={`${String(name)}-error`} key={`${name}-${index}`}>{error}</p>)}
+      <input id={String(name)} type={type} placeholder={description?.placeholder} value={String(fields[name] ?? '')} onChange={(event) => updateField(name, (type === 'number' ? numericInput(event.target.value) : event.target.value) as never)} aria-invalid={errorsForField.length > 0} aria-describedby={describedBy} />
+      {description && <small id={description.id}>{description.text}</small>}
+      {errorsForField.map((error, index) => <p className={styles.error} id={errorId(index)} key={`${name}-${index}`}>{error}</p>)}
     </div>;
   }
 
@@ -233,7 +236,11 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
           <div className={styles.field}><label htmlFor="category">カテゴリ</label><select id="category" disabled={Boolean(initial)} value={fields.category} onChange={(event) => { updateField('category', event.target.value as AdminProductCategory); setSpecValues({}); }}>
             {categories.map((item) => <option value={item.slug} key={item.slug}>{item.label}</option>)}
           </select>{initial && <small>登録後のカテゴリ変更はできません。</small>}</div>
-          {textInput('slug', 'slug')}{textInput('sku', 'SKU')}{textInput('name', '商品名')}{textInput('brand', 'ブランド')}
+          {textInput('slug', '商品ページURL（slug）', 'text', {
+            id: 'slug-description',
+            placeholder: 'ryzen-7-7700',
+            text: '商品ページURLの末尾に使います（例: ryzen-7-7700 → /products/ryzen-7-7700）。小文字英数字と単語の区切りのハイフンのみ、1～160文字で、他の商品と重複できません。SKU（在庫管理用コード）とは別です。公開後に変更すると既存URLが変わるため、必要な場合は慎重に変更してください。',
+          })}{textInput('sku', 'SKU')}{textInput('name', '商品名')}{textInput('brand', 'ブランド')}
           <div className={styles.field}><label htmlFor="description">商品説明</label><textarea id="description" maxLength={5000} value={fields.description} onChange={(event) => updateField('description', event.target.value)} aria-invalid={fieldErrors('description').length > 0} />{fieldErrors('description').map((error) => <p className={styles.error} key={error}>{error}</p>)}</div>
           <div className={styles.field}><label htmlFor="beginnerNote">初心者向けメモ</label><textarea id="beginnerNote" maxLength={2000} value={fields.beginnerNote} onChange={(event) => updateField('beginnerNote', event.target.value)} aria-invalid={fieldErrors('beginnerNote').length > 0} />{fieldErrors('beginnerNote').map((error) => <p className={styles.error} key={error}>{error}</p>)}</div>
           {textInput('priceTaxIncludedYen', '税込価格（円）', 'number')}
