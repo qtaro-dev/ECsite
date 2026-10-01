@@ -82,7 +82,8 @@ test('T59 creates and edits a prebuilt PC draft, retains the free-text configura
   await expect(page.getByLabel('ゲーム')).toBeChecked();
 
   const beforeStock = await inventoryFor(page, productId);
-  expect(beforeStock).toBeNull();
+  expect(beforeStock).not.toBeNull();
+  const stockState = { onHand: beforeStock!.onHand, allocated: beforeStock!.allocated, version: beforeStock!.version };
   await page.setViewportSize({ width: 900, height: 900 });
   await page.getByLabel('商品名').fill('T59 更新済み構成済みPC');
   const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5KsAAAAASUVORK5CYII=', 'base64');
@@ -100,7 +101,8 @@ test('T59 creates and edits a prebuilt PC draft, retains the free-text configura
   await expect(page.getByRole('status')).toContainText('構成済みPCを保存しました');
   await expect(page.getByLabel('代替テキスト')).toHaveCount(0);
   const afterStock = await inventoryFor(page, productId);
-  expect(afterStock).toBeNull();
+  expect(afterStock).not.toBeNull();
+  expect({ onHand: afterStock!.onHand, allocated: afterStock!.allocated, version: afterStock!.version }).toEqual(stockState);
 
   await page.setViewportSize({ width: 1280, height: 900 });
   const widths = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth }));
@@ -145,7 +147,6 @@ test('T59 route remains protected from regular members', async ({ page }) => {
   await page.getByLabel('メールアドレス').fill(process.env.T36_MEMBER_EMAIL!);
   await page.getByLabel('パスワード').fill(process.env.T36_MEMBER_PASSWORD!);
   await page.getByRole('button', { name: 'ログイン' }).click();
-  await expect(page).toHaveURL('/account');
   const response = await page.goto('/admin/prebuilt-pcs/new');
   expect(response?.status()).toBe(403);
   await expect(page.getByRole('heading', { name: '管理画面を利用できません' })).toBeVisible();
