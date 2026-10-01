@@ -1,8 +1,10 @@
 .main { max-width: 1200px; margin: 0 auto; }
 .heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.headingActions { display: flex; flex-wrap: wrap; gap: 8px; }
 .heading h1 { margin: 0; font-size: 1.75rem; }
 .heading p { margin: 8px 0 0; color: #475467; }
 .primary, .search button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border: 0; border-radius: 6px; background: #155eef; color: #fff; font-weight: 700; text-decoration: none; cursor: pointer; }
+.secondary { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 9px 15px; border: 1px solid #155eef; border-radius: 6px; background: #fff; color: #155eef; font-weight: 700; text-decoration: none; }
 .primary:hover, .search button:hover { background: #004eeb; }
 .search { max-width: 720px; margin-bottom: 20px; padding: 16px; background: #fff; border: 1px solid #d0d5dd; border-radius: 8px; }
 .search label { display: block; margin-bottom: 8px; font-weight: 600; }
@@ -26,7 +28,8 @@
 .audit { margin-top: 20px; font-size: .8125rem; overflow-wrap: anywhere; }
 @media(max-width: 767px) {
   .heading { align-items: flex-start; flex-direction: column; }
-  .primary { width: 100%; }
+  .headingActions { width: 100%; flex-direction: column; }
+  .headingActions > a { width: 100%; }
   .search { padding: 12px; }
   .tableWrap { overflow: visible; background: transparent; border: 0; }
   .tableWrap table, .tableWrap tbody { display: block; }
