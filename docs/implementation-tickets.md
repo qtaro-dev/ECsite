@@ -7,7 +7,7 @@
 **2エージェント担当と進捗** [担当割当・実行計画](multi-agent-execution-plan.md) ／ [実装進捗HTML一覧](implementation-status.html)。個別チケットの依存と内容はこの索引およびチケット本体を正とする。
 
 **公開MVP**：[完成ライン・分類・優先順](mvp-release-plan.md)。2026-09-27以降は利用者のMVP優先指示を適用し、公開後に回すチケットを完了扱いにしない。
-**追加チケット**：T50/T51は利用者が承認した、閲覧者ごとに分離された架空データのデモ購入体験。T52–T55のMVP改善とT56の初回管理者セットアップを加え、計56件とする。
+**追加チケット**：T50/T51は利用者が承認した、閲覧者ごとに分離された架空データのデモ購入体験。T52–T55のMVP改善、T56の初回管理者セットアップ、T57の商品slugヘルプ、T58/T59の構成済みPC管理を加え、計59件とする。
 
 ## 個別チケット索引（推奨実装順）
 
@@ -65,6 +65,9 @@
 | 48 | [T49 公開テスト環境でのStripe Webhook接続・実通知検証](../tickets/T49-deployed-stripe-webhook-validation.md) | T31、T32、T46 | ORD-07、ORD-08、INV-02、INV-03、SEC-01、QLT-01、USR-STRIPE-01 |
 | 49 | [T47 公開・運用・ポートフォリオ説明](../tickets/T47-public-demo-operations-portfolio.md) | T22、T42、T43、T44、T45、T46、T49 | QLT-01、DEM-01、ACC-09、ORD-07、SEC-01 |
 | 50 | [T56 初回管理者アカウントのサイト内セットアップ](../tickets/T56-first-admin-setup.md) | T06、T10、T17、T20、T36、T44、T50 | ACC-01、ADM-01、SEC-01、SEC-02、QLT-01 |
+| 51 | [T57 商品slug入力ヘルプ](../tickets/T57-product-slug-help.md) | T37 | CAT-04、QLT-01 |
+| 52 | [T58 構成済みPCの管理API・DB保存](../tickets/T58-prebuilt-pc-admin-backend.md) | T37、T53、T56、T38 | CAT-04、CAT-05、SEC-01、QLT-01 |
+| 53 | [T59 構成済みPCの管理画面](../tickets/T59-prebuilt-pc-admin-ui.md) | T58、T57、T56、T37、T38、T53 | CAT-04、CAT-05、SEC-01、QLT-01 |
 
 ## チケット概要（番号順）
 
@@ -456,3 +459,15 @@
 - **目的**：サイト所有者が公開ECから初回管理者アカウントを作成できるようにする。
 - **範囲・依存**：T06/T10/T17/T20/T36/T44/T50後。初回専用セットアップ、管理者ログイン、権限付与の競合・監査・ロールバック、セットアップコード運用手順。
 - **進捗**：実装PR #102はmainへマージ済み、必須CI成功。公開Hosted Supabaseへのmigration適用、Vercel Productionへの一時コード設定、所有者本人による初回作成とログイン確認が残るため、公開設定待ち・未完了。
+
+### [T57 商品登録フォームのslug説明](../tickets/T57-product-slug-help.md)
+- **目的・範囲**：商品登録/編集画面のslug説明、入力例、アクセシブルな補助文を追加する。
+- **依存・受け入れ**：T37後。実バリデーション・URL仕様に合う説明を表示し、既存入力を維持する。
+
+### [T58 構成済みPCの管理API・DB保存](../tickets/T58-prebuilt-pc-admin-backend.md)
+- **目的・範囲**：自由入力の構成情報を、専用Zod/API/サーバー処理/service-role RPCで商品・用途と原子的に保存する。
+- **依存・受け入れ**：T37/T53/T56後。公開条件、監査、権限、既存注文スナップショットを保ち、構成パーツや在庫とSKU連携しない。
+
+### [T59 構成済みPCの管理画面](../tickets/T59-prebuilt-pc-admin-ui.md)
+- **目的・範囲**：完成PC独立SKUの商品項目、用途、採用パーツ名/仕様を管理する専用フォームを用意する。
+- **依存・受け入れ**：T58/T57/T56/T37/T38/T53後。作成/編集/公開検証を操作でき、在庫は既存T38経路で独立管理する。
