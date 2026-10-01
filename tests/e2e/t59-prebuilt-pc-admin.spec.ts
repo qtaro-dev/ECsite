@@ -54,9 +54,27 @@ test('T59 creates and edits a prebuilt PC draft, retains the free-text configura
   expect(mobileWidths.document).toBeLessThanOrEqual(mobileWidths.viewport);
   const mobileSubmit = await page.getByRole('button', { name: '構成済みPCを作成' }).boundingBox();
   expect(mobileSubmit?.height).toBeGreaterThanOrEqual(44);
+  // Chromium CSS zoom emulates the 640-device-pixel / 200% reflow target.
+  await page.setViewportSize({ width: 640, height: 900 });
+  const zoomed = await page.evaluate(() => {
+    document.documentElement.style.zoom = '200%';
+    const controls = [...document.querySelectorAll<HTMLElement>('input:not([type="checkbox"]), select, textarea, button, .uses label')]
+      .filter((control) => control.getBoundingClientRect().width > 0);
+    return {
+      zoom: getComputedStyle(document.documentElement).zoom,
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      controlsAtLeast44px: controls.every((control) => control.getBoundingClientRect().height >= 44),
+    };
+  });
+  expect(zoomed.zoom).toBe('2');
+  expect(zoomed.documentWidth).toBeLessThanOrEqual(zoomed.viewportWidth);
+  expect(zoomed.controlsAtLeast44px).toBe(true);
+  await page.evaluate(() => { document.documentElement.style.zoom = ''; });
+  await page.setViewportSize({ width: 320, height: 812 });
   await page.getByRole('button', { name: '構成済みPCを作成' }).focus();
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/admin\/prebuilt-pcs\/[0-9a-f-]+$/i);
+  await expect(page).toHaveURL(/\/admin\/prebuilt-pcs\/[0-9a-f-]+(?:\?saved=1)?$/i);
   await expect(page.getByRole('status')).toContainText('構成済みPCを保存しました');
   const productId = page.url().split('/').at(-1)!;
   await expect(page.locator('#cpu-label')).toHaveValue('Ryzen 7 Test');
@@ -101,12 +119,14 @@ test('T59 maps publish requirements and stale-save conflicts without discarding 
   await page.getByLabel('公開状態').selectOption('published');
   await page.getByRole('button', { name: '構成済みPCを作成' }).click();
   await expect(page.getByText('公開には入力が必要です。').first()).toBeVisible();
-  await expect(page.getByText('公開にはCPU・GPU・メモリ・SSDの構成が必要です。')).toBeVisible();
+  const missingComponents = page.getByRole('alert').filter({ hasText: '公開にはCPU・GPU・メモリ・SSDの構成が必要です。' });
+  await expect(missingComponents).toBeVisible();
+  await expect(page.locator('section[aria-labelledby="components-title"]')).toHaveAttribute('aria-describedby', /components-schema-error/);
 
   await page.getByLabel('公開状態').selectOption('draft');
   await page.getByLabel('商品名').fill('T59 conflict fixture');
   await page.getByRole('button', { name: '構成済みPCを作成' }).click();
-  await expect(page).toHaveURL(/\/admin\/prebuilt-pcs\/[0-9a-f-]+$/i);
+  await expect(page).toHaveURL(/\/admin\/prebuilt-pcs\/[0-9a-f-]+(?:\?saved=1)?$/i);
   await page.getByLabel('商品名').fill('入力保持を確認する名前');
   await page.route('**/api/admin/prebuilt-pcs', async (route) => {
     if (route.request().method() === 'PATCH') {
@@ -124,10 +144,10 @@ test('T59 route remains protected from regular members', async ({ page }) => {
   await page.goto(`/login?next=${encodeURIComponent('/admin/prebuilt-pcs/new')}`);
   await page.getByLabel('メールアドレス').fill(process.env.T36_MEMBER_EMAIL!);
   await page.getByLabel('パスワード').fill(process.env.T36_MEMBER_PASSWORD!);
-  const responsePromise = page.waitForResponse((item) => item.url().includes('/admin/prebuilt-pcs/new') && item.request().resourceType() === 'document');
   await page.getByRole('button', { name: 'ログイン' }).click();
-  const response = await responsePromise;
-  expect(response.status()).toBe(403);
+  await expect(page).toHaveURL('/account');
+  const response = await page.goto('/admin/prebuilt-pcs/new');
+  expect(response?.status()).toBe(403);
   await expect(page.getByRole('heading', { name: '管理画面を利用できません' })).toBeVisible();
   const api = await page.request.get('/api/admin/prebuilt-pcs');
   expect(api.status()).toBe(403);

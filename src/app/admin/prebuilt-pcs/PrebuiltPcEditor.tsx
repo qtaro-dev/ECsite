@@ -11,7 +11,7 @@ type Part = { label: string; details: string };
 type PartKey = 'cpu' | 'gpu' | 'memory' | 'ssd' | 'motherboard' | 'powerSupply' | 'pcCase';
 type Image = { storagePath: string; altText: string; sortOrder: number };
 type Detail = z.infer<typeof AdminPrebuiltPcDetailSchema>;
-type Props = { initial?: Detail };
+type Props = { initial?: Detail; initialMessage?: string };
 type Fields = {
   slug: string; sku: string; name: string; brand: string; description: string; beginnerNote: string;
   priceTaxIncludedYen: string; status: Detail['status']; weightG: string; packLengthMm: string; packWidthMm: string; packHeightMm: string;
@@ -34,7 +34,7 @@ function initialValues(initial?: Detail): Fields {
   };
 }
 
-export default function PrebuiltPcEditor({ initial }: Props) {
+export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
   const router = useRouter();
   const imageInput = useRef<HTMLInputElement>(null);
   const [fields, setFields] = useState(() => initialValues(initial));
@@ -47,7 +47,7 @@ export default function PrebuiltPcEditor({ initial }: Props) {
   const [imageAltText, setImageAltText] = useState(`${initial?.name || initial?.sku || '構成済みPC'}の商品画像`);
   const [imageError, setImageError] = useState('');
   const [errors, setErrors] = useState<Record<string, string[]>>({});
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialMessage ?? '');
   const [busy, setBusy] = useState(false);
 
   const fieldErrors = (name: string) => errors[name] ?? [];
@@ -126,7 +126,8 @@ export default function PrebuiltPcEditor({ initial }: Props) {
       setMessage(result.data.cleanupPending
         ? '構成済みPCを保存しました。置換した画像の後片付けが保留中です。管理者へ連絡してください。'
         : '構成済みPCを保存しました。');
-      if (!initial) router.replace(`/admin/prebuilt-pcs/${result.data.productId}`); else router.refresh();
+      if (!initial) router.replace(`/admin/prebuilt-pcs/${result.data.productId}?saved=1`);
+      else { router.replace(`/admin/prebuilt-pcs/${initial.id}`, { scroll: false }); router.refresh(); }
     } catch { setMessage('通信できませんでした。入力内容はこの画面に保持しています。'); }
     finally { setBusy(false); }
   }
@@ -171,9 +172,9 @@ export default function PrebuiltPcEditor({ initial }: Props) {
         </div>
       </section>
 
-      <section className={styles.section} aria-labelledby="components-title">
+      <section className={styles.section} aria-labelledby="components-title" aria-describedby={['components-help', fieldErrors('components').length ? 'components-schema-error' : undefined].filter(Boolean).join(' ')}>
         <h2 id="components-title">採用パーツの構成</h2>
-        <p className={styles.help}>パーツ名と詳細を自由入力します。単品パーツSKU・在庫とは連動しません。公開時はCPU・GPU・メモリ・SSDの名前と詳細が必要です。すべて空欄なら構成なしの下書きとして保存できます。</p>
+        <p id="components-help" className={styles.help}>パーツ名と詳細を自由入力します。単品パーツSKU・在庫とは連動しません。公開時はCPU・GPU・メモリ・SSDの名前と詳細が必要です。すべて空欄なら構成なしの下書きとして保存できます。</p>
         <div className={styles.componentGrid}>
           {partKeys.map((key) => {
             const labelErrors = fieldErrors(`components.${key}.label`); const detailErrors = fieldErrors(`components.${key}.details`);
@@ -194,7 +195,7 @@ export default function PrebuiltPcEditor({ initial }: Props) {
             </fieldset>;
           })}
         </div>
-        {fieldErrors('components').map((error, index) => <p className={styles.error} key={index}>{error}</p>)}
+        {fieldErrors('components').map((error, index) => <p id="components-schema-error" className={styles.error} role="alert" key={index}>{error}</p>)}
       </section>
 
       <section className={styles.section} aria-labelledby="usage-title">
