@@ -8,7 +8,9 @@ import { ADMIN_PRODUCT_IMAGE_MAX_BYTES, ADMIN_PRODUCT_IMAGE_MAX_PIXELS, ADMIN_PR
 import styles from './prebuilt-pc-editor.module.css';
 
 type Part = { label: string; details: string };
-type PartKey = 'cpu' | 'gpu' | 'memory' | 'ssd' | 'motherboard' | 'powerSupply' | 'pcCase';
+type PartKey = 'cpu' | 'gpu' | 'memory' | 'ssd' | 'motherboard' | 'powerSupply' | 'pcCase' | 'cpuCooler';
+type Candidate = { id: string; name: string; brand: string; sku: string; details: string };
+type CandidatePage = { items: Candidate[]; page: number; hasMore: boolean };
 type Image = { storagePath: string; altText: string; sortOrder: number };
 type Detail = z.infer<typeof AdminPrebuiltPcDetailSchema>;
 type Props = { initial?: Detail; initialMessage?: string };
@@ -17,8 +19,8 @@ type Fields = {
   priceTaxIncludedYen: string; status: Detail['status']; weightG: string; packLengthMm: string; packWidthMm: string; packHeightMm: string;
 };
 
-const partKeys: PartKey[] = ['cpu', 'gpu', 'memory', 'ssd', 'motherboard', 'powerSupply', 'pcCase'];
-const partLabels: Record<PartKey, string> = { cpu: 'CPU', gpu: 'グラフィックボード', memory: 'メモリ', ssd: 'SSD', motherboard: 'マザーボード', powerSupply: '電源', pcCase: 'PCケース' };
+const partKeys: PartKey[] = ['cpu', 'gpu', 'memory', 'ssd', 'motherboard', 'powerSupply', 'pcCase', 'cpuCooler'];
+const partLabels: Record<PartKey, string> = { cpu: 'CPU', gpu: 'グラフィックボード', memory: 'メモリ', ssd: 'SSD', motherboard: 'マザーボード', powerSupply: '電源', pcCase: 'PCケース', cpuCooler: 'CPUクーラー' };
 const usageOptions = [['gaming', 'ゲーム'], ['daily', '普段使い'], ['editing', '動画編集']] as const;
 const requiredParts = new Set<PartKey>(['cpu', 'gpu', 'memory', 'ssd']);
 const numericKeys = ['priceTaxIncludedYen', 'weightG', 'packLengthMm', 'packWidthMm', 'packHeightMm'] as const;
@@ -40,6 +42,11 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
   const [fields, setFields] = useState(() => initialValues(initial));
   const [version, setVersion] = useState(initial?.version ?? 0);
   const [parts, setParts] = useState<Record<PartKey, Part>>(() => Object.fromEntries(partKeys.map((key) => [key, initial?.components?.[key] ?? blankPart()])) as Record<PartKey, Part>);
+  const [partIds, setPartIds] = useState<Record<PartKey, string>>(() => Object.fromEntries(partKeys.map((key) => [key, initial?.partIds?.[key] ?? ''])) as Record<PartKey, string>);
+  const [searches, setSearches] = useState<Record<PartKey, string>>(() => Object.fromEntries(partKeys.map((key) => [key, ''])) as Record<PartKey, string>);
+  const [candidatePages, setCandidatePages] = useState<Partial<Record<PartKey, CandidatePage>>>({});
+  const [candidateErrors, setCandidateErrors] = useState<Partial<Record<PartKey, string>>>({});
+  const [searching, setSearching] = useState<PartKey | null>(null);
   const [selectedUseCases, setSelectedUseCases] = useState<Detail['useCases']>(initial?.useCases ?? []);
   const [images, setImages] = useState<Image[]>(initial?.images ?? []);
   const [removedImages, setRemovedImages] = useState<string[]>([]);
@@ -54,7 +61,27 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
   const imageErrors = [...fieldErrors('images'), ...fieldErrors('image')];
   const imageErrorIds = imageErrors.map((_, index) => `prebuilt-image-server-error-${index}`);
   function changeField(name: keyof Fields, value: string) { setFields((current) => ({ ...current, [name]: value })); }
-  function changePart(key: PartKey, prop: keyof Part, value: string) { setParts((current) => ({ ...current, [key]: { ...current[key], [prop]: value } })); }
+  async function searchParts(key: PartKey, page = 0) {
+    setSearching(key); setCandidateErrors((current) => ({ ...current, [key]: '' }));
+    try {
+      const params = new URLSearchParams({ slot: key, q: searches[key], page: String(page) });
+      const response = await fetch(`/api/admin/prebuilt-parts?${params}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error('candidate request failed');
+      const body = await response.json() as { data?: CandidatePage };
+      if (!body.data) throw new Error('candidate response missing');
+      setCandidatePages((current) => ({ ...current, [key]: body.data }));
+    } catch { setCandidateErrors((current) => ({ ...current, [key]: '候補を読み込めませんでした。再度検索してください。' })); }
+    finally { setSearching(null); }
+  }
+  function selectPart(key: PartKey, candidate: Candidate) {
+    setPartIds((current) => ({ ...current, [key]: candidate.id }));
+    setParts((current) => ({ ...current, [key]: { label: candidate.name, details: candidate.details } }));
+    setCandidatePages((current) => ({ ...current, [key]: undefined }));
+  }
+  function clearPart(key: PartKey) {
+    setPartIds((current) => ({ ...current, [key]: '' }));
+    setParts((current) => ({ ...current, [key]: blankPart() }));
+  }
 
   async function chooseImage(file?: File) {
     setImageFile(null); setImageError('');
@@ -76,14 +103,12 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
   }
 
   function buildPayloadFields() {
-    const hasAnyPart = partKeys.some((key) => parts[key].label.trim() || parts[key].details.trim());
-    const components = hasAnyPart ? Object.fromEntries(partKeys
-      .filter((key) => requiredParts.has(key) || parts[key].label.trim() || parts[key].details.trim())
-      .map((key) => [key, parts[key]])) : null;
+    const selected = Object.fromEntries(partKeys.filter((key) => partIds[key]).map((key) => [key, partIds[key]]));
+    const selectedParts = Object.keys(selected).length ? selected : null;
     const numbers = Object.fromEntries(numericKeys.map((key) => [key, fields[key] === '' ? null : Number(fields[key])]));
     return {
       slug: fields.slug, sku: fields.sku, name: fields.name, brand: fields.brand, description: fields.description,
-      beginnerNote: fields.beginnerNote, ...numbers, status: fields.status, useCases: selectedUseCases, components,
+      beginnerNote: fields.beginnerNote, ...numbers, status: fields.status, useCases: selectedUseCases, partIds: selectedParts,
       ...(initial ? { expectedVersion: version } : {}),
     };
   }
@@ -172,30 +197,43 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
         </div>
       </section>
 
-      <section className={styles.section} aria-labelledby="components-title" aria-describedby={['components-help', fieldErrors('components').length ? 'components-schema-error' : undefined].filter(Boolean).join(' ')}>
+      <section className={styles.section} aria-labelledby="components-title" aria-describedby={['components-help', fieldErrors('partIds').length ? 'components-schema-error' : undefined].filter(Boolean).join(' ')}>
         <h2 id="components-title">採用パーツの構成</h2>
-        <p id="components-help" className={styles.help}>パーツ名と詳細を自由入力します。単品パーツSKU・在庫とは連動しません。公開時はCPU・グラフィックボード・メモリ・SSDの名前と詳細が必要です。すべて空欄なら構成なしの下書きとして保存できます。</p>
+        <p id="components-help" className={styles.help}>登録済みの単品パーツから選択します。完成PCの価格と在庫は独立しており、単品パーツの在庫は減りません。公開時はCPU・グラフィックボード・メモリ・SSDが必要です。</p>
+        {initial?.legacyComponents && <p className={styles.help} role="status">このPCは旧方式の構成です。現在の表示・購入は維持されます。変更を保存するには採用パーツを選び直してください。</p>}
         <div className={styles.componentGrid}>
           {partKeys.map((key) => {
-            const labelErrors = fieldErrors(`components.${key}.label`); const detailErrors = fieldErrors(`components.${key}.details`);
-            const labelErrorIds = labelErrors.map((_, index) => `${key}-label-error-${index}`);
-            const detailErrorIds = detailErrors.map((_, index) => `${key}-details-error-${index}`);
+            const slotErrors = fieldErrors(`partIds.${key}`);
+            const candidates = candidatePages[key];
             return <fieldset className={styles.component} key={key}>
               <legend>{partLabels[key]}{requiredParts.has(key) ? '（必須）' : '（任意）'}</legend>
-              <div className={styles.field}><label htmlFor={`${key}-label`}>パーツ名</label>
-                <input id={`${key}-label`} maxLength={120} value={parts[key].label} onChange={(event) => changePart(key, 'label', event.target.value)}
-                  aria-invalid={labelErrors.length > 0} aria-describedby={labelErrorIds.length ? labelErrorIds.join(' ') : undefined} />
-                {labelErrors.map((error, index) => <p className={styles.error} id={labelErrorIds[index]} key={index}>{error}</p>)}
+              {partIds[key] ? <div><p>選択済み: <strong>{parts[key].label}</strong></p><p>{parts[key].details}</p>
+                <button type="button" onClick={() => clearPart(key)}>選択を解除</button></div>
+                : initial?.legacyComponents && parts[key].label ? <p>旧構成: {parts[key].label} · {parts[key].details}</p> : <p>未選択</p>}
+              <div className={styles.field}>
+                <label htmlFor={`${key}-search`}>{partLabels[key]}の商品名・ブランド・SKUを検索</label>
+                <input id={`${key}-search`} type="search" maxLength={100} value={searches[key]}
+                  onChange={(event) => setSearches((current) => ({ ...current, [key]: event.target.value }))}
+                  aria-describedby={slotErrors.length ? `${key}-selection-error` : undefined} />
+                <button type="button" disabled={searching === key} onClick={() => void searchParts(key)}>{searching === key ? '検索中…' : '候補を検索'}</button>
+                {candidateErrors[key] && <p className={styles.error} role="alert">{candidateErrors[key]}</p>}
+                {slotErrors.map((error, index) => <p id={`${key}-selection-error`} className={styles.error} key={index}>{error}</p>)}
               </div>
-              <div className={styles.field}><label htmlFor={`${key}-details`}>詳細・仕様</label>
-                <textarea id={`${key}-details`} maxLength={300} value={parts[key].details} onChange={(event) => changePart(key, 'details', event.target.value)}
-                  aria-invalid={detailErrors.length > 0} aria-describedby={detailErrorIds.length ? detailErrorIds.join(' ') : undefined} />
-                {detailErrors.map((error, index) => <p className={styles.error} id={detailErrorIds[index]} key={index}>{error}</p>)}
-              </div>
+              {candidates && <div aria-live="polite">
+                {candidates.items.length === 0 && <p>該当する登録済み商品がありません。検索語を変えてください。</p>}
+                <ul>{candidates.items.map((candidate) => <li key={candidate.id}>
+                  <span>{candidate.name} · {candidate.details}</span>{' '}
+                  <button type="button" onClick={() => selectPart(key, candidate)}>{candidate.name}を選択</button>
+                </li>)}</ul>
+                <div className={styles.actions}>
+                  {candidates.page > 0 && <button type="button" onClick={() => void searchParts(key, candidates.page - 1)}>前の候補</button>}
+                  {candidates.hasMore && <button type="button" onClick={() => void searchParts(key, candidates.page + 1)}>次の候補</button>}
+                </div>
+              </div>}
             </fieldset>;
           })}
         </div>
-        {fieldErrors('components').map((error, index) => <p id="components-schema-error" className={styles.error} role="alert" key={index}>{error}</p>)}
+        {fieldErrors('partIds').map((error, index) => <p id="components-schema-error" className={styles.error} role="alert" key={index}>{error}</p>)}
       </section>
 
       <section className={styles.section} aria-labelledby="usage-title">

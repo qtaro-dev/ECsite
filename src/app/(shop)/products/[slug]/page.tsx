@@ -4,6 +4,7 @@ import { ProductActions } from "./ProductActions";
 import { ProductImage } from "./ProductImage";
 import styles from "./page.module.css";
 import { getPublishedProductDetail } from "@/server/catalog/product-detail";
+import { getPublishedPrebuiltPartLinks } from "@/server/catalog/prebuilt-part-links";
 import { productImageUrl } from "@/lib/product-image-url";
 
 const labels: Record<string, string> = {
@@ -21,7 +22,7 @@ const categoryNames: Record<string, string> = {
 };
 const prebuiltPartLabels: Array<[string, string]> = [
   ["cpu", "CPU"], ["gpu", "グラフィックボード"], ["memory", "メモリ"], ["ssd", "SSD"],
-  ["motherboard", "マザーボード"], ["powerSupply", "電源ユニット"], ["pcCase", "PCケース"],
+  ["motherboard", "マザーボード"], ["powerSupply", "電源ユニット"], ["pcCase", "PCケース"], ["cpuCooler", "CPUクーラー"],
 ];
 const prebuiltUseCases: Record<string, string> = { gaming: "ゲーミングPC", daily: "一般用途向けPC", editing: "クリエイターPC" };
 const categorySpecFields: Record<string, string[]> = {
@@ -47,6 +48,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   const category = categoryNames[product.category] ?? product.category;
   const isPrebuilt = product.category === "prebuilt-pc";
+  const partLinks = isPrebuilt ? await getPublishedPrebuiltPartLinks(product.id) : {};
   const specifications = Object.entries(product.specifications ?? {}).filter(([key, value]) =>
     value !== null && (!isPrebuilt || key !== "components"),
   );
@@ -90,7 +92,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
       <section className={styles.specifications} aria-labelledby="spec-title">
         <h2 id="spec-title">{isPrebuilt ? "採用構成" : "主な仕様"}</h2>
-        {isPrebuilt && componentRows.length > 0 && <dl>{componentRows.map((component) => <div key={component.key}><dt>{component.label}</dt><dd>{component.text}</dd></div>)}</dl>}
+        {isPrebuilt && componentRows.length > 0 && <dl>{componentRows.map((component) => <div key={component.key}><dt>{component.label}</dt><dd>{component.text}{partLinks[component.key] && <> <Link href={`/products/${partLinks[component.key]}`}>単品商品を見る</Link></>}</dd></div>)}</dl>}
         {specifications.length > 0 && <dl>{specifications.map(([key, value]) => <div key={key}><dt>{labels[key] ?? key}</dt><dd>{formatValue(value)}</dd></div>)}</dl>}
         {isPrebuilt && componentRows.length === 0 && <p>構成情報を表示できません。時間をおいて再度お試しください。</p>}
         {missingSpecifications.length > 0 && <div className={styles.specificationNotice}>

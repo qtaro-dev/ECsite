@@ -22,7 +22,7 @@ async function inventoryFor(page: Page, productId: string) {
   return null;
 }
 
-test('T59 creates and edits a prebuilt PC draft, retains the free-text configuration, and leaves stock unchanged', async ({ page }) => {
+test('T61 creates and edits a prebuilt PC draft with registered parts, and leaves stock unchanged', async ({ page }) => {
   test.skip(!process.env.T36_ADMIN_EMAIL || !process.env.T36_ADMIN_PASSWORD,
     'T36_ADMIN_EMAIL and T36_ADMIN_PASSWORD must identify a locally provisioned admin account');
   await signInAsAdmin(page);
@@ -40,14 +40,15 @@ test('T59 creates and edits a prebuilt PC draft, retains the free-text configura
   await page.getByLabel('商品名').fill('T59 テスト構成済みPC');
   await page.getByLabel('ブランド').fill('T59 Labs');
   const componentData = [
-    ['CPU', 'Ryzen 7 Test', '8コア / テスト用'], ['グラフィックボード', 'Radeon Test', '16GB / テスト用'],
-    ['メモリ', 'DDR5 Test', '32GB / 2枚'], ['SSD', 'NVMe Test', '1TB / Gen4'],
-    ['マザーボード', 'Test Board', 'ATX / AM5'],
+    ['CPU', 'T11-CPU-AM5'], ['グラフィックボード', 'T11-GPU-300'],
+    ['メモリ', 'T11-MEM-DDR5'], ['SSD', 'T11-SSD'],
+    ['マザーボード', 'T11-MB-ATX'], ['CPUクーラー', 'T11-COOLER-AM5'],
   ] as const;
-  for (const [label, part, details] of componentData) {
+  for (const [label, sku] of componentData) {
     const group = page.locator('fieldset').filter({ has: page.getByText(new RegExp(`^${label}`)) }).first();
-    await group.getByLabel('パーツ名').fill(part);
-    await group.getByLabel('詳細・仕様').fill(details);
+    await group.getByLabel(`${label}の商品名・ブランド・SKUを検索`).fill(sku);
+    await group.getByRole('button', { name: '候補を検索' }).click();
+    await group.getByRole('button', { name: /を選択$/ }).first().click();
   }
   await page.getByLabel('ゲーム').check();
   await page.getByLabel('動画編集').check();
@@ -78,8 +79,8 @@ test('T59 creates and edits a prebuilt PC draft, retains the free-text configura
   await expect(page).toHaveURL(/\/admin\/prebuilt-pcs\/[0-9a-f-]+(?:\?saved=1)?$/i);
   await expect(page.getByRole('status')).toContainText('構成済みPCを保存しました');
   const productId = new URL(page.url()).pathname.split('/').at(-1)!;
-  await expect(page.locator('#cpu-label')).toHaveValue('Ryzen 7 Test');
-  await expect(page.locator('#motherboard-label')).toHaveValue('Test Board');
+  await expect(page.getByText('選択済み:')).toHaveCount(6);
+  await expect(page.getByText('T11 Test CPU AM5')).toBeVisible();
   await expect(page.getByLabel('ゲーム')).toBeChecked();
 
   const beforeStock = await inventoryFor(page, productId);
@@ -123,7 +124,7 @@ test('T59 maps publish requirements and stale-save conflicts without discarding 
   await page.getByLabel('公開状態').selectOption('published');
   await page.getByRole('button', { name: '構成済みPCを作成' }).click();
   await expect(page.getByText('公開には入力が必要です。').first()).toBeVisible();
-  const missingComponents = page.getByRole('alert').filter({ hasText: '公開にはCPU・グラフィックボード・メモリ・SSDの構成が必要です。' });
+  const missingComponents = page.getByRole('alert').filter({ hasText: '公開にはCPU・グラフィックボード・メモリ・SSDの選択が必要です。' });
   await expect(missingComponents).toBeVisible();
   await expect(page.locator('section[aria-labelledby="components-title"]')).toHaveAttribute('aria-describedby', /components-schema-error/);
 
@@ -156,4 +157,21 @@ test('T59 route remains protected from regular members', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '管理画面を利用できません' })).toBeVisible();
   const api = await page.request.get('/api/admin/prebuilt-pcs');
   expect(api.status()).toBe(403);
+});
+
+test('T61 keeps a legacy published PC visible and requires part reselection before editing', async ({ page }) => {
+  test.skip(!process.env.T36_ADMIN_EMAIL || !process.env.T36_ADMIN_PASSWORD,
+    'T36_ADMIN_EMAIL and T36_ADMIN_PASSWORD must identify a locally provisioned admin account');
+  await signInAsAdmin(page);
+  await page.getByLabel('商品名・ブランド・SKU・slug').fill('demo-gaming-pc-01');
+  await page.getByRole('button', { name: '検索' }).click();
+  const row = page.getByRole('row').filter({ hasText: 'demo-gaming-pc-01' });
+  await expect(row).toContainText('旧構成・パーツ未選択');
+  await row.getByRole('link', { name: '編集' }).click();
+  await expect(page.getByText('このPCは旧方式の構成です。')).toBeVisible();
+  await expect(page.getByText(/旧構成: Demo CPU G1/)).toBeVisible();
+  await page.getByLabel('商品名').fill('保存できない変更');
+  await page.getByLabel('公開状態').selectOption('draft');
+  await page.getByRole('button', { name: '変更を保存' }).click();
+  await expect(page.getByRole('alert')).toContainText('採用パーツを選び直してから保存してください');
 });

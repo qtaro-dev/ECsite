@@ -18,6 +18,18 @@ export class PrebuiltPcSaveError extends Error {
   constructor(readonly code: 'BAD_REQUEST' | 'FORBIDDEN' | 'CONFLICT' | 'NOT_FOUND' | 'UNAVAILABLE', readonly fieldErrors?: Record<string, string[]>) { super(code); }
 }
 
+export async function getLegacyPrebuiltPcIds(productIds: string[]) {
+  if (!productIds.length) return new Set<string>();
+  const client = createAdminDataClient();
+  const [specs, refs] = await Promise.all([
+    client.from('prebuilt_pc_specs').select('product_id').in('product_id', productIds),
+    client.from('prebuilt_pc_component_parts').select('prebuilt_product_id').in('prebuilt_product_id', productIds),
+  ]);
+  if (specs.error || refs.error) throw new Error('Prebuilt PC legacy state unavailable');
+  const selected = new Set((refs.data ?? []).map((row) => row.prebuilt_product_id));
+  return new Set((specs.data ?? []).map((row) => row.product_id).filter((id) => !selected.has(id)));
+}
+
 function mapRpcError(error: RpcError): PrebuiltPcSaveError {
   if (error.code === 'P0001' || error.code === '23505') return new PrebuiltPcSaveError('CONFLICT');
   if (error.code === 'P0002') return new PrebuiltPcSaveError('NOT_FOUND');
@@ -72,6 +84,9 @@ export async function saveAdminPrebuiltPc(input: SaveInput) {
   const expectedVersion = isCreate ? null : (fields as AdminPrebuiltPcUpdate).expectedVersion;
   const existing = isCreate ? null : await getAdminPrebuiltPc(productId);
   if (!isCreate && !existing) throw new PrebuiltPcSaveError('NOT_FOUND');
+  if (existing?.legacyComponents && !fields.partIds) throw new PrebuiltPcSaveError('BAD_REQUEST', {
+    partIds: ['旧方式の構成です。採用パーツを選び直してから保存してください。'],
+  });
   if (isCreate && input.images.length) throw new PrebuiltPcSaveError('BAD_REQUEST');
   if (input.images.some((image) => !(existing?.images.some((old) => old.storagePath === image.storagePath)))) throw new PrebuiltPcSaveError('BAD_REQUEST');
   if (fields.status === 'published' && input.images.length === 0 && !input.imageFile) {

@@ -104,6 +104,11 @@ begin
   if p_fields->>'status'='published' and v_components='{}'::jsonb then
     raise exception 'published PC requires selected parts' using errcode='23514';
   end if;
+  if p_expected_version is not null and v_components='{}'::jsonb
+    and exists(select 1 from public.prebuilt_pc_specs s where s.product_id=p_product_id)
+    and not exists(select 1 from public.prebuilt_pc_component_parts r where r.prebuilt_product_id=p_product_id) then
+    raise exception 'legacy PC requires part reselection before update' using errcode='23514';
+  end if;
   select * into v_saved from public.admin_save_prebuilt_pc(p_product_id,p_expected_version,p_fields,
     nullif(v_components,'{}'::jsonb),p_use_cases,p_images,p_actor_id,p_request_id);
   delete from public.prebuilt_pc_component_parts where prebuilt_product_id=p_product_id;
@@ -114,4 +119,5 @@ end;
 $$;
 revoke all on function public.admin_save_prebuilt_pc_v2(uuid,integer,jsonb,jsonb,text[],jsonb,uuid,text) from public,anon,authenticated;
 grant execute on function public.admin_save_prebuilt_pc_v2(uuid,integer,jsonb,jsonb,text[],jsonb,uuid,text) to service_role;
--- The application uses v2. Keep the service-only v1 grant for historical T58 regression fixtures.
+-- Only migration-owner code may invoke the legacy free-text function. API service role uses v2.
+revoke execute on function public.admin_save_prebuilt_pc(uuid,integer,jsonb,jsonb,text[],jsonb,uuid,text) from service_role;

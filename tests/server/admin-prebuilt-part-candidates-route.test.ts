@@ -26,16 +26,20 @@ beforeEach(() => {
 it('requires administrator access before searching', async () => {
   authorizeAdminApi.mockResolvedValueOnce({ response: Response.json({}, { status: 403 }) });
   const response = await GET(new NextRequest('https://shop.example/api/admin/prebuilt-parts?slot=cpu'));
+  if (!response) throw new Error('No response');
   expect(response.status).toBe(403);
   expect(getPrebuiltPartCandidates).not.toHaveBeenCalled();
 });
 
 it('validates slot and bounded pagination', async () => {
   const invalid = await GET(new NextRequest('https://shop.example/api/admin/prebuilt-parts?slot=prebuilt-pc'));
+  if (!invalid) throw new Error('No response');
   expect(invalid.status).toBe(400);
   const invalidPage = await GET(new NextRequest('https://shop.example/api/admin/prebuilt-parts?slot=cpu&page=1000'));
+  if (!invalidPage) throw new Error('No response');
   expect(invalidPage.status).toBe(400);
   const valid = await GET(new NextRequest('https://shop.example/api/admin/prebuilt-parts?slot=gpu&q=Radeon&page=2'));
+  if (!valid) throw new Error('No response');
   expect(valid.status).toBe(200);
   expect(getPrebuiltPartCandidates).toHaveBeenCalledWith('gpu', 'Radeon', 2);
 });
