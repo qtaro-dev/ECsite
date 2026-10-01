@@ -22,7 +22,8 @@ test('administrator can retry a failed logout and then ends the session', async 
     await route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":{"code":"UNAVAILABLE"}}' });
   }, { times: 1 });
   await logoutButton.click();
-  await expect(page.getByRole('alert')).toContainText('ログアウトできませんでした');
+  await expect(page.getByRole('alert').filter({ hasText: 'ログアウトできませんでした' }))
+    .toContainText('ログアウトできませんでした。時間をおいて再度お試しください。');
   await expect(logoutButton).toBeEnabled();
   await expect(page).toHaveURL('/admin');
 
