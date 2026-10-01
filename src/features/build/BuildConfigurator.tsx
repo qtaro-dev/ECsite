@@ -24,7 +24,7 @@ const rules: Array<{ id: CompatibilityFinding['rule']; title: string }> = [
   { id: 'cpu_motherboard_socket', title: 'CPUとマザーボードのSocket' },
   { id: 'motherboard_memory_ddr', title: 'マザーボードとメモリのDDR規格' },
   { id: 'motherboard_case_form_factor', title: 'マザーボードとケースの形状' },
-  { id: 'gpu_case_length', title: 'GPUとケースの搭載可能長' },
+  { id: 'gpu_case_length', title: 'グラフィックボードとケースの搭載可能長' },
   { id: 'cpu_cooler_socket', title: 'CPUとクーラーの対応Socket' },
 ];
 
@@ -32,7 +32,7 @@ const matchingLinkLabels: Record<CompatibilityFinding['rule'], string> = {
   cpu_motherboard_socket: 'このCPUに対応するマザーボードを見る',
   motherboard_memory_ddr: 'このマザーボードに対応するメモリを見る',
   motherboard_case_form_factor: 'このマザーボードが搭載できるケースを見る',
-  gpu_case_length: 'このGPUが収まるケースを見る',
+  gpu_case_length: 'このグラフィックボードが収まるケースを見る',
   cpu_cooler_socket: 'このCPUに対応するCPUクーラーを見る',
 };
 
@@ -50,7 +50,7 @@ const comparisonLabels: Record<string, string> = {
   memoryDdrGeneration: 'メモリのDDR規格',
   motherboardFormFactor: 'マザーボードのフォームファクター',
   caseSupportedFormFactors: 'ケースの対応フォームファクター',
-  gpuCardLengthMm: 'GPUのカード長',
+  gpuCardLengthMm: 'グラフィックボードのカード長',
   caseMaxGpuLengthMm: 'ケースの最大搭載長',
   coolerSupportedSocketCodes: 'クーラーの対応Socket',
 };
@@ -59,7 +59,7 @@ const specificationLabels: Record<string, string> = {
   socket_code: 'Socket', core_count: 'コア数', base_clock_mhz: '基本クロック', tdp_w: 'TDP',
   chipset: 'チップセット', vram_gb: 'VRAM', card_length_mm: 'カード長', ddr_generation: 'DDR規格',
   form_factor: 'フォームファクター', capacity_gb: '容量', module_count: '枚数', speed_mt_s: '速度',
-  interface: '接続規格', rated_w: '定格出力', efficiency_grade: '変換効率', max_gpu_length_mm: '最大GPU搭載長',
+  interface: '接続規格', rated_w: '定格出力', efficiency_grade: '変換効率', max_gpu_length_mm: '最大グラフィックボード搭載長',
   outer_length_mm: 'ケース奥行', outer_width_mm: 'ケース幅', outer_height_mm: 'ケース高さ',
   supported_form_factors: '対応フォームファクター', supported_socket_codes: '対応Socket', height_mm: '高さ', cooling_type: '冷却方式',
 };

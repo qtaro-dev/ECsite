@@ -21,7 +21,7 @@ const categories: CategoryConfig[] = [
     { key: 'base_clock_mhz', label: 'ベースクロック（MHz）', kind: 'number', nullable: true },
     { key: 'tdp_w', label: 'TDP（W）', kind: 'number', nullable: true },
   ] },
-  { slug: 'gpu', label: 'GPU', fields: [
+  { slug: 'gpu', label: 'グラフィックボード', fields: [
     { key: 'chipset', label: 'チップセット', kind: 'text' }, { key: 'vram_gb', label: 'VRAM（GB）', kind: 'number' },
     { key: 'card_length_mm', label: 'カード長（mm）', kind: 'number', nullable: true },
   ] },
@@ -45,7 +45,7 @@ const categories: CategoryConfig[] = [
     { key: 'efficiency_grade', label: '効率認証', kind: 'text' },
   ] },
   { slug: 'pc-case', label: 'PCケース', fields: [
-    { key: 'max_gpu_length_mm', label: '対応GPU長（mm）', kind: 'number', nullable: true },
+    { key: 'max_gpu_length_mm', label: '対応グラフィックボード長（mm）', kind: 'number', nullable: true },
     { key: 'outer_length_mm', label: 'ケース本体の長さ（mm）', kind: 'number' },
     { key: 'outer_width_mm', label: 'ケース本体の幅（mm）', kind: 'number' },
     { key: 'outer_height_mm', label: 'ケース本体の高さ（mm）', kind: 'number' },

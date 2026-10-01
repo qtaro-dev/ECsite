@@ -40,7 +40,7 @@ test('T59 creates and edits a prebuilt PC draft, retains the free-text configura
   await page.getByLabel('商品名').fill('T59 テスト構成済みPC');
   await page.getByLabel('ブランド').fill('T59 Labs');
   const componentData = [
-    ['CPU', 'Ryzen 7 Test', '8コア / テスト用'], ['GPU', 'Radeon Test', '16GB / テスト用'],
+    ['CPU', 'Ryzen 7 Test', '8コア / テスト用'], ['グラフィックボード', 'Radeon Test', '16GB / テスト用'],
     ['メモリ', 'DDR5 Test', '32GB / 2枚'], ['SSD', 'NVMe Test', '1TB / Gen4'],
     ['マザーボード', 'Test Board', 'ATX / AM5'],
   ] as const;
@@ -123,7 +123,7 @@ test('T59 maps publish requirements and stale-save conflicts without discarding 
   await page.getByLabel('公開状態').selectOption('published');
   await page.getByRole('button', { name: '構成済みPCを作成' }).click();
   await expect(page.getByText('公開には入力が必要です。').first()).toBeVisible();
-  const missingComponents = page.getByRole('alert').filter({ hasText: '公開にはCPU・GPU・メモリ・SSDの構成が必要です。' });
+  const missingComponents = page.getByRole('alert').filter({ hasText: '公開にはCPU・グラフィックボード・メモリ・SSDの構成が必要です。' });
   await expect(missingComponents).toBeVisible();
   await expect(page.locator('section[aria-labelledby="components-title"]')).toHaveAttribute('aria-describedby', /components-schema-error/);
 

@@ -73,7 +73,7 @@ export const SearchQuerySchema = z.object({
 }), {
   path: ['spec'], message: 'Specification filters must use fields defined for the selected category',
 }).refine(({ category, minGpuClearanceMm }) => minGpuClearanceMm === undefined || category === 'pc-case', {
-  path: ['minGpuClearanceMm'], message: 'GPU clearance can only filter PC cases',
+  path: ['minGpuClearanceMm'], message: 'グラフィックボードの搭載可能長はPCケースの検索にのみ指定できます',
 });
 
 export const AddressSchema = z.object({

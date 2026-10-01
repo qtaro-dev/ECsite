@@ -11,7 +11,7 @@ const labels: Record<string, string> = {
   chipset: "チップセット", vram_gb: "VRAM（GB）", card_length_mm: "カード長（mm）",
   ddr_generation: "メモリ規格", form_factor: "フォームファクター", capacity_gb: "容量（GB）",
   module_count: "枚数", speed_mt_s: "速度（MT/s）", interface: "接続規格", rated_w: "定格出力（W）",
-  efficiency_grade: "変換効率", max_gpu_length_mm: "対応GPU長（mm）", outer_length_mm: "奥行（mm）",
+  efficiency_grade: "変換効率", max_gpu_length_mm: "対応グラフィックボード長（mm）", outer_length_mm: "奥行（mm）",
   outer_width_mm: "幅（mm）", outer_height_mm: "高さ（mm）", supported_form_factors: "対応フォームファクター（カンマ区切り）",
   supported_socket_codes: "対応ソケット（カンマ区切り）", height_mm: "高さ（mm）", cooling_type: "冷却方式",
 };
@@ -20,7 +20,7 @@ const categoryNames: Record<string, string> = {
   ssd: "SSD", "power-supply": "電源ユニット", "pc-case": "PCケース", "cpu-cooler": "CPUクーラー", "prebuilt-pc": "構成済みPC",
 };
 const prebuiltPartLabels: Array<[string, string]> = [
-  ["cpu", "CPU"], ["gpu", "GPU（グラフィックボード）"], ["memory", "メモリ"], ["ssd", "SSD"],
+  ["cpu", "CPU"], ["gpu", "グラフィックボード"], ["memory", "メモリ"], ["ssd", "SSD"],
   ["motherboard", "マザーボード"], ["powerSupply", "電源ユニット"], ["pcCase", "PCケース"],
 ];
 const prebuiltUseCases: Record<string, string> = { gaming: "ゲーミングPC", daily: "一般用途向けPC", editing: "クリエイターPC" };

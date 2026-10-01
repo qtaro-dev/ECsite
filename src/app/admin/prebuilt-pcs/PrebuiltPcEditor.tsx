@@ -18,7 +18,7 @@ type Fields = {
 };
 
 const partKeys: PartKey[] = ['cpu', 'gpu', 'memory', 'ssd', 'motherboard', 'powerSupply', 'pcCase'];
-const partLabels: Record<PartKey, string> = { cpu: 'CPU', gpu: 'GPU', memory: 'メモリ', ssd: 'SSD', motherboard: 'マザーボード', powerSupply: '電源', pcCase: 'PCケース' };
+const partLabels: Record<PartKey, string> = { cpu: 'CPU', gpu: 'グラフィックボード', memory: 'メモリ', ssd: 'SSD', motherboard: 'マザーボード', powerSupply: '電源', pcCase: 'PCケース' };
 const usageOptions = [['gaming', 'ゲーム'], ['daily', '普段使い'], ['editing', '動画編集']] as const;
 const requiredParts = new Set<PartKey>(['cpu', 'gpu', 'memory', 'ssd']);
 const numericKeys = ['priceTaxIncludedYen', 'weightG', 'packLengthMm', 'packWidthMm', 'packHeightMm'] as const;
@@ -174,7 +174,7 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
 
       <section className={styles.section} aria-labelledby="components-title" aria-describedby={['components-help', fieldErrors('components').length ? 'components-schema-error' : undefined].filter(Boolean).join(' ')}>
         <h2 id="components-title">採用パーツの構成</h2>
-        <p id="components-help" className={styles.help}>パーツ名と詳細を自由入力します。単品パーツSKU・在庫とは連動しません。公開時はCPU・GPU・メモリ・SSDの名前と詳細が必要です。すべて空欄なら構成なしの下書きとして保存できます。</p>
+        <p id="components-help" className={styles.help}>パーツ名と詳細を自由入力します。単品パーツSKU・在庫とは連動しません。公開時はCPU・グラフィックボード・メモリ・SSDの名前と詳細が必要です。すべて空欄なら構成なしの下書きとして保存できます。</p>
         <div className={styles.componentGrid}>
           {partKeys.map((key) => {
             const labelErrors = fieldErrors(`components.${key}.label`); const detailErrors = fieldErrors(`components.${key}.details`);
