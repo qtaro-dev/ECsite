@@ -47,7 +47,7 @@ insert into auth.users(id,aud,role,email,created_at,updated_at,is_anonymous) val
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
             results = list(pool.map(attempt, range(2)))
-        if sorted(results) != ["false", "true"]:
+        if sorted(results) != ["f", "t"]:
             raise RuntimeError(f"expected exactly one successful setup claim, got {results}")
         state = sql("select (select count(*) from public.admin_setup_claim)||':'||"
                     "(select count(*) from public.admin_memberships)||':'||"
