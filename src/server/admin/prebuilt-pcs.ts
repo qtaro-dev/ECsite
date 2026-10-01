@@ -1,10 +1,12 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { AdminPrebuiltPcListSchema, type AdminPrebuiltPcCreate, type AdminPrebuiltPcUpdate } from '@/lib/admin-prebuilt-pc-schemas';
+import { hasCompletePartSelection } from '@/lib/prebuilt-part-selection';
 import { IdSchema } from '@/lib/schemas';
 import { ADMIN_PRODUCT_IMAGE_MAX_BYTES } from '@/lib/admin-product-image-limits';
 import { createAdminDataClient } from '@/server/admin/overview';
 import { getAdminPrebuiltPc } from '@/server/admin/prebuilt-pc-read';
+import { PART_CATEGORIES, type PartSlot } from '@/server/admin/prebuilt-part-candidates';
 import { inspectAndSanitizeProductImage, ProductImageValidationError } from '@/server/admin/product-images';
 
 type ImageInput = { storagePath: string; altText: string; sortOrder: number };
@@ -14,6 +16,17 @@ type SaveInput = {
 };
 type RpcError = { code?: string };
 
+export async function invalidSelectedPart(client: ReturnType<typeof createAdminDataClient>, partIds: Record<string, string> | null | undefined) {
+  for (const [slot, id] of Object.entries(partIds ?? {})) {
+    if (!(slot in PART_CATEGORIES)) continue;
+    const { data, error } = await client.from('products').select('id,status,deleted_at,categories!inner(slug)').eq('id', id).maybeSingle();
+    if (error) return null;
+    if (!data || data.status !== 'published' || data.deleted_at !== null
+      || (data.categories as unknown as { slug: string }).slug !== PART_CATEGORIES[slot as PartSlot]) return slot;
+  }
+  return null;
+}
+
 export class PrebuiltPcSaveError extends Error {
   constructor(readonly code: 'BAD_REQUEST' | 'FORBIDDEN' | 'CONFLICT' | 'NOT_FOUND' | 'UNAVAILABLE', readonly fieldErrors?: Record<string, string[]>) { super(code); }
 }
@@ -22,12 +35,12 @@ export async function getLegacyPrebuiltPcIds(productIds: string[]) {
   if (!productIds.length) return new Set<string>();
   const client = createAdminDataClient();
   const [specs, refs] = await Promise.all([
-    client.from('prebuilt_pc_specs').select('product_id').in('product_id', productIds),
-    client.from('prebuilt_pc_component_parts').select('prebuilt_product_id').in('prebuilt_product_id', productIds),
+    client.from('prebuilt_pc_specs').select('product_id,components').in('product_id', productIds),
+    client.from('prebuilt_pc_component_parts').select('prebuilt_product_id,slot').in('prebuilt_product_id', productIds),
   ]);
   if (specs.error || refs.error) throw new Error('Prebuilt PC legacy state unavailable');
-  const selected = new Set((refs.data ?? []).map((row) => row.prebuilt_product_id));
-  return new Set((specs.data ?? []).map((row) => row.product_id).filter((id) => !selected.has(id)));
+  return new Set((specs.data ?? []).filter((spec) => !hasCompletePartSelection(spec.components,
+    (refs.data ?? []).filter((ref) => ref.prebuilt_product_id === spec.product_id).map((ref) => ref.slot))).map((spec) => spec.product_id));
 }
 
 function mapRpcError(error: RpcError): PrebuiltPcSaveError {
@@ -57,16 +70,16 @@ export async function getAdminPrebuiltPcs(query = '') {
   if (error) throw new Error('Prebuilt PC list unavailable');
   const ids = (data ?? []).map((row) => row.id);
   const [specs, refs] = ids.length ? await Promise.all([
-    client.from('prebuilt_pc_specs').select('product_id').in('product_id', ids),
-    client.from('prebuilt_pc_component_parts').select('prebuilt_product_id').in('prebuilt_product_id', ids),
+    client.from('prebuilt_pc_specs').select('product_id,components').in('product_id', ids),
+    client.from('prebuilt_pc_component_parts').select('prebuilt_product_id,slot').in('prebuilt_product_id', ids),
   ]) : [{ data: [], error: null }, { data: [], error: null }];
   if (specs.error || refs.error) throw new Error('Prebuilt PC legacy state unavailable');
-  const specified = new Set((specs.data ?? []).map((row) => row.product_id));
-  const selected = new Set((refs.data ?? []).map((row) => row.prebuilt_product_id));
+  const legacy = new Set((specs.data ?? []).filter((spec) => !hasCompletePartSelection(spec.components,
+    (refs.data ?? []).filter((ref) => ref.prebuilt_product_id === spec.product_id).map((ref) => ref.slot))).map((spec) => spec.product_id));
   return AdminPrebuiltPcListSchema.parse((data ?? []).map((row) => ({
     id: row.id, slug: row.slug, sku: row.sku, name: row.name, brand: row.brand,
     priceTaxIncludedYen: row.price_tax_included_yen, status: row.status, version: row.version, updatedAt: row.updated_at,
-    legacyComponents: specified.has(row.id) && !selected.has(row.id),
+    legacyComponents: legacy.has(row.id),
   })));
 }
 
@@ -133,7 +146,13 @@ export async function saveAdminPrebuiltPc(input: SaveInput) {
     p_request_id: input.requestId,
   });
   if (error) {
-    const mapped = mapRpcError(error);
+    let invalidSlot: string | null = null;
+    if (error.code === '23514') {
+      invalidSlot = await invalidSelectedPart(client, fields.partIds);
+    }
+    const mapped = invalidSlot ? new PrebuiltPcSaveError('BAD_REQUEST', {
+      [`partIds.${invalidSlot}`]: ['このパーツは公開終了、削除、またはカテゴリ変更されたため使えません。別の登録済みパーツを選び直してください。'],
+    }) : mapRpcError(error);
     if (uploadedPath && mapped.code !== 'UNAVAILABLE') await client.storage.from('product-images').remove([uploadedPath]);
     throw mapped;
   }

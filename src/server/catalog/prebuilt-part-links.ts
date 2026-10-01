@@ -1,6 +1,7 @@
 import 'server-only';
 
 export async function getPublishedPrebuiltPartLinks(prebuiltProductId: string): Promise<Record<string, string>> {
+  try {
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!baseUrl || !anonKey) throw new Error('Supabase public catalog configuration is unavailable');
@@ -25,4 +26,8 @@ export async function getPublishedPrebuiltPartLinks(prebuiltProductId: string): 
     const slug = slugs.get(ref.part_product_id);
     return slug ? [[ref.slot, slug]] : [];
   }));
+  } catch {
+    // Related catalog links are optional; the PC snapshot and purchase must remain available.
+    return {};
+  }
 }

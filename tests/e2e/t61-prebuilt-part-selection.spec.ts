@@ -15,8 +15,8 @@ test('legacy published PC stays visible and requires registered-part reselection
   await row.getByRole('link', { name: '編集' }).click();
   await expect(page.getByText('このPCは旧方式の構成です。')).toBeVisible();
   await expect(page.getByText(/旧構成: Demo CPU G1/)).toBeVisible();
-  await page.getByLabel('商品名').fill('保存できない変更');
+  await page.getByRole('textbox', { name: '商品名', exact: true }).fill('保存できない変更');
   await page.getByLabel('公開状態').selectOption('draft');
   await page.getByRole('button', { name: '変更を保存' }).click();
-  await expect(page.getByRole('alert')).toContainText('採用パーツを選び直してから保存してください');
+  await expect(page.getByRole('alert').filter({ hasText: '採用パーツを選び直してから保存してください' })).toBeVisible();
 });

@@ -37,7 +37,7 @@ test('T61 creates and edits a prebuilt PC draft with registered parts, and leave
   await expect(page.locator('#slug-description')).toContainText('ryzen-7-7700 → /products/ryzen-7-7700');
   await slugInput.fill(slug);
   await page.getByLabel('完成PCのSKU').fill(sku);
-  await page.getByLabel('商品名').fill('T59 テスト構成済みPC');
+  await page.getByRole('textbox', { name: '商品名', exact: true }).fill('T59 テスト構成済みPC');
   await page.getByLabel('ブランド').fill('T59 Labs');
   const componentData = [
     ['CPU', 'T11-CPU-AM5'], ['グラフィックボード', 'T11-GPU-300'],
@@ -87,7 +87,7 @@ test('T61 creates and edits a prebuilt PC draft with registered parts, and leave
   expect(beforeStock).not.toBeNull();
   const stockState = { onHand: beforeStock!.onHand, allocated: beforeStock!.allocated, version: beforeStock!.version };
   await page.setViewportSize({ width: 900, height: 900 });
-  await page.getByLabel('商品名').fill('T59 更新済み構成済みPC');
+  await page.getByRole('textbox', { name: '商品名', exact: true }).fill('T59 更新済み構成済みPC');
   const image = await sharp({ create: { width: 1, height: 1, channels: 3, background: '#ffffff' } }).png().toBuffer();
   await page.getByLabel('画像を選択').setInputFiles({ name: 't59.png', mimeType: 'image/png', buffer: image });
   await expect(page.getByText(/選択済み: t59\.png/)).toBeVisible();
@@ -96,7 +96,7 @@ test('T61 creates and edits a prebuilt PC draft with registered parts, and leave
   await expect(page.getByRole('status')).toContainText('構成済みPCを保存しました');
   await expect(page.getByLabel('代替テキスト')).toHaveValue('T59 PC 正面');
   await page.reload();
-  await expect(page.getByLabel('商品名')).toHaveValue('T59 更新済み構成済みPC');
+  await expect(page.getByRole('textbox', { name: '商品名', exact: true })).toHaveValue('T59 更新済み構成済みPC');
   await expect(page.getByLabel('新しい画像の代替テキスト')).toHaveCount(0);
   await expect(page.getByLabel('代替テキスト')).toHaveValue('T59 PC 正面');
   await page.getByRole('button', { name: '画像を削除' }).click();
@@ -129,10 +129,10 @@ test('T59 maps publish requirements and stale-save conflicts without discarding 
   await expect(page.locator('section[aria-labelledby="components-title"]')).toHaveAttribute('aria-describedby', /components-schema-error/);
 
   await page.getByLabel('公開状態').selectOption('draft');
-  await page.getByLabel('商品名').fill('T59 conflict fixture');
+  await page.getByRole('textbox', { name: '商品名', exact: true }).fill('T59 conflict fixture');
   await page.getByRole('button', { name: '構成済みPCを作成' }).click();
   await expect(page).toHaveURL(/\/admin\/prebuilt-pcs\/[0-9a-f-]+(?:\?saved=1)?$/i);
-  await page.getByLabel('商品名').fill('入力保持を確認する名前');
+  await page.getByRole('textbox', { name: '商品名', exact: true }).fill('入力保持を確認する名前');
   await page.route('**/api/admin/prebuilt-pcs', async (route) => {
     if (route.request().method() === 'PATCH') {
       await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'CONFLICT', message: 'conflict' }, requestId: 'test' }) });
@@ -140,7 +140,7 @@ test('T59 maps publish requirements and stale-save conflicts without discarding 
   });
   await page.getByRole('button', { name: '変更を保存' }).click();
   await expect(page.getByRole('status')).toContainText('別の管理者が先に更新しました');
-  await expect(page.getByLabel('商品名')).toHaveValue('入力保持を確認する名前');
+  await expect(page.getByRole('textbox', { name: '商品名', exact: true })).toHaveValue('入力保持を確認する名前');
 });
 
 test('T59 route remains protected from regular members', async ({ page }) => {

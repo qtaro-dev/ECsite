@@ -21,3 +21,10 @@ it('links only parts returned by public product visibility', async () => {
   await expect(getPublishedPrebuiltPartLinks('pc-id')).resolves.toEqual({ cpu: 'visible-cpu' });
   expect(fetcher).toHaveBeenCalledTimes(2);
 });
+
+it('keeps the PC detail available when optional reference lookup fails', async () => {
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://db.example';
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'public-key';
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('transient outage')));
+  await expect(getPublishedPrebuiltPartLinks('pc-id')).resolves.toEqual({});
+});

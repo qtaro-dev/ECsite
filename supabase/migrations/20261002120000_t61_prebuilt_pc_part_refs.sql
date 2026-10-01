@@ -28,8 +28,11 @@ create policy prebuilt_component_parts_public_read on public.prebuilt_pc_compone
   using (exists (select 1 from public.products pc where pc.id=prebuilt_product_id and pc.status='published' and pc.deleted_at is null)
     and exists (select 1 from public.products part where part.id=part_product_id and part.status='published' and part.deleted_at is null));
 create policy prebuilt_component_parts_admin_read on public.prebuilt_pc_component_parts for select to authenticated using (private.is_active_admin());
-revoke all on public.prebuilt_pc_component_parts from public,anon,authenticated;
+-- The service role can read references, but only the definer RPC may change them.
+-- A direct single-row insert could otherwise publish a partial configuration.
+revoke all on public.prebuilt_pc_component_parts from public,anon,authenticated,service_role;
 grant select on public.prebuilt_pc_component_parts to anon,authenticated;
+grant select on public.prebuilt_pc_component_parts to service_role;
 
 create or replace function public.validate_prebuilt_component_part()
 returns trigger language plpgsql set search_path = '' as $$
@@ -106,11 +109,19 @@ begin
   end if;
   if p_expected_version is not null and v_components='{}'::jsonb
     and exists(select 1 from public.prebuilt_pc_specs s where s.product_id=p_product_id)
-    and not exists(select 1 from public.prebuilt_pc_component_parts r where r.prebuilt_product_id=p_product_id) then
+    and (not exists(select 1 from public.prebuilt_pc_component_parts r where r.prebuilt_product_id=p_product_id)
+      or exists(select 1 from public.prebuilt_pc_specs s where s.product_id=p_product_id
+        and exists(select 1 from jsonb_object_keys(s.components) as old_slot(slot)
+          where not exists(select 1 from public.prebuilt_pc_component_parts r
+            where r.prebuilt_product_id=p_product_id and r.slot=old_slot.slot)))) then
     raise exception 'legacy PC requires part reselection before update' using errcode='23514';
   end if;
   if p_expected_version is not null
-    and not exists(select 1 from public.prebuilt_pc_component_parts r where r.prebuilt_product_id=p_product_id)
+    and (not exists(select 1 from public.prebuilt_pc_component_parts r where r.prebuilt_product_id=p_product_id)
+      or exists(select 1 from public.prebuilt_pc_specs s where s.product_id=p_product_id
+        and exists(select 1 from jsonb_object_keys(s.components) as old_slot(slot)
+          where not exists(select 1 from public.prebuilt_pc_component_parts r
+            where r.prebuilt_product_id=p_product_id and r.slot=old_slot.slot))))
     and exists(select 1 from public.prebuilt_pc_specs s where s.product_id=p_product_id
       and exists(select 1 from jsonb_object_keys(s.components) as old_slot(slot)
         where not (coalesce(p_part_ids,'{}'::jsonb) ? old_slot.slot))) then
