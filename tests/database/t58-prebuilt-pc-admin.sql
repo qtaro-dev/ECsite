@@ -54,11 +54,11 @@ declare
 begin
   perform public.admin_save_prebuilt_pc('00000000-0000-4000-8000-000000000580',null,fields,components,ARRAY['gaming'],image,
     '00000000-0000-4000-8000-000000000581','t58-create-published');
-  select version into v_version from public.products where id='00000000-0000-4000-8000-000000000580';
-  if v_version<>0 or not exists(select 1 from public.prebuilt_pc_specs where product_id='00000000-0000-4000-8000-000000000580') then
+  select p.version into v_version from public.products p where p.id='00000000-0000-4000-8000-000000000580';
+  if v_version<>0 or not exists(select 1 from public.prebuilt_pc_specs s where s.product_id='00000000-0000-4000-8000-000000000580') then
     raise exception 'T58 create did not persist version zero and component data';
   end if;
-  if exists(select 1 from public.inventory where product_id='00000000-0000-4000-8000-000000000580') then
+  if exists(select 1 from public.inventory i where i.product_id='00000000-0000-4000-8000-000000000580') then
     raise exception 'T58 product save created or modified independent SKU inventory';
   end if;
 
@@ -70,21 +70,21 @@ begin
   insert into public.order_items(order_id,product_id,sku_snapshot,name_snapshot,brand_snapshot,unit_price_yen,quantity,line_total_yen,spec_snapshot)
   values('00000000-0000-4000-8000-000000000583','00000000-0000-4000-8000-000000000580','T58-PC-01','T58 Synthetic PC','T58 Fixture',10999,1,10999,
     jsonb_build_object('components',components));
-  select spec_snapshot into v_snapshot from public.order_items where order_id='00000000-0000-4000-8000-000000000583';
+  select i.spec_snapshot into v_snapshot from public.order_items i where i.order_id='00000000-0000-4000-8000-000000000583';
 
   fields := jsonb_set(jsonb_set(fields,'{name}','"T58 Revised PC"'),'{price_tax_included_yen}','11999');
   perform public.admin_save_prebuilt_pc('00000000-0000-4000-8000-000000000580',0,fields,revised,ARRAY['editing'],image,
     '00000000-0000-4000-8000-000000000581','t58-update');
-  select version into v_version from public.products where id='00000000-0000-4000-8000-000000000580';
-  if v_version<>1 or (select components from public.prebuilt_pc_specs where product_id='00000000-0000-4000-8000-000000000580') is distinct from revised then
+  select p.version into v_version from public.products p where p.id='00000000-0000-4000-8000-000000000580';
+  if v_version<>1 or (select s.components from public.prebuilt_pc_specs s where s.product_id='00000000-0000-4000-8000-000000000580') is distinct from revised then
     raise exception 'T58 update did not save components and increment version';
   end if;
-  if (select spec_snapshot from public.order_items where order_id='00000000-0000-4000-8000-000000000583') is distinct from v_snapshot then
+  if (select i.spec_snapshot from public.order_items i where i.order_id='00000000-0000-4000-8000-000000000583') is distinct from v_snapshot then
     raise exception 'T58 catalog edit changed immutable order item configuration snapshot';
   end if;
-  if exists(select 1 from public.audit_logs where request_id='t58-update' and change_summary::text like '%T58 CPU Revised Secret%')
-     or not exists(select 1 from public.audit_logs where request_id='t58-update'
-       and change_summary->'changed_fields' @> '["prebuilt_pc_components","product_use_cases","product_details","price_tax_included_yen"]'::jsonb) then
+  if exists(select 1 from public.audit_logs a where a.request_id='t58-update' and a.change_summary::text like '%T58 CPU Revised Secret%')
+     or not exists(select 1 from public.audit_logs a where a.request_id='t58-update'
+       and a.change_summary->'changed_fields' @> '["prebuilt_pc_components","product_use_cases","product_details","price_tax_included_yen"]'::jsonb) then
     raise exception 'T58 audit recorded data values or omitted field-name markers';
   end if;
 
@@ -94,7 +94,7 @@ begin
       jsonb_set(fields,'{weight_g}','30001'),revised,ARRAY['gaming'],image,
       '00000000-0000-4000-8000-000000000581','t58-yamato-reject');
   exception when check_violation then v_conflicted:=true; end;
-  if not v_conflicted or (select version from public.products where id='00000000-0000-4000-8000-000000000580')<>1 then
+  if not v_conflicted or (select p.version from public.products p where p.id='00000000-0000-4000-8000-000000000580')<>1 then
     raise exception 'T58 published Yamato limit failure was accepted or left partial changes';
   end if;
 
@@ -110,15 +110,15 @@ begin
     perform public.admin_save_prebuilt_pc('00000000-0000-4000-8000-000000000580',0,fields,revised,ARRAY['gaming'],image,
       '00000000-0000-4000-8000-000000000581','t58-stale-version');
   exception when sqlstate 'P0001' then v_conflicted:=true; end;
-  if not v_conflicted or (select version from public.products where id='00000000-0000-4000-8000-000000000580')<>1 then
+  if not v_conflicted or (select p.version from public.products p where p.id='00000000-0000-4000-8000-000000000580')<>1 then
     raise exception 'T58 stale version did not fail atomically';
   end if;
 
   -- The migration's check constraint also rejects nested unknown component keys.
   v_conflicted:=false;
   begin
-    update public.prebuilt_pc_specs set components=jsonb_set(revised,'{cpu,unexpected}','"x"')
-      where product_id='00000000-0000-4000-8000-000000000580';
+    update public.prebuilt_pc_specs as spec set components=jsonb_set(revised,'{cpu,unexpected}','"x"')
+      where spec.product_id='00000000-0000-4000-8000-000000000580';
   exception when check_violation then v_conflicted:=true; end;
   if not v_conflicted then raise exception 'T58 DB constraint accepted unknown nested component keys'; end if;
 
@@ -126,19 +126,19 @@ begin
   fields := jsonb_set(fields,'{status}','"draft"');
   perform public.admin_save_prebuilt_pc('00000000-0000-4000-8000-000000000580',1,fields,null,ARRAY[]::text[],image,
     '00000000-0000-4000-8000-000000000581','t58-clear-draft-components');
-  if exists(select 1 from public.prebuilt_pc_specs where product_id='00000000-0000-4000-8000-000000000580')
-     or (select status from public.products where id='00000000-0000-4000-8000-000000000580')<>'draft' then
+  if exists(select 1 from public.prebuilt_pc_specs s where s.product_id='00000000-0000-4000-8000-000000000580')
+     or (select p.status from public.products p where p.id='00000000-0000-4000-8000-000000000580')<>'draft' then
     raise exception 'T58 draft config clear failed';
   end if;
 
-  update public.admin_memberships set revoked_at=now() where user_id='00000000-0000-4000-8000-000000000581';
+  update public.admin_memberships as membership set revoked_at=now() where membership.user_id='00000000-0000-4000-8000-000000000581';
   v_conflicted:=false;
   begin
     perform public.admin_save_prebuilt_pc('00000000-0000-4000-8000-000000000580',2,
       jsonb_set(fields,'{name}','"revoked"'),null,ARRAY[]::text[],image,
       '00000000-0000-4000-8000-000000000581','t58-revoked-admin');
   exception when insufficient_privilege then v_conflicted:=true; end;
-  if not v_conflicted or (select version from public.products where id='00000000-0000-4000-8000-000000000580')<>2 then
+  if not v_conflicted or (select p.version from public.products p where p.id='00000000-0000-4000-8000-000000000580')<>2 then
     raise exception 'T58 revoked administrator retained RPC write access or left partial state';
   end if;
 end $$;
@@ -146,7 +146,7 @@ reset role;
 
 select set_config('request.jwt.claim.role','service_role',true);
 do $$ begin
-  if exists(select 1 from public.audit_logs where request_id in ('t58-yamato-reject','t58-use-case-reject','t58-stale-version','t58-revoked-admin')) then
+  if exists(select 1 from public.audit_logs a where a.request_id in ('t58-yamato-reject','t58-use-case-reject','t58-stale-version','t58-revoked-admin')) then
     raise exception 'T58 failed requests left audit rows';
   end if;
 end $$;
