@@ -162,6 +162,11 @@ export const AuthCredentialsSchema = z.object({
   email: z.string().trim().email().max(254),
   password: z.string().min(12).max(128),
 }).strict();
+export const AdminSetupSchema = z.object({
+  email: z.string().trim().email().max(254),
+  password: z.string().min(12).max(128),
+  setupCode: z.string().min(32).max(512),
+}).strict();
 export const AuthRegistrationSchema = AuthCredentialsSchema.extend({
   passwordConfirmation: z.string().min(12).max(128),
   acceptedTerms: z.literal(true),
