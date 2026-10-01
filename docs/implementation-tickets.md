@@ -7,7 +7,7 @@
 **2エージェント担当と進捗** [担当割当・実行計画](multi-agent-execution-plan.md) ／ [実装進捗HTML一覧](implementation-status.html)。個別チケットの依存と内容はこの索引およびチケット本体を正とする。
 
 **公開MVP**：[完成ライン・分類・優先順](mvp-release-plan.md)。2026-09-27以降は利用者のMVP優先指示を適用し、公開後に回すチケットを完了扱いにしない。
-**追加チケット**：T50/T51は利用者が承認した、閲覧者ごとに分離された架空データのデモ購入体験。従来のT01–T49は維持し、計51件とする。
+**追加チケット**：T50/T51は利用者が承認した、閲覧者ごとに分離された架空データのデモ購入体験。T52–T55のMVP改善とT56の初回管理者セットアップを加え、計56件とする。
 
 ## 個別チケット索引（推奨実装順）
 
@@ -64,6 +64,7 @@
 | 47 | [T46 GitHub Actions・Vercel・SupabaseのCI/CD](../tickets/T46-cicd-vercel-supabase-release.md) | T05、T45 | QLT-01、SEC-01、SEC-02 |
 | 48 | [T49 公開テスト環境でのStripe Webhook接続・実通知検証](../tickets/T49-deployed-stripe-webhook-validation.md) | T31、T32、T46 | ORD-07、ORD-08、INV-02、INV-03、SEC-01、QLT-01、USR-STRIPE-01 |
 | 49 | [T47 公開・運用・ポートフォリオ説明](../tickets/T47-public-demo-operations-portfolio.md) | T22、T42、T43、T44、T45、T46、T49 | QLT-01、DEM-01、ACC-09、ORD-07、SEC-01 |
+| 50 | [T56 初回管理者アカウントのサイト内セットアップ](../tickets/T56-first-admin-setup.md) | T06、T10、T17、T20、T36、T44、T50 | ACC-01、ADM-01、SEC-01、SEC-02、QLT-01 |
 
 ## チケット概要（番号順）
 
@@ -450,3 +451,8 @@
 - **目的**：3用途から完成PC一覧と構成詳細へ遷移し、完成PCをカートへ入れられるようにする。
 - **範囲・依存**：T52/T53マージ後。ホーム、用途別一覧、詳細、レスポンシブ。LUNA-B担当。
 - **受け入れ条件・テスト**：各用途2件以上、単品パーツ非混入、詳細構成とカート投入、8カテゴリ維持。Playwright/型/ビルド。
+
+### [T56 初回管理者アカウントのサイト内セットアップ](../tickets/T56-first-admin-setup.md)
+- **目的**：サイト所有者が公開ECから初回管理者アカウントを作成できるようにする。
+- **範囲・依存**：T06/T10/T17/T20/T36/T44/T50後。初回専用セットアップ、管理者ログイン、権限付与の競合・監査・ロールバック、セットアップコード運用手順。
+- **進捗**：実装PR #102はmainへマージ済み、必須CI成功。公開Hosted Supabaseへのmigration適用、Vercel Productionへの一時コード設定、所有者本人による初回作成とログイン確認が残るため、公開設定待ち・未完了。
