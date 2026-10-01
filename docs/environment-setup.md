@@ -84,6 +84,7 @@ PreviewとProductionを同じHosted DBへ同時接続しない。検証中は固
 | `NEXT_PUBLIC_SUPABASE_URL` | Local URL | 単一Hosted project | Local CI以外は設定しない | 切替後に同じHosted project | URL自体は公開可だが接続先環境を限定 |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Local | Hosted project | 設定しない | 切替後に同じHosted project | 公開鍵。RLSを必須とし通常PRへHosted値を渡さない |
 | `SUPABASE_SERVICE_ROLE_KEY` | Local | Hosted検証用 | 設定しない | 切替後に同じHosted project | サーバー専用。RLSを迂回するため用途を限定 |
+| `ADMIN_SETUP_CODE` | 32バイト以上の乱数 | 初回セットアップを行う環境に一時設定 | 設定しない | 初回セットアップを行う場合のみ一時設定 | サーバー専用。初回管理者作成後に削除し再デプロイ |
 | `STRIPE_SECRET_KEY` | テスト鍵 | Stripeテストモード | 設定しない | Stripeテストモード | サーバー専用。ライブ鍵拒否 |
 | `STRIPE_WEBHOOK_SECRET` | Local専用 | 固定Preview endpoint用 | 設定しない | 切替後のendpoint用 | サーバー専用。T49で実通知確認し、endpoint切替時に再設定 |
 | `AUTH_EMAIL_HOOK_SECRET` | Local専用 | 公開MVPでは不要 | 設定しない | 公開MVPでは不要 | SMTP確認メールは公開後の範囲 |
