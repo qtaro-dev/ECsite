@@ -5,8 +5,7 @@ returns boolean language sql immutable set search_path = '' as $$
     and value ?& array['cpu','gpu','memory','ssd']
     and (value - array['cpu','gpu','memory','ssd','motherboard','powerSupply','pcCase']) = '{}'::jsonb
     and (select bool_and(case when jsonb_typeof(value->component_key) is distinct from 'object' then false else
-      (value->component_key - array['label','details']) = '{}'::jsonb
-      and jsonb_object_length(value->component_key) = 2
+      ((value->component_key) - array['label','details']) = '{}'::jsonb
       and jsonb_typeof(value->component_key->'label') = 'string'
       and length(btrim(value->component_key->>'label')) between 1 and 120
       and jsonb_typeof(value->component_key->'details') = 'string'
