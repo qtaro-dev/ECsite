@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import sharp from 'sharp';
 
 async function signInAsAdmin(page: Page) {
   await page.goto('/login?next=%2Fadmin%2Fproducts');
@@ -86,8 +87,9 @@ test('T59 creates and edits a prebuilt PC draft, retains the free-text configura
   const stockState = { onHand: beforeStock!.onHand, allocated: beforeStock!.allocated, version: beforeStock!.version };
   await page.setViewportSize({ width: 900, height: 900 });
   await page.getByLabel('商品名').fill('T59 更新済み構成済みPC');
-  const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5KsAAAAASUVORK5CYII=', 'base64');
+  const image = await sharp({ create: { width: 1, height: 1, channels: 3, background: '#ffffff' } }).png().toBuffer();
   await page.getByLabel('画像を選択').setInputFiles({ name: 't59.png', mimeType: 'image/png', buffer: image });
+  await expect(page.getByText(/選択済み: t59\.png/)).toBeVisible();
   await page.getByLabel('新しい画像の代替テキスト').fill('T59 PC 正面');
   await page.getByRole('button', { name: '変更を保存' }).click();
   await expect(page.getByRole('status')).toContainText('構成済みPCを保存しました');
@@ -143,10 +145,12 @@ test('T59 maps publish requirements and stale-save conflicts without discarding 
 test('T59 route remains protected from regular members', async ({ page }) => {
   test.skip(!process.env.T36_MEMBER_EMAIL || !process.env.T36_MEMBER_PASSWORD,
     'T36_MEMBER_EMAIL and T36_MEMBER_PASSWORD must identify a locally provisioned regular account');
-  await page.goto(`/login?next=${encodeURIComponent('/admin/prebuilt-pcs/new')}`);
+  await page.goto(`/login?next=${encodeURIComponent('/account')}`);
   await page.getByLabel('メールアドレス').fill(process.env.T36_MEMBER_EMAIL!);
   await page.getByLabel('パスワード').fill(process.env.T36_MEMBER_PASSWORD!);
   await page.getByRole('button', { name: 'ログイン' }).click();
+  await expect(page).toHaveURL('/account');
+  await expect(page.getByRole('heading', { name: '会員メニュー' })).toBeVisible();
   const response = await page.goto('/admin/prebuilt-pcs/new');
   expect(response?.status()).toBe(403);
   await expect(page.getByRole('heading', { name: '管理画面を利用できません' })).toBeVisible();
