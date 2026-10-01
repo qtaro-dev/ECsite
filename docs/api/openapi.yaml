@@ -523,7 +523,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
-        '413': { description: Multipart body exceeds the product image request limit. }
+        '413': { description: 'HTTP 413 with the standard BAD_REQUEST error envelope when the total multipart body exceeds 4,300,000 bytes.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
         '503': { $ref: '#/components/responses/Unavailable' }
     patch:
       operationId: patch_admin_prebuilt_pc
@@ -543,7 +543,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
-        '413': { description: Multipart body exceeds the product image request limit. }
+        '413': { description: 'HTTP 413 with the standard BAD_REQUEST error envelope when the total multipart body exceeds 4,300,000 bytes.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
         '503': { $ref: '#/components/responses/Unavailable' }
   /admin/overview:
     get:
