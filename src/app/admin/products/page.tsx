@@ -20,7 +20,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   catch { throw new Error(`商品一覧を読み込めませんでした。時間をおいて再度お試しください。 (監査ID: ${auditId})`); }
   return (
     <main className={styles.main}>
-      <div className={styles.heading}><div><h1>A02 商品管理</h1><p>商品情報、仕様、画像、公開状態を管理します。</p></div><Link href="/admin/products/new" className={styles.primary}>新規商品</Link></div>
+      <div className={styles.heading}><div><h1>A02 商品管理</h1><p>商品情報、仕様、画像、公開状態を管理します。</p></div><div className={styles.headingActions}><Link href="/admin/products/new" className={styles.primary}>新規商品</Link><Link href="/admin/prebuilt-pcs/new" className={styles.secondary}>構成済みPCを登録</Link></div></div>
       <form className={styles.search} action="/admin/products" method="get">
         <label htmlFor="product-search">商品名・ブランド・SKU・slug</label>
         <div><input id="product-search" name="q" type="search" maxLength={100} defaultValue={q} /><button type="submit">検索</button></div>
@@ -34,7 +34,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             <td>{product.priceTaxIncludedYen === null ? '未設定' : `¥${product.priceTaxIncludedYen.toLocaleString('ja-JP')}`}</td>
             <td><span className={`${styles.status} ${styles[product.status]}`}>{statusLabels[product.status]}</span></td>
             <td><time dateTime={product.updatedAt}>{new Date(product.updatedAt).toLocaleDateString('ja-JP')}</time></td>
-            <td>{product.category === 'prebuilt-pc' ? <span>SQL管理</span> : <Link href={`/admin/products/${product.id}`}>編集</Link>}</td>
+            <td>{product.category === 'prebuilt-pc' ? <Link href={`/admin/prebuilt-pcs/${product.id}`}>編集</Link> : <Link href={`/admin/products/${product.id}`}>編集</Link>}</td>
           </tr>)}</tbody>
         </table></div>
       )}
