@@ -16,7 +16,7 @@ test('a regular member cannot use the admin login as an admin', async ({ page })
   await page.getByLabel('メールアドレス').fill(process.env.T36_MEMBER_EMAIL!);
   await page.getByLabel('パスワード').fill(process.env.T36_MEMBER_PASSWORD!);
   await page.getByRole('button', { name: '管理者ログイン' }).click();
-  await expect(page.getByRole('alert')).toContainText('このアカウントには管理者権限がありません');
+  await expect(page.locator('form').getByRole('alert')).toContainText('このアカウントには管理者権限がありません');
   await expect(page).toHaveURL('/admin-login');
   const apiResponse = await page.request.get('/api/admin/overview');
   expect(apiResponse.status()).toBe(401);
