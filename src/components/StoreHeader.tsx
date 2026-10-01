@@ -2,7 +2,7 @@ import Link from "next/link";
 import styles from "./StoreHeader.module.css";
 
 const categories = [
-  ["CPU", "cpu"], ["GPU", "gpu"], ["マザーボード", "motherboard"],
+  ["CPU", "cpu"], ["グラフィックボード", "gpu"], ["マザーボード", "motherboard"],
   ["メモリ", "memory"], ["SSD", "ssd"], ["電源", "power-supply"],
   ["PCケース", "pc-case"], ["CPUクーラー", "cpu-cooler"],
 ] as const;

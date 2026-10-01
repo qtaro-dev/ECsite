@@ -53,9 +53,9 @@ function comparePair(rule: typeof RULES[number], products: Map<ProductCategory, 
     const length = readSpec(a.specs, 'card_length_mm');
     const maxLength = readSpec(b.specs, 'max_gpu_length_mm');
     const values = { gpuCardLengthMm: length, caseMaxGpuLengthMm: maxLength };
-    if (typeof length !== 'number' || typeof maxLength !== 'number') return finding(rule.rule, 'unknown', 'GPUまたはケースの搭載可能長が不足しているため判定できません。', values, null);
+    if (typeof length !== 'number' || typeof maxLength !== 'number') return finding(rule.rule, 'unknown', 'グラフィックボードまたはケースの搭載可能長が不足しているため判定できません。', values, null);
     const ok = length <= maxLength;
-    return finding(rule.rule, ok ? 'compatible' : 'incompatible', ok ? `GPU長 ${length}mm はケースの最大搭載長 ${maxLength}mm 以下です。` : `GPU長 ${length}mm はケースの最大搭載長 ${maxLength}mm を超えています。`, values, ok ? null : productListUrl('pc-case', undefined, length));
+    return finding(rule.rule, ok ? 'compatible' : 'incompatible', ok ? `グラフィックボード長 ${length}mm はケースの最大搭載長 ${maxLength}mm 以下です。` : `グラフィックボード長 ${length}mm はケースの最大搭載長 ${maxLength}mm を超えています。`, values, ok ? null : productListUrl('pc-case', undefined, length));
   }
 
   const property = rule.property;

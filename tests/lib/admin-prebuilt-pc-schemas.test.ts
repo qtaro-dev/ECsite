@@ -25,7 +25,9 @@ describe('T58 prebuilt PC admin schemas', () => {
 
   it('accepts an empty-configuration draft but rejects incomplete publication', () => {
     expect(AdminPrebuiltPcCreateSchema.safeParse({ slug: 'draft-pc', sku: 'DRAFT-PC' }).success).toBe(true);
-    expect(AdminPrebuiltPcCreateSchema.safeParse({ ...complete, components: null, status: 'published' }).success).toBe(false);
+    const result = AdminPrebuiltPcCreateSchema.safeParse({ ...complete, components: null, status: 'published' });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues.some(({ message }) => message.includes('グラフィックボード'))).toBe(true);
   });
 
   it('requires a use case and enforces Yamato limits for publication', () => {

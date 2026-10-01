@@ -42,7 +42,7 @@ function validatePublishedFields(value: z.infer<typeof PrebuiltPcFields>, contex
     if (!value[field].trim()) context.addIssue({ code: 'custom', path: [field], message: '公開には入力が必要です。' });
   }
   if (value.priceTaxIncludedYen == null) context.addIssue({ code: 'custom', path: ['priceTaxIncludedYen'], message: '公開には税込価格が必要です。' });
-  if (!value.components) context.addIssue({ code: 'custom', path: ['components'], message: '公開にはCPU・GPU・メモリ・SSDの構成が必要です。' });
+  if (!value.components) context.addIssue({ code: 'custom', path: ['components'], message: '公開にはCPU・グラフィックボード・メモリ・SSDの構成が必要です。' });
   if (value.useCases.length === 0) context.addIssue({ code: 'custom', path: ['useCases'], message: '公開には用途を1つ以上選択してください。' });
   for (const field of ['weightG', 'packLengthMm', 'packWidthMm', 'packHeightMm'] as const) {
     if (value[field] == null) context.addIssue({ code: 'custom', path: [field], message: '公開には梱包情報が必要です。' });
