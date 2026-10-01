@@ -331,7 +331,7 @@
           <tr data-owner="LUNA-A">
             <th scope="row"><a href="../tickets/T56-first-admin-setup.md">T56</a></th>
             <td>初回管理者アカウントのサイト内セットアップ</td><td>MVP追加</td><td>LUNA-A</td>
-            <td>T06、T10、T17、T20、T36、T44、T50</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/102">PR #102</a> マージ済み（<code>2df5b51</code>）、必須CI成功。初回管理者作成機能は実装済み。Hosted Supabaseへのmigration適用、Vercel Productionの一時コード設定、所有者による初回登録・ログイン確認が未完了のため、公開設定待ち</td><td class="updated">2026-10-01</td>
+            <td>T06、T10、T17、T20、T36、T44、T50</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/102">PR #102</a> マージ済み（<code>2df5b51</code>）、必須CI成功。Hosted Supabase migration <code>20261001090000</code>適用・履歴確認済み。2026-10-01、所有者提供スクリーンショットで公開サイトの管理者ログインと管理ダッシュボード表示を確認。所有者報告によりVercel Productionの一時<code>ADMIN_SETUP_CODE</code>を削除して再デプロイ済み。公開<code>/admin-setup</code>で初回セットアップが閉じていることを確認</td><td class="updated">2026-10-01</td>
           </tr>
         </tbody>
       </table>
