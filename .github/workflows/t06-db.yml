@@ -41,6 +41,8 @@ on:
       - 'tests/database/t38-inventory-concurrency.py'
       - 'tests/database/t56-first-admin-setup.sql'
       - 'tests/database/t56-admin-setup-concurrency.py'
+      - 'tests/database/t58-prebuilt-pc-admin.sql'
+      - 'tests/database/t58-storage-fixtures.py'
       - '.github/workflows/t06-db.yml'
   push:
     branches: [main]
@@ -83,6 +85,8 @@ on:
       - 'tests/database/t38-inventory-concurrency.py'
       - 'tests/database/t56-first-admin-setup.sql'
       - 'tests/database/t56-admin-setup-concurrency.py'
+      - 'tests/database/t58-prebuilt-pc-admin.sql'
+      - 'tests/database/t58-storage-fixtures.py'
       - '.github/workflows/t06-db.yml'
 
 permissions:
@@ -175,6 +179,10 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t56-first-admin-setup.sql
       - name: Check T56 concurrent setup serialization
         run: python3 tests/database/t56-admin-setup-concurrency.py
+      - name: Upload synthetic T58 product image
+        run: python3 tests/database/t58-storage-fixtures.py
+      - name: Check T58 prebuilt PC admin validation, permissions, versions, audit and history
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t58-prebuilt-pc-admin.sql
       - name: Upload and read T11 image placeholders
         run: python3 tests/database/t11-storage-fixtures.py
       - name: Check T09 private Storage URLs

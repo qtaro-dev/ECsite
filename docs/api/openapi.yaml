@@ -490,6 +490,61 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '413': { description: 'HTTP 413 with the standard BAD_REQUEST error envelope when the total multipart body exceeds 4,300,000 bytes.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
         '503': { $ref: '#/components/responses/Unavailable' }
+  /admin/prebuilt-pcs:
+    get:
+      operationId: get_admin_prebuilt_pcs
+      summary: List or read prebuilt PC entries for administrators
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: productId, in: query, schema: { type: string, format: uuid }, description: Read one prebuilt PC detail when supplied. }
+      responses:
+        '200': { description: Admin prebuilt PC list or detail, content: { application/json: { schema: { anyOf: [{ $ref: '#/components/schemas/AdminPrebuiltPcListResponse' }, { $ref: '#/components/schemas/AdminPrebuiltPcDetailResponse' }] } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    post:
+      operationId: post_admin_prebuilt_pc
+      summary: Create a prebuilt PC draft or publish a complete prebuilt PC
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody:
+        required: true
+        description: Multipart payload; component names/details are free text and do not reference component SKUs or stock.
+        content: { multipart/form-data: { schema: { $ref: '#/components/schemas/AdminPrebuiltPcCreateMultipart' } } }
+      responses:
+        '201': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { description: 'HTTP 413 with the standard BAD_REQUEST error envelope when the total multipart body exceeds 4,300,000 bytes.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    patch:
+      operationId: patch_admin_prebuilt_pc
+      summary: Update a prebuilt PC with optimistic version control
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody:
+        required: true
+        description: Multipart payload; component names/details are free text and do not reference component SKUs or stock.
+        content: { multipart/form-data: { schema: { $ref: '#/components/schemas/AdminPrebuiltPcUpdateMultipart' } } }
+      responses:
+        '200': { $ref: '#/components/responses/GenericSuccess' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { description: 'HTTP 413 with the standard BAD_REQUEST error envelope when the total multipart body exceeds 4,300,000 bytes.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /admin/overview:
     get:
       operationId: get_admin_overview
@@ -605,6 +660,148 @@ components:
     Origin: { name: Origin, in: header, required: true, schema: { type: string, format: uri } }
     IdempotencyKey: { name: Idempotency-Key, in: header, required: true, description: Stable UUID for one checkout attempt; retries and a second submit for the same quote resolve to one order., schema: { type: string, format: uuid } }
   schemas:
+    AdminPrebuiltPcComponent:
+      type: object
+      required: [label, details]
+      additionalProperties: false
+      properties:
+        label: { type: string, minLength: 1, maxLength: 120 }
+        details: { type: string, minLength: 1, maxLength: 300 }
+    AdminPrebuiltPcComponents:
+      type: object
+      required: [cpu, gpu, memory, ssd]
+      additionalProperties: false
+      properties:
+        cpu: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
+        gpu: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
+        memory: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
+        ssd: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
+        motherboard: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
+        powerSupply: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
+        pcCase: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
+    AdminPrebuiltPcFields:
+      type: object
+      required: [slug, sku]
+      additionalProperties: false
+      properties:
+        slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$', maxLength: 160 }
+        sku: { type: string, minLength: 1, maxLength: 80 }
+        name: { type: string, maxLength: 240 }
+        brand: { type: string, maxLength: 120 }
+        description: { type: string, maxLength: 5000 }
+        beginnerNote: { type: string, maxLength: 2000 }
+        priceTaxIncludedYen: { type: [integer, 'null'], minimum: 0 }
+        status: { type: string, enum: [draft, published, hidden] }
+        weightG: { type: [integer, 'null'], minimum: 1 }
+        packLengthMm: { type: [integer, 'null'], minimum: 1 }
+        packWidthMm: { type: [integer, 'null'], minimum: 1 }
+        packHeightMm: { type: [integer, 'null'], minimum: 1 }
+        useCases: { type: array, uniqueItems: true, maxItems: 3, items: { type: string, enum: [gaming, daily, editing] } }
+        components: { oneOf: [{ $ref: '#/components/schemas/AdminPrebuiltPcComponents' }, { type: 'null' }], description: Draft may omit configuration; a stored configuration must be complete. }
+    AdminPrebuiltPcCreate:
+      allOf: [{ $ref: '#/components/schemas/AdminPrebuiltPcFields' }]
+      unevaluatedProperties: false
+    AdminPrebuiltPcUpdate:
+      allOf:
+        - { $ref: '#/components/schemas/AdminPrebuiltPcFields' }
+        - type: object
+          required: [expectedVersion]
+          properties: { expectedVersion: { type: integer, minimum: 0 } }
+      unevaluatedProperties: false
+    AdminPrebuiltPcImageInput:
+      type: object
+      required: [storagePath, altText, sortOrder]
+      additionalProperties: false
+      properties:
+        storagePath: { type: string, minLength: 1, maxLength: 512 }
+        altText: { type: string, minLength: 1, maxLength: 240 }
+        sortOrder: { type: integer, minimum: 0 }
+    AdminPrebuiltPcCreateMultipart:
+      type: object
+      required: [payload]
+      additionalProperties: false
+      properties:
+        payload: { type: string, contentMediaType: application/json, contentSchema: { $ref: '#/components/schemas/AdminPrebuiltPcCreateMultipartPayload' }, description: 'JSON payload with fields, images, imageAltText.' }
+        image: { type: string, format: binary, description: 'Optional JPEG, PNG, or WebP product image.' }
+    AdminPrebuiltPcUpdateMultipart:
+      type: object
+      required: [payload]
+      additionalProperties: false
+      properties:
+        payload: { type: string, contentMediaType: application/json, contentSchema: { $ref: '#/components/schemas/AdminPrebuiltPcUpdateMultipartPayload' }, description: 'JSON payload with productId, fields, images, imageAltText.' }
+        image: { type: string, format: binary, description: 'Optional JPEG, PNG, or WebP product image.' }
+    AdminPrebuiltPcCreateMultipartPayload:
+      type: object
+      required: [fields, images, imageAltText]
+      additionalProperties: false
+      properties:
+        fields: { $ref: '#/components/schemas/AdminPrebuiltPcCreate' }
+        images: { type: array, items: { $ref: '#/components/schemas/AdminPrebuiltPcImageInput' } }
+        imageAltText: { type: string, minLength: 1, maxLength: 240 }
+    AdminPrebuiltPcUpdateMultipartPayload:
+      type: object
+      required: [productId, fields, images, imageAltText]
+      additionalProperties: false
+      properties:
+        productId: { type: string, format: uuid }
+        fields: { $ref: '#/components/schemas/AdminPrebuiltPcUpdate' }
+        images: { type: array, items: { $ref: '#/components/schemas/AdminPrebuiltPcImageInput' } }
+        imageAltText: { type: string, minLength: 1, maxLength: 240 }
+    AdminPrebuiltPcListResponse:
+      type: object
+      required: [data, requestId]
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          required: [items]
+          additionalProperties: false
+          properties: { items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/AdminPrebuiltPcListItem' } } }
+        requestId: { type: string, format: uuid }
+    AdminPrebuiltPcListItem:
+      type: object
+      required: [id, slug, sku, name, brand, priceTaxIncludedYen, status, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        sku: { type: string }
+        name: { type: string }
+        brand: { type: string }
+        priceTaxIncludedYen: { type: [integer, 'null'], minimum: 0 }
+        status: { type: string, enum: [draft, published, hidden] }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { type: string, format: date-time }
+    AdminPrebuiltPcDetailResponse:
+      type: object
+      required: [data, requestId]
+      additionalProperties: false
+      properties:
+        data: { $ref: '#/components/schemas/AdminPrebuiltPcDetail' }
+        requestId: { type: string, format: uuid }
+    AdminPrebuiltPcDetail:
+      type: object
+      required: [id, version, updatedAt, slug, sku, name, brand, priceTaxIncludedYen, status, description, beginnerNote, weightG, packLengthMm, packWidthMm, packHeightMm, useCases, components, images]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { type: string, format: date-time }
+        slug: { type: string }
+        sku: { type: string }
+        name: { type: string }
+        brand: { type: string }
+        priceTaxIncludedYen: { type: [integer, 'null'], minimum: 0 }
+        status: { type: string, enum: [draft, published, hidden] }
+        description: { type: string }
+        beginnerNote: { type: string }
+        weightG: { type: [integer, 'null'], minimum: 1 }
+        packLengthMm: { type: [integer, 'null'], minimum: 1 }
+        packWidthMm: { type: [integer, 'null'], minimum: 1 }
+        packHeightMm: { type: [integer, 'null'], minimum: 1 }
+        useCases: { type: array, items: { type: string, enum: [gaming, daily, editing] } }
+        components: { oneOf: [{ $ref: '#/components/schemas/AdminPrebuiltPcComponents' }, { type: 'null' }] }
+        images: { type: array, items: { $ref: '#/components/schemas/AdminPrebuiltPcImageInput' } }
     Envelope:
       type: object
       required: [data, requestId]
