@@ -19,6 +19,7 @@ describe('compatibility engine', () => {
       ['motherboard_case_form_factor', 'compatible'], ['gpu_case_length', 'compatible'], ['cpu_cooler_socket', 'compatible'],
     ]);
     expect(findings.every(({ matchingUrl }) => matchingUrl === null)).toBe(true);
+    expect(findings[3].reason).toContain('グラフィックボード長');
   });
 
   it('detects all five incompatibilities without blocking purchase', () => {
@@ -36,6 +37,7 @@ describe('compatibility engine', () => {
     expect(findings[0].matchingUrl).toContain('category=motherboard');
     expect(findings[2].matchingUrl).toContain('supported_form_factors');
     expect(findings[3].matchingUrl).toContain('minGpuClearanceMm=320');
+    expect(findings[3].reason).toContain('グラフィックボード長');
     expect(findings[4].matchingUrl).toContain('supported_socket_codes');
   });
 
@@ -48,6 +50,7 @@ describe('compatibility engine', () => {
     products[5].specs.supported_socket_codes = null;
     const findings = evaluateCompatibility(products);
     expect(findings.map(({ status }) => status)).toEqual(['unknown', 'unknown', 'unknown', 'unknown', 'unknown']);
+    expect(findings[3].reason).toContain('グラフィックボード');
     expect(evaluateCompatibility([]).map(({ status }) => status)).toEqual(Array(5).fill('not_applicable'));
     expect(evaluateCompatibility([{ ...products[0] }])[0].status).toBe('not_applicable');
   });

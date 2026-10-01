@@ -13,7 +13,7 @@ const useCases = {
 type Usage = keyof typeof useCases;
 
 const partLabels = [
-  ["cpu", "CPU"], ["gpu", "GPU（グラフィックボード）"], ["memory", "メモリ"], ["ssd", "SSD"],
+  ["cpu", "CPU"], ["gpu", "グラフィックボード"], ["memory", "メモリ"], ["ssd", "SSD"],
   ["motherboard", "マザーボード"], ["powerSupply", "電源ユニット"], ["pcCase", "PCケース"],
 ] as const;
 

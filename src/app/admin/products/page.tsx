@@ -6,7 +6,7 @@ import { getAdminProducts } from '@/server/admin/products';
 export const dynamic = 'force-dynamic';
 
 const labels: Record<string, string> = {
-  cpu: 'CPU', gpu: 'GPU', motherboard: 'マザーボード', memory: 'メモリ', ssd: 'SSD',
+  cpu: 'CPU', gpu: 'グラフィックボード', motherboard: 'マザーボード', memory: 'メモリ', ssd: 'SSD',
   'power-supply': '電源', 'pc-case': 'PCケース', 'cpu-cooler': 'CPUクーラー',
   'prebuilt-pc': '構成済みPC（シード管理）',
 };

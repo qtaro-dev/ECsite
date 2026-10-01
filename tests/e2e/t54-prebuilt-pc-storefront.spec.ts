@@ -16,7 +16,7 @@ test("home purpose cards open two configured PCs per use case and their detail e
     const products = page.locator('section[aria-label$="の商品一覧"] > article');
     await expect(products).toHaveCount(2);
     await expect(products.first().getByText(/販売可能：\d+点|在庫切れ/)).toBeVisible();
-    for (const part of ["CPU", "GPU（グラフィックボード）", "メモリ", "SSD"]) {
+    for (const part of ["CPU", "グラフィックボード", "メモリ", "SSD"]) {
       await expect(products.first().getByText(part, { exact: true })).toBeVisible();
     }
 
@@ -24,7 +24,7 @@ test("home purpose cards open two configured PCs per use case and their detail e
     const configuration = page.locator('section[aria-labelledby="spec-title"]');
     await expect(configuration.getByRole("heading", { level: 2, name: "採用構成", exact: true })).toBeVisible();
     const productName = await page.getByRole("heading", { level: 1 }).textContent();
-    for (const part of ["CPU", "GPU（グラフィックボード）", "メモリ", "SSD"]) {
+    for (const part of ["CPU", "グラフィックボード", "メモリ", "SSD"]) {
       await expect(configuration.getByText(part, { exact: true })).toBeVisible();
     }
     await expect(page.getByRole("link", { name: "構成に追加" })).toHaveCount(0);

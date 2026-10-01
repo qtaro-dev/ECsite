@@ -26,7 +26,7 @@ const specFields: Partial<Record<CatalogCategory, SpecField[]>> = {
   memory: [{ key: "ddr_generation", label: "メモリ規格", type: "text" }, { key: "capacity_gb", label: "容量（GB）", type: "number" }, { key: "module_count", label: "枚数", type: "number" }, { key: "speed_mt_s", label: "速度（MT/s）", type: "number" }],
   ssd: [{ key: "capacity_gb", label: "容量（GB）", type: "number" }, { key: "interface", label: "接続規格", type: "text" }, { key: "form_factor", label: "フォームファクター", type: "text" }],
   "power-supply": [{ key: "rated_w", label: "定格出力（W）", type: "number" }, { key: "form_factor", label: "フォームファクター", type: "text" }, { key: "efficiency_grade", label: "変換効率", type: "text" }],
-  "pc-case": [{ key: "max_gpu_length_mm", label: "対応GPU長（mm）", type: "number" }, { key: "outer_length_mm", label: "奥行（mm）", type: "number" }, { key: "outer_width_mm", label: "幅（mm）", type: "number" }, { key: "outer_height_mm", label: "高さ（mm）", type: "number" }, { key: "supported_form_factors", label: "対応フォームファクター（カンマ区切り）", type: "list" }],
+  "pc-case": [{ key: "max_gpu_length_mm", label: "対応グラフィックボード長（mm）", type: "number" }, { key: "outer_length_mm", label: "奥行（mm）", type: "number" }, { key: "outer_width_mm", label: "幅（mm）", type: "number" }, { key: "outer_height_mm", label: "高さ（mm）", type: "number" }, { key: "supported_form_factors", label: "対応フォームファクター（カンマ区切り）", type: "list" }],
   "cpu-cooler": [{ key: "supported_socket_codes", label: "対応ソケット（カンマ区切り）", type: "list" }, { key: "height_mm", label: "高さ（mm）", type: "number" }, { key: "cooling_type", label: "冷却方式", type: "text" }],
 };
 
@@ -164,7 +164,7 @@ export function CatalogExplorer({ category }: ExplorerProps) {
           <label>用途<select name="usage" defaultValue={params.get("usage") ?? ""}><option value="">指定なし</option>{usageOptions.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
           <label>メーカー<input name="manufacturer" type="search" maxLength={100} defaultValue={params.get("manufacturer") ?? ""} /></label>
           <fieldset><legend>価格（税込）</legend><div className={styles.priceFields}><label>下限<input name="minPrice" inputMode="numeric" pattern="[0-9]*" defaultValue={params.get("minPrice") ?? ""} /></label><span>〜</span><label>上限<input name="maxPrice" inputMode="numeric" pattern="[0-9]*" defaultValue={params.get("maxPrice") ?? ""} /></label></div></fieldset>
-          {currentCategory === "pc-case" && <label>対応GPU長以上（mm）<input name="minGpuClearanceMm" type="number" min={1} defaultValue={params.get("minGpuClearanceMm") ?? ""} /></label>}
+          {currentCategory === "pc-case" && <label>対応グラフィックボード長以上（mm）<input name="minGpuClearanceMm" type="number" min={1} defaultValue={params.get("minGpuClearanceMm") ?? ""} /></label>}
           {fields.length > 0 && <fieldset className={styles.specs}><legend>仕様</legend>{fields.map((field) => <label key={field.key}>{field.label}<input name={`spec.${field.key}`} type={field.type === "number" ? "number" : "text"} min={field.type === "number" ? 1 : undefined} defaultValue={specDisplayValue(selectedSpec[field.key])} /></label>)}</fieldset>}
           <label>並べ替え<select name="sort" defaultValue={params.get("sort") ?? "newest"}><option value="newest">新着順</option><option value="price_asc">価格が安い順</option><option value="price_desc">価格が高い順</option></select></label>
           <button className={styles.apply} type="submit">条件を適用</button>
