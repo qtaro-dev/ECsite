@@ -35,9 +35,9 @@
 <body>
   <main>
     <h1>実装チケット進捗一覧</h1>
-    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 55件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
+    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 56件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
     <div class="summary" aria-label="進捗件数">
-      <span>全件 <output id="count-all">55</output></span>
+      <span>全件 <output id="count-all">56</output></span>
       <span>未実装 <output id="count-not-started">7</output></span>
       <span>実装中 <output id="count-active">0</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
@@ -49,7 +49,7 @@
       <label>担当<select id="owner"><option value="">すべて</option><option>LUNA-A</option><option>LUNA-B</option></select></label>
       <label>状態<select id="state"><option value="">すべて</option><option>未実装</option><option>実装中</option><option>レビュー中</option><option>完了</option><option>保留</option></select></label>
     </div>
-    <div class="table-wrap" role="region" aria-label="55件の実装チケット" tabindex="0">
+    <div class="table-wrap" role="region" aria-label="56件の実装チケット" tabindex="0">
       <table>
         <thead><tr><th scope="col">番号</th><th scope="col">チケット</th><th scope="col">フェーズ / Wave</th><th scope="col">担当</th><th scope="col">依存</th><th scope="col">状態</th><th scope="col">根拠 PR / commit</th><th scope="col">更新日</th></tr></thead>
         <tbody>
@@ -327,6 +327,11 @@
             <th scope="row"><a href="../tickets/T55-home-layout-alignment.md">T55</a></th>
             <td>ホーム見出しとカテゴリ欄の幅合わせ</td><td>MVP改善</td><td>LUNA-B</td>
             <td>T52</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/98">PR #98</a> マージ済み（<code>b6743ee</code>）。CI全成功。指定見出し、カテゴリ欄の幅合わせ、既存の列数とレスポンシブを検証</td><td class="updated">2026-09-29</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T56-first-admin-setup.md">T56</a></th>
+            <td>初回管理者アカウントのサイト内セットアップ</td><td>MVP追加</td><td>LUNA-A</td>
+            <td>T06、T10、T17、T20、T36、T44、T50</td><td class="status">保留</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/102">PR #102</a> マージ済み（<code>2df5b51</code>）、必須CI成功。初回管理者作成機能は実装済み。Hosted Supabaseへのmigration適用、Vercel Productionの一時コード設定、所有者による初回登録・ログイン確認が未完了のため、公開設定待ち</td><td class="updated">2026-10-01</td>
           </tr>
         </tbody>
       </table>
