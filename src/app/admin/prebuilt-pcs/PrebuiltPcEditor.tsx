@@ -200,7 +200,7 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
       <section className={styles.section} aria-labelledby="components-title" aria-describedby={['components-help', fieldErrors('partIds').length ? 'components-schema-error' : undefined].filter(Boolean).join(' ')}>
         <h2 id="components-title">採用パーツの構成</h2>
         <p id="components-help" className={styles.help}>登録済みの単品パーツから選択します。完成PCの価格と在庫は独立しており、単品パーツの在庫は減りません。公開時はCPU・グラフィックボード・メモリ・SSDが必要です。</p>
-        {initial?.legacyComponents && <p className={styles.help} role="status">このPCは旧方式の構成です。現在の表示・購入は維持されます。変更を保存するには採用パーツを選び直してください。</p>}
+        {initial?.legacyComponents && <p className={styles.help} role="status">このPCは旧方式の構成です。現在の表示・購入は維持されます。変更を保存するには旧構成で使っているすべての採用パーツを選び直してください。</p>}
         <div className={styles.componentGrid}>
           {partKeys.map((key) => {
             const slotErrors = fieldErrors(`partIds.${key}`);

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { AdminProductImageFileSchema, AdminProductImageInputSchema, AdminProductStatusSchema, AdminProductUseCaseSchema } from '@/lib/admin-product-schemas';
 
 const component = z.object({
-  label: z.string().trim().min(1).max(120),
+  label: z.string().trim().min(1).max(240),
   details: z.string().trim().min(1).max(300),
 }).strict();
 

@@ -7,7 +7,7 @@ returns boolean language sql immutable set search_path = '' as $$
     and (select bool_and(case when jsonb_typeof(value->component_key) is distinct from 'object' then false else
       ((value->component_key) - array['label','details']) = '{}'::jsonb
       and jsonb_typeof(value->component_key->'label') = 'string'
-      and length(btrim(value->component_key->>'label')) between 1 and 120
+      and length(btrim(value->component_key->>'label')) between 1 and 240
       and jsonb_typeof(value->component_key->'details') = 'string'
       and length(btrim(value->component_key->>'details')) between 1 and 300 end)
       from unnest(array['cpu','gpu','memory','ssd','motherboard','powerSupply','pcCase','cpuCooler']) as keys(component_key)
@@ -98,7 +98,7 @@ begin
         raise exception 'selected part unavailable or category mismatched' using errcode='23514';
       end if;
       v_components := v_components || jsonb_build_object(item.key,jsonb_build_object(
-        'label',left(v_part.name,120),'details',private.prebuilt_part_details(v_part_id,item.key)));
+        'label',v_part.name,'details',private.prebuilt_part_details(v_part_id,item.key)));
     end loop;
   end if;
   if p_fields->>'status'='published' and v_components='{}'::jsonb then
@@ -108,6 +108,13 @@ begin
     and exists(select 1 from public.prebuilt_pc_specs s where s.product_id=p_product_id)
     and not exists(select 1 from public.prebuilt_pc_component_parts r where r.prebuilt_product_id=p_product_id) then
     raise exception 'legacy PC requires part reselection before update' using errcode='23514';
+  end if;
+  if p_expected_version is not null
+    and not exists(select 1 from public.prebuilt_pc_component_parts r where r.prebuilt_product_id=p_product_id)
+    and exists(select 1 from public.prebuilt_pc_specs s where s.product_id=p_product_id
+      and exists(select 1 from jsonb_object_keys(s.components) as old_slot(slot)
+        where not (coalesce(p_part_ids,'{}'::jsonb) ? old_slot.slot))) then
+    raise exception 'all legacy component slots require reselection' using errcode='23514';
   end if;
   select * into v_saved from public.admin_save_prebuilt_pc(p_product_id,p_expected_version,p_fields,
     nullif(v_components,'{}'::jsonb),p_use_cases,p_images,p_actor_id,p_request_id);

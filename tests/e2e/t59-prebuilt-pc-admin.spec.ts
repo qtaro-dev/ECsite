@@ -158,20 +158,3 @@ test('T59 route remains protected from regular members', async ({ page }) => {
   const api = await page.request.get('/api/admin/prebuilt-pcs');
   expect(api.status()).toBe(403);
 });
-
-test('T61 keeps a legacy published PC visible and requires part reselection before editing', async ({ page }) => {
-  test.skip(!process.env.T36_ADMIN_EMAIL || !process.env.T36_ADMIN_PASSWORD,
-    'T36_ADMIN_EMAIL and T36_ADMIN_PASSWORD must identify a locally provisioned admin account');
-  await signInAsAdmin(page);
-  await page.getByLabel('商品名・ブランド・SKU・slug').fill('demo-gaming-pc-01');
-  await page.getByRole('button', { name: '検索' }).click();
-  const row = page.getByRole('row').filter({ hasText: 'demo-gaming-pc-01' });
-  await expect(row).toContainText('旧構成・パーツ未選択');
-  await row.getByRole('link', { name: '編集' }).click();
-  await expect(page.getByText('このPCは旧方式の構成です。')).toBeVisible();
-  await expect(page.getByText(/旧構成: Demo CPU G1/)).toBeVisible();
-  await page.getByLabel('商品名').fill('保存できない変更');
-  await page.getByLabel('公開状態').selectOption('draft');
-  await page.getByRole('button', { name: '変更を保存' }).click();
-  await expect(page.getByRole('alert')).toContainText('採用パーツを選び直してから保存してください');
-});

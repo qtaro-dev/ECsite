@@ -87,6 +87,12 @@ export async function saveAdminPrebuiltPc(input: SaveInput) {
   if (existing?.legacyComponents && !fields.partIds) throw new PrebuiltPcSaveError('BAD_REQUEST', {
     partIds: ['旧方式の構成です。採用パーツを選び直してから保存してください。'],
   });
+  if (existing?.legacyComponents && existing.components &&
+    Object.keys(existing.components).some((slot) => !fields.partIds || !Object.hasOwn(fields.partIds, slot))) {
+    throw new PrebuiltPcSaveError('BAD_REQUEST', {
+      partIds: ['旧構成で使用中のパーツをすべて選び直してください。'],
+    });
+  }
   if (isCreate && input.images.length) throw new PrebuiltPcSaveError('BAD_REQUEST');
   if (input.images.some((image) => !(existing?.images.some((old) => old.storagePath === image.storagePath)))) throw new PrebuiltPcSaveError('BAD_REQUEST');
   if (fields.status === 'published' && input.images.length === 0 && !input.imageFile) {

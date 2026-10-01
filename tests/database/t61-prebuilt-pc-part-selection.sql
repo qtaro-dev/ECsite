@@ -48,6 +48,10 @@ begin
     or (select on_hand from public.inventory where product_id=v_cpu) is distinct from v_before then
     raise exception 'selected parts, independent PC price, or part stock changed incorrectly';
   end if;
+  update public.products set name='Renamed source CPU' where id=v_cpu;
+  if (select components->'cpu'->>'label' from public.prebuilt_pc_specs where product_id=v_pc)='Renamed source CPU' then
+    raise exception 'source part edit rewrote the PC display snapshot';
+  end if;
   v_failed:=false;
   begin
     perform public.admin_save_prebuilt_pc_v2(v_pc,0,

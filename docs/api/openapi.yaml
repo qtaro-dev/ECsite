@@ -681,7 +681,7 @@ components:
       required: [label, details]
       additionalProperties: false
       properties:
-        label: { type: string, minLength: 1, maxLength: 120 }
+        label: { type: string, minLength: 1, maxLength: 240 }
         details: { type: string, minLength: 1, maxLength: 300 }
     AdminPrebuiltPcComponents:
       type: object
