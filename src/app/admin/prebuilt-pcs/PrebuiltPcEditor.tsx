@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { AdminPrebuiltPcCreateSchema, AdminPrebuiltPcDetailSchema, AdminPrebuiltPcUpdateSchema } from '@/lib/admin-prebuilt-pc-schemas';
 import { ADMIN_PRODUCT_IMAGE_MAX_BYTES, ADMIN_PRODUCT_IMAGE_MAX_PIXELS, ADMIN_PRODUCT_IMAGE_MAX_SIDE, ADMIN_PRODUCT_MULTIPART_MAX_BYTES } from '@/lib/admin-product-image-limits';
+import { parsePrebuiltWeightKg, weightGToKgInput } from '@/lib/prebuilt-weight-kg';
 import styles from './prebuilt-pc-editor.module.css';
 
 type Part = { label: string; details: string };
@@ -16,14 +17,14 @@ type Detail = z.infer<typeof AdminPrebuiltPcDetailSchema>;
 type Props = { initial?: Detail; initialMessage?: string };
 type Fields = {
   slug: string; sku: string; name: string; brand: string; description: string; beginnerNote: string;
-  priceTaxIncludedYen: string; status: Detail['status']; weightG: string; packLengthMm: string; packWidthMm: string; packHeightMm: string;
+  priceTaxIncludedYen: string; status: Detail['status']; weightKg: string; packLengthMm: string; packWidthMm: string; packHeightMm: string;
 };
 
 const partKeys: PartKey[] = ['cpu', 'gpu', 'memory', 'ssd', 'motherboard', 'powerSupply', 'pcCase', 'cpuCooler'];
 const partLabels: Record<PartKey, string> = { cpu: 'CPU', gpu: 'グラフィックボード', memory: 'メモリ', ssd: 'SSD', motherboard: 'マザーボード', powerSupply: '電源', pcCase: 'PCケース', cpuCooler: 'CPUクーラー' };
 const usageOptions = [['gaming', 'ゲーム'], ['daily', '普段使い'], ['editing', '動画編集']] as const;
 const requiredParts = new Set<PartKey>(['cpu', 'gpu', 'memory', 'ssd']);
-const numericKeys = ['priceTaxIncludedYen', 'weightG', 'packLengthMm', 'packWidthMm', 'packHeightMm'] as const;
+const numericKeys = ['priceTaxIncludedYen', 'packLengthMm', 'packWidthMm', 'packHeightMm'] as const;
 const blankPart = (): Part => ({ label: '', details: '' });
 
 function initialValues(initial?: Detail): Fields {
@@ -31,7 +32,7 @@ function initialValues(initial?: Detail): Fields {
   return {
     slug: initial?.slug ?? '', sku: initial?.sku ?? '', name: initial?.name ?? '', brand: initial?.brand ?? '',
     description: initial?.description ?? '', beginnerNote: initial?.beginnerNote ?? '',
-    priceTaxIncludedYen: value(initial?.priceTaxIncludedYen), status: initial?.status ?? 'draft', weightG: value(initial?.weightG),
+    priceTaxIncludedYen: value(initial?.priceTaxIncludedYen), status: initial?.status ?? 'draft', weightKg: weightGToKgInput(initial?.weightG),
     packLengthMm: value(initial?.packLengthMm), packWidthMm: value(initial?.packWidthMm), packHeightMm: value(initial?.packHeightMm),
   };
 }
@@ -58,6 +59,10 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
   const [busy, setBusy] = useState(false);
 
   const fieldErrors = (name: string) => errors[name] ?? [];
+  const weightPreview = parsePrebuiltWeightKg(fields.weightKg);
+  const weightErrors = fieldErrors('weightG');
+  const weightErrorIds = weightErrors.map((_, index) => `weight-kg-error-${index}`);
+  const showWeightPreview = weightPreview.weightG !== null && !weightPreview.error;
   const imageErrors = [...fieldErrors('images'), ...fieldErrors('image')];
   const imageErrorIds = imageErrors.map((_, index) => `prebuilt-image-server-error-${index}`);
   function changeField(name: keyof Fields, value: string) { setFields((current) => ({ ...current, [name]: value })); }
@@ -102,20 +107,24 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
     else setImageFile(file);
   }
 
-  function buildPayloadFields() {
+  function buildPayloadFields(weightG: number | null) {
     const selected = Object.fromEntries(partKeys.filter((key) => partIds[key]).map((key) => [key, partIds[key]]));
     const selectedParts = Object.keys(selected).length ? selected : null;
     const numbers = Object.fromEntries(numericKeys.map((key) => [key, fields[key] === '' ? null : Number(fields[key])]));
     return {
       slug: fields.slug, sku: fields.sku, name: fields.name, brand: fields.brand, description: fields.description,
-      beginnerNote: fields.beginnerNote, ...numbers, status: fields.status, useCases: selectedUseCases, partIds: selectedParts,
+      beginnerNote: fields.beginnerNote, ...numbers, weightG, status: fields.status, useCases: selectedUseCases, partIds: selectedParts,
       ...(initial ? { expectedVersion: version } : {}),
     };
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setMessage('');
-    const candidate = buildPayloadFields();
+    const parsedWeight = parsePrebuiltWeightKg(fields.weightKg);
+    if (parsedWeight.error) {
+      setErrors({ weightG: [parsedWeight.error] }); setMessage('入力内容を確認してください。'); return;
+    }
+    const candidate = buildPayloadFields(parsedWeight.weightG);
     if (initial?.legacyComponents && (!candidate.partIds
       || Object.keys(initial.components ?? {}).some((slot) => !Object.hasOwn(candidate.partIds ?? {}, slot)))) {
       setErrors({ partIds: ['旧方式の構成です。採用パーツを選び直してから保存してください。'] });
@@ -125,7 +134,12 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
     const parsed = initial ? AdminPrebuiltPcUpdateSchema.safeParse(candidate) : AdminPrebuiltPcCreateSchema.safeParse(candidate);
     if (!parsed.success) {
       const next: Record<string, string[]> = {};
-      for (const issue of parsed.error.issues) { const key = issue.path.join('.'); next[key] = [...(next[key] ?? []), issue.message]; }
+      for (const issue of parsed.error.issues) {
+        const key = issue.path.join('.');
+        const message = key === 'weightG' && parsedWeight.weightG === null
+          ? '公開には商品重量（kg）の入力が必要です。' : issue.message;
+        next[key] = [...(next[key] ?? []), message];
+      }
       setErrors(next); setMessage('入力内容を確認してください。'); return;
     }
     const retained = images.filter((image) => !removedImages.includes(image.storagePath)).map((image, index) => ({ ...image, sortOrder: index }));
@@ -248,8 +262,20 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
           {usageOptions.map(([value, label]) => <label key={value}><input type="checkbox" checked={selectedUseCases.includes(value)} onChange={(event) => setSelectedUseCases((current) => event.target.checked ? [...current, value] : current.filter((item) => item !== value))} />{label}</label>)}
         </fieldset>
         {fieldErrors('useCases').map((error, index) => <p className={styles.error} id="use-cases-error" key={index}>{error}</p>)}
-        <div className={styles.grid}>{textField('weightG', '商品重量（g）', 'number')}{textField('packLengthMm', '梱包後の長さ（mm）', 'number')}{textField('packWidthMm', '梱包後の幅（mm）', 'number')}{textField('packHeightMm', '梱包後の高さ（mm）', 'number')}</div>
-        {['weightG', 'packLengthMm', 'packWidthMm', 'packHeightMm'].flatMap((name) => fieldErrors(name).map((error, index) => <p className={styles.error} key={`${name}-${index}`}>{error}</p>))}
+        <div className={styles.grid}>
+          <div className={styles.field}>
+            <label htmlFor="weight-kg">商品重量（kg）</label>
+            <input id="weight-kg" type="text" inputMode="decimal" value={fields.weightKg} maxLength={12}
+              onChange={(event) => changeField('weightKg', event.target.value)}
+              aria-required={fields.status === 'published'} aria-invalid={weightErrors.length > 0}
+              aria-describedby={['weight-kg-help', showWeightPreview ? 'weight-kg-preview' : undefined, ...weightErrorIds].filter(Boolean).join(' ')} />
+            <small id="weight-kg-help">kg単位で小数第3位（1g）まで入力できます。公開時は必須、上限30kgです。</small>
+            {showWeightPreview && <small id="weight-kg-preview" aria-live="polite">約{weightGToKgInput(weightPreview.weightG)}kg</small>}
+            {weightErrors.map((error, index) => <p id={weightErrorIds[index]} className={styles.error} key={index}>{error}</p>)}
+          </div>
+          {textField('packLengthMm', '梱包後の長さ（mm）', 'number')}{textField('packWidthMm', '梱包後の幅（mm）', 'number')}{textField('packHeightMm', '梱包後の高さ（mm）', 'number')}
+        </div>
+        {['packLengthMm', 'packWidthMm', 'packHeightMm'].flatMap((name) => fieldErrors(name).map((error, index) => <p className={styles.error} key={`${name}-${index}`}>{error}</p>))}
       </section>
 
       <section className={styles.section} aria-labelledby="images-title">
