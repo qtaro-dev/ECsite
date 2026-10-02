@@ -35,21 +35,21 @@
 <body>
   <main>
     <h1>実装チケット進捗一覧</h1>
-    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 59件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
+    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 63件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
     <div class="summary" aria-label="進捗件数">
-      <span>全件 <output id="count-all">59</output></span>
-      <span>未実装 <output id="count-not-started">6</output></span>
+      <span>全件 <output id="count-all">63</output></span>
+      <span>未実装 <output id="count-not-started">7</output></span>
       <span>実装中 <output id="count-active">0</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">41</output></span>
+      <span>完了 <output id="count-done">44</output></span>
       <span>保留 <output id="count-blocked">12</output></span>
     </div>
     <div class="controls">
       <label>チケット検索<input id="query" type="search" placeholder="番号・名称・依存"></label>
-      <label>担当<select id="owner"><option value="">すべて</option><option>LUNA-A</option><option>LUNA-B</option></select></label>
+      <label>担当<select id="owner"><option value="">すべて</option><option>LUNA-A</option><option>LUNA-B</option><option>LUNA-C</option></select></label>
       <label>状態<select id="state"><option value="">すべて</option><option>未実装</option><option>実装中</option><option>レビュー中</option><option>完了</option><option>保留</option></select></label>
     </div>
-    <div class="table-wrap" role="region" aria-label="59件の実装チケット" tabindex="0">
+    <div class="table-wrap" role="region" aria-label="63件の実装チケット" tabindex="0">
       <table>
         <thead><tr><th scope="col">番号</th><th scope="col">チケット</th><th scope="col">フェーズ / Wave</th><th scope="col">担当</th><th scope="col">依存</th><th scope="col">状態</th><th scope="col">根拠 PR / commit</th><th scope="col">更新日</th></tr></thead>
         <tbody>
@@ -347,6 +347,26 @@
             <th scope="row"><a href="../tickets/T59-prebuilt-pc-admin-ui.md">T59</a></th>
             <td>構成済みPCの管理画面</td><td>MVP拡張</td><td>LUNA-A</td>
             <td>T58、T57、T56、T37、T38、T53</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/109">PR #109</a> マージ済み。Quality gates成功、Catalog UI browser tests 50/50成功。Vercel Production deployment Ready、公開alias <a href="https://ecsite-jade.vercel.app/">ecsite-jade.vercel.app</a>がこのdeploymentを参照</td><td class="updated">2026-10-02</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T60-admin-logout.md">T60</a></th>
+            <td>管理者ログアウト導線</td><td>MVP改善</td><td>LUNA-A</td>
+            <td>T17、T36、T56</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/111">PR #111</a> マージ済み（<code>d835dae</code>）。必須CI成功。共通管理ヘッダーからのログアウト導線を検証</td><td class="updated">2026-10-02</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T61-prebuilt-pc-registered-part-selection.md">T61</a></th>
+            <td>構成済みPCの採用パーツを登録済み商品から選択</td><td>MVP改善</td><td>LUNA-B</td>
+            <td>T53、T54、T58、T59、T62</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/113">PR #113</a> マージ済み（<code>ddb8eba</code>）。Quality gates、Catalog UI browser tests、DB integration成功。Hosted Supabase migration <code>20261002120000</code>適用・履歴確認、Vercel公開alias Ready確認済み。既存公開PCは旧構成のまま維持し、更新時に再選択が必要。Hostedの旧構成件数・IDは未照合（別チケットで棚卸し）</td><td class="updated">2026-10-02</td>
+          </tr>
+          <tr data-owner="LUNA-C">
+            <th scope="row"><a href="../tickets/T62-graphics-card-label.md">T62</a></th>
+            <td>グラフィックボードへの表示文言統一</td><td>MVP改善</td><td>LUNA-C</td>
+            <td>T15、T23、T24、T37、T53、T54、T58、T59</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/112">PR #112</a> マージ済み（<code>bb5f1db</code>）。Quality gates、Catalog UI browser tests成功。画面と利用者向け判定文の「グラフィックボード」表記を確認</td><td class="updated">2026-10-02</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T63-prebuilt-pc-weight-kg-editor.md">T63</a></th>
+            <td>構成済みPC管理フォームの重量をkgで入力・表示</td><td>MVP改善</td><td>LUNA-B</td>
+            <td>T61</td><td class="status">未実装</td><td class="evidence">チケット起案済み。管理フォームのkg入力・表示は未実装。DB・送料計算はg整数を維持する</td><td class="updated">2026-10-02</td>
           </tr>
         </tbody>
       </table>
