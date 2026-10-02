@@ -38,10 +38,10 @@
     <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 63件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
     <div class="summary" aria-label="進捗件数">
       <span>全件 <output id="count-all">63</output></span>
-      <span>未実装 <output id="count-not-started">7</output></span>
+      <span>未実装 <output id="count-not-started">6</output></span>
       <span>実装中 <output id="count-active">0</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">44</output></span>
+      <span>完了 <output id="count-done">45</output></span>
       <span>保留 <output id="count-blocked">12</output></span>
     </div>
     <div class="controls">
@@ -366,7 +366,7 @@
           <tr data-owner="LUNA-B">
             <th scope="row"><a href="../tickets/T63-prebuilt-pc-weight-kg-editor.md">T63</a></th>
             <td>構成済みPC管理フォームの重量をkgで入力・表示</td><td>MVP改善</td><td>LUNA-B</td>
-            <td>T61</td><td class="status">未実装</td><td class="evidence">チケット起案済み。管理フォームのkg入力・表示は未実装。DB・送料計算はg整数を維持する</td><td class="updated">2026-10-02</td>
+            <td>T61</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/115">PR #115</a> マージ済み（<code>8059bf1</code>）。<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36992218625">CI #305</a> のQuality gates・Catalog UI browser tests成功。kg入力・約0.5kg表示、整数gへの境界変換と保存・再編集を検証。Vercel Production Ready、公開alias反映確認済み。DB・API・送料計算はg整数を維持</td><td class="updated">2026-10-02</td>
           </tr>
         </tbody>
       </table>
