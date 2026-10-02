@@ -38,7 +38,7 @@ test('T61 creates and edits a prebuilt PC draft with registered parts, and leave
   await slugInput.fill(slug);
   await page.getByLabel('完成PCのSKU').fill(sku);
   await page.getByRole('textbox', { name: '商品名', exact: true }).fill('T59 テスト構成済みPC');
-  await page.getByLabel('ブランド').fill('T59 Labs');
+  await page.getByRole('textbox', { name: 'ブランド', exact: true }).fill('T59 Labs');
   const componentData = [
     ['CPU', 'T11-CPU-AM5'], ['グラフィックボード', 'T11-GPU-300'],
     ['メモリ', 'T11-MEM-DDR5'], ['SSD', 'T11-SSD'],

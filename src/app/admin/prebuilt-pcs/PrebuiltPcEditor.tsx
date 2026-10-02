@@ -116,6 +116,12 @@ export default function PrebuiltPcEditor({ initial, initialMessage }: Props) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setMessage('');
     const candidate = buildPayloadFields();
+    if (initial?.legacyComponents && (!candidate.partIds
+      || Object.keys(initial.components ?? {}).some((slot) => !Object.hasOwn(candidate.partIds ?? {}, slot)))) {
+      setErrors({ partIds: ['旧方式の構成です。採用パーツを選び直してから保存してください。'] });
+      setMessage('入力内容を確認してください。');
+      return;
+    }
     const parsed = initial ? AdminPrebuiltPcUpdateSchema.safeParse(candidate) : AdminPrebuiltPcCreateSchema.safeParse(candidate);
     if (!parsed.success) {
       const next: Record<string, string[]> = {};
