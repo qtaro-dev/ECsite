@@ -42,6 +42,7 @@ on:
       - 'tests/database/t56-first-admin-setup.sql'
       - 'tests/database/t56-admin-setup-concurrency.py'
       - 'tests/database/t58-prebuilt-pc-admin.sql'
+      - 'tests/database/t61-prebuilt-pc-part-selection.sql'
       - 'tests/database/t58-storage-fixtures.py'
       - '.github/workflows/t06-db.yml'
   push:
@@ -86,6 +87,7 @@ on:
       - 'tests/database/t56-first-admin-setup.sql'
       - 'tests/database/t56-admin-setup-concurrency.py'
       - 'tests/database/t58-prebuilt-pc-admin.sql'
+      - 'tests/database/t61-prebuilt-pc-part-selection.sql'
       - 'tests/database/t58-storage-fixtures.py'
       - '.github/workflows/t06-db.yml'
 
@@ -183,6 +185,8 @@ jobs:
         run: python3 tests/database/t58-storage-fixtures.py
       - name: Check T58 prebuilt PC admin validation, permissions, versions, audit and history
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t58-prebuilt-pc-admin.sql
+      - name: Check T61 selected parts, RLS and atomic save
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t61-prebuilt-pc-part-selection.sql
       - name: Upload and read T11 image placeholders
         run: python3 tests/database/t11-storage-fixtures.py
       - name: Check T09 private Storage URLs

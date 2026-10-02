@@ -14,7 +14,7 @@ type Usage = keyof typeof useCases;
 
 const partLabels = [
   ["cpu", "CPU"], ["gpu", "グラフィックボード"], ["memory", "メモリ"], ["ssd", "SSD"],
-  ["motherboard", "マザーボード"], ["powerSupply", "電源ユニット"], ["pcCase", "PCケース"],
+  ["motherboard", "マザーボード"], ["powerSupply", "電源ユニット"], ["pcCase", "PCケース"], ["cpuCooler", "CPUクーラー"],
 ] as const;
 
 type Part = { key: string; label: string; details: string };

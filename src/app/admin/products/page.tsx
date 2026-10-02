@@ -2,13 +2,14 @@ import Link from 'next/link';
 import { randomUUID } from 'node:crypto';
 import styles from './products.module.css';
 import { getAdminProducts } from '@/server/admin/products';
+import { getLegacyPrebuiltPcIds } from '@/server/admin/prebuilt-pcs';
 
 export const dynamic = 'force-dynamic';
 
 const labels: Record<string, string> = {
   cpu: 'CPU', gpu: 'グラフィックボード', motherboard: 'マザーボード', memory: 'メモリ', ssd: 'SSD',
   'power-supply': '電源', 'pc-case': 'PCケース', 'cpu-cooler': 'CPUクーラー',
-  'prebuilt-pc': '構成済みPC（シード管理）',
+  'prebuilt-pc': '構成済みPC',
 };
 const statusLabels = { draft: '下書き', published: '公開中', hidden: '非公開' };
 
@@ -18,6 +19,9 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   let products;
   try { products = await getAdminProducts(q); }
   catch { throw new Error(`商品一覧を読み込めませんでした。時間をおいて再度お試しください。 (監査ID: ${auditId})`); }
+  let legacyIds: Set<string>;
+  try { legacyIds = await getLegacyPrebuiltPcIds(products.filter((item) => item.category === 'prebuilt-pc').map((item) => item.id)); }
+  catch { throw new Error(`構成済みPCの移行状態を読み込めませんでした。時間をおいて再度お試しください。 (監査ID: ${auditId})`); }
   return (
     <main className={styles.main}>
       <div className={styles.heading}><div><h1>A02 商品管理</h1><p>商品情報、仕様、画像、公開状態を管理します。</p></div><div className={styles.headingActions}><Link href="/admin/products/new" className={styles.primary}>新規商品</Link><Link href="/admin/prebuilt-pcs/new" className={styles.secondary}>構成済みPCを登録</Link></div></div>
@@ -30,7 +34,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           <thead><tr><th>商品</th><th>カテゴリ</th><th>SKU</th><th>税込価格</th><th>状態</th><th>更新日</th><th><span className="sr-only">操作</span></th></tr></thead>
           <tbody>{products.map((product) => <tr key={product.id}>
             <td><strong>{product.name || '名称未設定'}</strong><small>{product.brand} · {product.slug}</small></td>
-            <td>{labels[product.category] ?? product.category}</td><td>{product.sku}</td>
+            <td>{labels[product.category] ?? product.category}{legacyIds.has(product.id) && <small>旧構成・パーツ未選択</small>}</td><td>{product.sku}</td>
             <td>{product.priceTaxIncludedYen === null ? '未設定' : `¥${product.priceTaxIncludedYen.toLocaleString('ja-JP')}`}</td>
             <td><span className={`${styles.status} ${styles[product.status]}`}>{statusLabels[product.status]}</span></td>
             <td><time dateTime={product.updatedAt}>{new Date(product.updatedAt).toLocaleDateString('ja-JP')}</time></td>

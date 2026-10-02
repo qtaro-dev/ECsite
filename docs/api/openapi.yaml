@@ -515,7 +515,7 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       requestBody:
         required: true
-        description: Multipart payload; component names/details are free text and do not reference component SKUs or stock.
+        description: Multipart payload with selected published part product IDs. PC price and stock stay independent.
         content: { multipart/form-data: { schema: { $ref: '#/components/schemas/AdminPrebuiltPcCreateMultipart' } } }
       responses:
         '201': { $ref: '#/components/responses/GenericSuccess' }
@@ -534,7 +534,7 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Origin' }]
       requestBody:
         required: true
-        description: Multipart payload; component names/details are free text and do not reference component SKUs or stock.
+        description: Multipart payload with selected published part product IDs. Legacy configurations require reselection before update.
         content: { multipart/form-data: { schema: { $ref: '#/components/schemas/AdminPrebuiltPcUpdateMultipart' } } }
       responses:
         '200': { $ref: '#/components/responses/GenericSuccess' }
@@ -544,6 +544,22 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '413': { description: 'HTTP 413 with the standard BAD_REQUEST error envelope when the total multipart body exceeds 4,300,000 bytes.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /admin/prebuilt-parts:
+    get:
+      operationId: get_admin_prebuilt_part_candidates
+      summary: Search published catalog parts for one prebuilt PC slot
+      security: [{ sessionCookies: [] }]
+      x-admin-membership-required: true
+      parameters:
+        - { name: slot, in: query, required: true, schema: { type: string, enum: [cpu, gpu, memory, ssd, motherboard, powerSupply, pcCase, cpuCooler] } }
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 0, maximum: 999, default: 0 } }
+      responses:
+        '200': { description: 'Up to 20 non-deleted published part products for the requested slot, with page and hasMore.' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '503': { $ref: '#/components/responses/Unavailable' }
   /admin/overview:
     get:
@@ -665,7 +681,7 @@ components:
       required: [label, details]
       additionalProperties: false
       properties:
-        label: { type: string, minLength: 1, maxLength: 120 }
+        label: { type: string, minLength: 1, maxLength: 240 }
         details: { type: string, minLength: 1, maxLength: 300 }
     AdminPrebuiltPcComponents:
       type: object
@@ -679,6 +695,20 @@ components:
         motherboard: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
         powerSupply: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
         pcCase: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
+        cpuCooler: { $ref: '#/components/schemas/AdminPrebuiltPcComponent' }
+    AdminPrebuiltPcPartIds:
+      type: object
+      required: [cpu, gpu, memory, ssd]
+      additionalProperties: false
+      properties:
+        cpu: { type: string, format: uuid }
+        gpu: { type: string, format: uuid }
+        memory: { type: string, format: uuid }
+        ssd: { type: string, format: uuid }
+        motherboard: { type: string, format: uuid }
+        powerSupply: { type: string, format: uuid }
+        pcCase: { type: string, format: uuid }
+        cpuCooler: { type: string, format: uuid }
     AdminPrebuiltPcFields:
       type: object
       required: [slug, sku]
@@ -697,7 +727,7 @@ components:
         packWidthMm: { type: [integer, 'null'], minimum: 1 }
         packHeightMm: { type: [integer, 'null'], minimum: 1 }
         useCases: { type: array, uniqueItems: true, maxItems: 3, items: { type: string, enum: [gaming, daily, editing] } }
-        components: { oneOf: [{ $ref: '#/components/schemas/AdminPrebuiltPcComponents' }, { type: 'null' }], description: Draft may omit configuration; a stored configuration must be complete. }
+        partIds: { oneOf: [{ $ref: '#/components/schemas/AdminPrebuiltPcPartIds' }, { type: 'null' }], description: 'Draft may omit configuration; selected IDs must be category-matched, published parts.' }
     AdminPrebuiltPcCreate:
       allOf: [{ $ref: '#/components/schemas/AdminPrebuiltPcFields' }]
       unevaluatedProperties: false
@@ -760,7 +790,7 @@ components:
         requestId: { type: string, format: uuid }
     AdminPrebuiltPcListItem:
       type: object
-      required: [id, slug, sku, name, brand, priceTaxIncludedYen, status, version, updatedAt]
+      required: [id, slug, sku, name, brand, priceTaxIncludedYen, status, version, updatedAt, legacyComponents]
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
@@ -772,6 +802,7 @@ components:
         status: { type: string, enum: [draft, published, hidden] }
         version: { type: integer, minimum: 0 }
         updatedAt: { type: string, format: date-time }
+        legacyComponents: { type: boolean }
     AdminPrebuiltPcDetailResponse:
       type: object
       required: [data, requestId]
@@ -781,7 +812,7 @@ components:
         requestId: { type: string, format: uuid }
     AdminPrebuiltPcDetail:
       type: object
-      required: [id, version, updatedAt, slug, sku, name, brand, priceTaxIncludedYen, status, description, beginnerNote, weightG, packLengthMm, packWidthMm, packHeightMm, useCases, components, images]
+      required: [id, version, updatedAt, slug, sku, name, brand, priceTaxIncludedYen, status, description, beginnerNote, weightG, packLengthMm, packWidthMm, packHeightMm, useCases, components, partIds, legacyComponents, images]
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
@@ -801,6 +832,8 @@ components:
         packHeightMm: { type: [integer, 'null'], minimum: 1 }
         useCases: { type: array, items: { type: string, enum: [gaming, daily, editing] } }
         components: { oneOf: [{ $ref: '#/components/schemas/AdminPrebuiltPcComponents' }, { type: 'null' }] }
+        partIds: { oneOf: [{ $ref: '#/components/schemas/AdminPrebuiltPcPartIds' }, { type: 'null' }] }
+        legacyComponents: { type: boolean }
         images: { type: array, items: { $ref: '#/components/schemas/AdminPrebuiltPcImageInput' } }
     Envelope:
       type: object

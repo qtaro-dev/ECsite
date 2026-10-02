@@ -9,8 +9,8 @@ insert into public.admin_memberships(user_id) values ('00000000-0000-4000-8000-0
 do $$ begin
   if has_function_privilege('anon','public.admin_save_prebuilt_pc(uuid,integer,jsonb,jsonb,text[],jsonb,uuid,text)','EXECUTE')
      or has_function_privilege('authenticated','public.admin_save_prebuilt_pc(uuid,integer,jsonb,jsonb,text[],jsonb,uuid,text)','EXECUTE')
-     or not has_function_privilege('service_role','public.admin_save_prebuilt_pc(uuid,integer,jsonb,jsonb,text[],jsonb,uuid,text)','EXECUTE') then
-    raise exception 'T58 RPC grants do not restrict execution to service_role';
+     or has_function_privilege('service_role','public.admin_save_prebuilt_pc(uuid,integer,jsonb,jsonb,text[],jsonb,uuid,text)','EXECUTE') then
+    raise exception 'legacy T58 RPC must be restricted to migration owner after T61';
   end if;
   if public.valid_prebuilt_pc_components('{"cpu":{"label":"CPU","details":"spec","extra":"reject"},"gpu":{"label":"GPU","details":"spec"},"memory":{"label":"RAM","details":"spec"},"ssd":{"label":"SSD","details":"spec"}}'::jsonb) then
     raise exception 'nested component unknown key was accepted';
@@ -38,7 +38,8 @@ do $$ begin
 end $$;
 reset role;
 
-set local role service_role;
+-- Historical v1 RPC regression is now internal-only. The active service_role endpoint is v2.
+set local role postgres;
 select set_config('request.jwt.claim.role','service_role',true);
 select set_config('request.jwt.claims','{"role":"service_role"}',true);
 do $$
