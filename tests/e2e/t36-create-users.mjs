@@ -18,15 +18,18 @@ async function createUser(email) {
   return { email, password };
 }
 
-const [admin, member] = await Promise.all([
+const [admin, member, logoutAdmin] = await Promise.all([
   createUser('t36-admin@example.test'),
   createUser('t36-member@example.test'),
+  createUser('t60-admin@example.test'),
 ]);
 const envLines = [
   `T36_ADMIN_EMAIL=${admin.email}`,
   `T36_ADMIN_PASSWORD=${admin.password}`,
   `T36_MEMBER_EMAIL=${member.email}`,
   `T36_MEMBER_PASSWORD=${member.password}`,
+  `T60_ADMIN_EMAIL=${logoutAdmin.email}`,
+  `T60_ADMIN_PASSWORD=${logoutAdmin.password}`,
 ];
 for (const line of envLines.filter((entry) => entry.includes('_PASSWORD='))) {
   process.stdout.write(`::add-mask::${line.slice(line.indexOf('=') + 1)}\n`);
