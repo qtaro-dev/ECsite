@@ -62,6 +62,9 @@ jobs:
       - name: Grant the T36 admin fixture and verify the regular member stays unprivileged
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t36-admin-fixtures.sql
 
+      - name: Diagnose isolated local shared-admin session behavior
+        run: node tests/e2e/diagnose-shared-admin-session.mjs
+
       - name: Prepare T28 formal quote fixtures
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t28-e2e-fixtures.sql
 
@@ -70,6 +73,15 @@ jobs:
 
       - name: Run catalog, authentication, member, checkout, and admin browser tests
         run: npx playwright test tests/e2e/t14-catalog-explorer.spec.ts tests/e2e/t15-product-detail.spec.ts tests/e2e/t17-email-auth.spec.ts tests/e2e/t21-member-address.spec.ts tests/e2e/t22-demo-retention.spec.ts tests/e2e/t24-build-check.spec.ts tests/e2e/t26-cart.spec.ts tests/e2e/t28-checkout-quote.spec.ts tests/e2e/t33-checkout-result.spec.ts tests/e2e/t35-checkout-integration.spec.ts tests/e2e/t43-responsive-mvp.spec.ts tests/e2e/t43-accessibility-audit.spec.ts tests/e2e/t36-admin-auth.spec.ts tests/e2e/t37-admin-products.spec.ts tests/e2e/t38-admin-inventory.spec.ts tests/e2e/t40-admin-shipping.spec.ts tests/e2e/t50-demo-auth.spec.ts tests/e2e/t51-demo-checkout.spec.ts tests/e2e/t45-mvp-journey.spec.ts tests/e2e/t45-mvp-performance.spec.ts tests/e2e/t52-home-category-grid.spec.ts tests/e2e/t54-prebuilt-pc-storefront.spec.ts tests/e2e/t56-admin-setup.spec.ts tests/e2e/t59-prebuilt-pc-admin.spec.ts tests/e2e/t60-admin-logout.spec.ts tests/e2e/t61-prebuilt-part-selection.spec.ts tests/e2e/t63-prebuilt-weight-kg.spec.ts
+
+      - name: Preserve failed browser test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
   quality:
     name: Quality gates
