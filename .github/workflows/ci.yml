@@ -62,9 +62,6 @@ jobs:
       - name: Grant the T36 admin fixture and verify the regular member stays unprivileged
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t36-admin-fixtures.sql
 
-      - name: Diagnose isolated local shared-admin session behavior
-        run: node tests/e2e/diagnose-shared-admin-session.mjs
-
       - name: Prepare T28 formal quote fixtures
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t28-e2e-fixtures.sql
 
