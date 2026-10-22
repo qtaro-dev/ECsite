@@ -23,3 +23,16 @@ trace/error-contextとActionsログから原因を特定し、最小修正後に
 ユーザーの確認前にマージ・本番デプロイを行わない。調査PRを作成してCIで検証する。
 
 CIローカル限定でT36管理者の2セッションを生成し、一方のglobal logout前後で他方のAuth user HTTP statusのみを記録する診断も実施する。既存E2Eログイン前に実行し、秘密値や応答本文は記録しない。
+
+## 2026-10-23時点の比較根拠
+- #117/#119: Quality gatesとVercel Preview成功、Catalog UI browser testsは54件中53件成功・T61行14のみ失敗（親担当のActionsログ照合）。異なる更新の同一失敗なので更新起因とは未確定。
+- #118: 全4チェック成功。直前main/PR #116のCI run36993051969も両job成功（親担当確認）。常時発生するseed欠落とは考えにくく、実行タイミング依存も調べる。
+- #117/#119にはActions artifactsがなく、失敗時trace/error-contextを回収できない（親担当確認）。診断PR #120で保存を追加した。
+- Supabase auth-jsのsignOut既定scopeはglobal（GoTrueClient.ts、親担当確認）。ただしJWTのuser検査まで失敗するかはローカルCIのHTTP診断で確認する。仮説を根本原因と扱わない。
+- 調査PR #120 run39815409343はrunner割当待ちのqueued。未実行を合格・再現なしと扱わない。
+
+## 残検証
+1. 共用管理者のlogout前後HTTP statusをCIログで確認。
+2. main依存でT61失敗を再現した場合、artifactの検索URL・ログイン状態・画面DOM・ネットワークを確認。
+3. 原因確定後のみ最小修正を行い、同じテスト条件と品質ゲートで再検証。
+4. #117/#119へはブランチ別に修正適用・チェック成功を確認する。#118は現在成功しているが、マージ後の再評価を含め利用者へ推奨順を提示する。
