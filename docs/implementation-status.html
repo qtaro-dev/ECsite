@@ -35,21 +35,21 @@
 <body>
   <main>
     <h1>実装チケット進捗一覧</h1>
-    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 63件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
+    <p>対象：<a href="https://github.com/qtaro-dev/ECsite">qtaro-dev/ECsite</a> ／ 65件。<a href="mvp-release-plan.md">公開MVPの完成ラインと優先順</a>、チケットの<a href="implementation-tickets.md">索引</a>、担当・Wave・並行条件の<a href="multi-agent-execution-plan.md">全件計画</a>を参照してください。公開後に回すチケットは未完了のまま残します。</p>
     <div class="summary" aria-label="進捗件数">
-      <span>全件 <output id="count-all">63</output></span>
+      <span>全件 <output id="count-all">65</output></span>
       <span>未実装 <output id="count-not-started">6</output></span>
       <span>実装中 <output id="count-active">0</output></span>
       <span>レビュー中 <output id="count-review">0</output></span>
-      <span>完了 <output id="count-done">45</output></span>
-      <span>保留 <output id="count-blocked">12</output></span>
+      <span>完了 <output id="count-done">46</output></span>
+      <span>保留 <output id="count-blocked">13</output></span>
     </div>
     <div class="controls">
       <label>チケット検索<input id="query" type="search" placeholder="番号・名称・依存"></label>
       <label>担当<select id="owner"><option value="">すべて</option><option>LUNA-A</option><option>LUNA-B</option><option>LUNA-C</option></select></label>
       <label>状態<select id="state"><option value="">すべて</option><option>未実装</option><option>実装中</option><option>レビュー中</option><option>完了</option><option>保留</option></select></label>
     </div>
-    <div class="table-wrap" role="region" aria-label="63件の実装チケット" tabindex="0">
+    <div class="table-wrap" role="region" aria-label="65件の実装チケット" tabindex="0">
       <table>
         <thead><tr><th scope="col">番号</th><th scope="col">チケット</th><th scope="col">フェーズ / Wave</th><th scope="col">担当</th><th scope="col">依存</th><th scope="col">状態</th><th scope="col">根拠 PR / commit</th><th scope="col">更新日</th></tr></thead>
         <tbody>
@@ -367,6 +367,16 @@
             <th scope="row"><a href="../tickets/T63-prebuilt-pc-weight-kg-editor.md">T63</a></th>
             <td>構成済みPC管理フォームの重量をkgで入力・表示</td><td>MVP改善</td><td>LUNA-B</td>
             <td>T61</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/115">PR #115</a> マージ済み（<code>8059bf1</code>）。<a href="https://github.com/qtaro-dev/ECsite/actions/runs/36992218625">CI #305</a> のQuality gates・Catalog UI browser tests成功。kg入力・約0.5kg表示、整数gへの境界変換と保存・再編集を検証。Vercel Production Ready、公開alias反映確認済み。DB・API・送料計算はg整数を維持</td><td class="updated">2026-10-02</td>
+          </tr>
+          <tr data-owner="LUNA-A">
+            <th scope="row"><a href="../tickets/T64-dependabot-ci-investigation.md">T64</a></th>
+            <td>Dependabot更新PRのCI失敗調査</td><td>保守</td><td>LUNA-A</td>
+            <td>T60、T61、T63</td><td class="status">保留</td><td class="evidence">管理者ログアウトの共有アカウント干渉を分離し、PR #117・<a href="https://github.com/qtaro-dev/ECsite/pull/119">#119</a>で54/54 E2E成功。#119はmainへマージ済み。<a href="https://github.com/qtaro-dev/ECsite/pull/120">調査PR #120</a>に別のフォーム初期化・保存後遷移の不安定さが残るためT64全体は保留。#117・#118は別途判断対象</td><td class="updated">2026-10-23</td>
+          </tr>
+          <tr data-owner="LUNA-B">
+            <th scope="row"><a href="../tickets/T65-node24-runtime-alignment.md">T65</a></th>
+            <td>Node.js 24.x統一とVercel本番反映</td><td>保守</td><td>LUNA-B</td>
+            <td>T64の認証分離修正、PR #119</td><td class="status">完了</td><td class="evidence"><a href="https://github.com/qtaro-dev/ECsite/pull/121">PR #121</a> マージ済み（<code>df3dca5</code>）。Node24で270単体テスト・型・Lint・OpenAPI・build成功、CI両必須job成功。Production <code>dpl_44JFTNvBzA868xPAHjMAj9eqLVDv</code> Ready、main SHA・公開alias一致、実行NodeとProject設定とも24.x。デプロイログにOverride警告なし、主要6ルート200確認</td><td class="updated">2026-10-23</td>
           </tr>
         </tbody>
       </table>
