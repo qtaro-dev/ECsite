@@ -14,7 +14,7 @@
 
 ## ローカル起動
 
-Node.js 20.9以上とnpmを用意します。依存関係は`package-lock.json`で固定します。T01の画面表示には外部サービス設定は不要です。型検査時の`next-env.d.ts`はNext.jsが生成するため、Gitには含めません。
+Node.js 24.x（LTS）とnpmを用意します。依存関係は`package-lock.json`で固定します。T01の画面表示には外部サービス設定は不要です。型検査時の`next-env.d.ts`はNext.jsが生成するため、Gitには含めません。
 
 ```powershell
 npm ci

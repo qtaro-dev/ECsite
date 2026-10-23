@@ -491,3 +491,7 @@
 ### [T63 構成済みPC管理フォームの重量をkgで入力・表示](../tickets/T63-prebuilt-pc-weight-kg-editor.md)
 - **目的・範囲**：管理フォームの重量欄をkg入力・表示にする。DB/APIと送料判定のg整数は維持する。
 - **依存・受け入れ**：T61後。500gは`0.5kg`として編集でき、保存時には500gのまま保持する。未実装。
+
+### [T65 Node.js 24.x統一とVercel本番反映](../tickets/T65-node24-runtime-alignment.md)
+- **目的・範囲**：package engines、CI、ローカル推奨major、Vercel Project設定を24.xに統一する。
+- **依存・受け入れ**：main 72d8a70 / T64。Node24品質チェックとE2E、マージ後のProduction Ready・SHA・実行Nodeを確認する。

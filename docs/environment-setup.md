@@ -143,3 +143,11 @@ T22マイグレーションは15分間隔の`pg_cron`ジョブ`t22-demo-retentio
 - [Supabase Google OAuth](https://supabase.com/docs/guides/auth/social-login/auth-google)、[Send Email Hook](https://supabase.com/docs/guides/auth/auth-hooks/send-email-hook)
 - [GitHub Actions Deployment environments](https://docs.github.com/en/actions/concepts/workflows-and-actions/deployment-environments)
 - [Stripe Checkoutテスト](https://docs.stripe.com/testing)、[Webhook](https://docs.stripe.com/webhooks)
+
+## T65 Node.js実行環境（2026-10-23）
+
+Node.jsは24.x（LTS）に統一する。package.jsonのenginesとpackage-lock.jsonのルートmetadataを24.x、GitHub Actionsの両Nodeセットアップを24.x、ローカルは.nvmrcの24に合わせる。パッチ更新は同じmajor内で追従する。Vercelではpackage.jsonのenginesがProject Settingsより優先されるため、Project SettingsのNode.js Versionも24.xに揃える。
+
+旧設定はengines >=20.9.0、CI 22.18.0、Vercel Project設定22.x、Production実行24.xで一致していなかった。24.xへの変更はランタイム整合のみで、認証・商品・注文・Stripeの業務仕様やDBは変更しない。@types/nodeは現在のAPI使用を満たす22.20.4を維持し型検査する。
+
+参照: [Vercel Node設定](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions)、[Node.jsリリース](https://nodejs.org/en/about/previous-releases)、[Next.js要件](https://nextjs.org/docs/app/getting-started/installation)。
