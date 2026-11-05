@@ -35,9 +35,16 @@ type HomeContentProps = {
 };
 
 export function HomeContent({ heroArt, heroClassName, previewNavigation, hideHeroEyebrow = false, showCardImages = false }: HomeContentProps) {
+  const demoNotice = (
+    <StatusMessage kind="warning" title="公開デモについて">
+      <p>このサイトは購入体験を試すためのデモです。実際の商品販売・課金・発送は行いません。</p>
+    </StatusMessage>
+  );
+
   return (
     <main className={styles.home} id="main-content" tabIndex={-1}>
       {previewNavigation}
+      {!previewNavigation && <div className={`${styles.demo} ${styles.demoAboveHero}`}>{demoNotice}</div>}
       <section className={heroClassName ? `${styles.hero} ${heroClassName}` : styles.hero} aria-labelledby="home-title">
         <div className={styles.heroCopy}>
           {!hideHeroEyebrow && <p className={styles.eyebrow}>BUILD YOUR PC, STEP BY STEP</p>}
@@ -86,7 +93,7 @@ export function HomeContent({ heroArt, heroClassName, previewNavigation, hideHer
         </div>
       </section>
 
-      <div className={styles.demo}><StatusMessage kind="warning" title="公開デモについて"><p>このサイトは購入体験を試すためのデモです。実際の商品販売・課金・発送は行いません。</p></StatusMessage></div>
+      {previewNavigation && <div className={styles.demo}>{demoNotice}</div>}
     </main>
   );
 }
