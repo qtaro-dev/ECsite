@@ -1,0 +1,75 @@
+.art {
+  min-width: 0;
+  width: min(100%, 30rem);
+  justify-self: end;
+  padding-inline-start: clamp(.75rem, 2vw, 1.5rem);
+}
+
+.art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-card);
+}
+
+.backdropHero {
+  isolation: isolate;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: center;
+  justify-items: end;
+  pointer-events: none;
+}
+
+.backdrop img {
+  display: block;
+  width: 40%;
+  height: auto;
+  mask-image:
+    linear-gradient(to right, transparent, #000 5%),
+    linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  mask-composite: intersect;
+}
+
+@media (min-width: 1200px) {
+  .wideBackdrop,
+  .widerBackdrop {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .wideBackdrop img,
+  .widerBackdrop img {
+    max-height: 100%;
+    object-fit: contain;
+    object-position: right center;
+  }
+
+  .wideBackdrop img { width: 48%; }
+  .widerBackdrop img { width: 52%; }
+}
+
+@media (max-width: 767px) {
+  .art {
+    justify-self: center;
+    padding-inline-start: 0;
+    margin-block-start: 1rem;
+  }
+
+  .backdropHero {
+    padding-bottom: 0;
+  }
+
+  .backdrop {
+    position: relative;
+    margin: 1rem -1rem 0;
+  }
+
+  .backdrop img {
+    width: 100%;
+    mask-image: linear-gradient(to bottom, transparent, #000 10%);
+  }
+}

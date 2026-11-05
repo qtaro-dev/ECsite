@@ -23,19 +23,28 @@
 .useGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
 .useCard { position: relative; display: flex; min-height: 13rem; flex-direction: column; padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); color: var(--color-text); text-decoration: none; transition: border-color 120ms ease, transform 120ms ease; }
 .useCard:hover { border-color: var(--color-primary); color: var(--color-text); transform: translateY(-2px); }
+.useCardWithImage:focus-visible { border-color: var(--color-primary); outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.useImage { display: block; width: 100%; aspect-ratio: 16 / 9; margin: .5rem 0 .75rem; }
+.useImage img { display: block; width: 100%; height: 100%; object-fit: contain; border-radius: var(--radius-control); }
 .cardNumber, .categoryIndex { color: var(--color-primary); font-size: 0.75rem; font-weight: 750; letter-spacing: 0.08em; }
 .arrow { position: absolute; top: 1.25rem; right: 1.25rem; color: var(--color-primary); font-size: 1.25rem; }
 .useCard h3 { margin: 1.25rem 0 0.375rem; font-size: 1.125rem; }
+.useCard.useCardWithImage h3 { margin-top: 0; padding-inline-end: 1.75rem; color: var(--color-text); font-weight: 700; }
 .useCard p { margin: 0 0 1rem; color: var(--color-muted); font-size: var(--font-size-small); }
 .textLink { margin-top: auto; color: var(--color-primary); font-size: var(--font-size-small); font-weight: 700; }
 .categorySection { padding-bottom: 3rem; background: #eef3fb; }
 .categoryGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
 .categoryCard { position: relative; display: flex; min-height: 5.5rem; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: #fff; color: var(--color-text); text-decoration: none; }
 .categoryCard:hover { border-color: var(--color-primary); color: var(--color-text); }
-.categoryCard > span:nth-child(2) { display: grid; gap: 0.25rem; padding-right: 1.2rem; }
+.categoryCopy { display: grid; gap: 0.25rem; padding-right: 1.2rem; }
 .categoryCard strong { font-size: 1rem; }
 .categoryCard small { color: var(--color-muted); font-size: 0.75rem; }
 .categoryCard .arrow { top: 1rem; right: 0.875rem; }
+.categoryCardWithImage { gap: 0.75rem; }
+.categoryCardWithImage .categoryCopy { min-width: 0; padding-right: 0; }
+.categoryCardWithImage:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.categoryImage { position: relative; flex: 0 0 5rem; aspect-ratio: 1; }
+.categoryImage img { object-fit: contain; }
 .demo { padding-top: 2rem; }
 .demo p { margin-block: 0; }
 @media (max-width: 767px) {
@@ -54,10 +63,12 @@
   .useCard h3 { margin-top: 0.75rem; }
   .categoryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
   .categoryCard { min-height: 6.5rem; align-items: start; flex-direction: column; gap: 0.25rem; padding: 0.75rem; }
-  .categoryCard > span:nth-child(2) { gap: 0.125rem; padding-right: 0; }
+  .categoryCopy { gap: 0.125rem; padding-right: 0; }
   .categoryCard strong { font-size: 0.9rem; }
   .categoryCard small { font-size: 0.6875rem; }
   .categoryCard .arrow { top: 0.5rem; right: 0.625rem; }
+  .categoryCardWithImage { align-items: center; flex-direction: row; gap: 0.375rem; padding: 0.5rem; }
+  .categoryImage { flex-basis: clamp(44px, 14vw, 64px); }
 }
 @media (min-width: 768px) and (max-width: 1199px) {
   .categoryGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
