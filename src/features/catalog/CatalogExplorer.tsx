@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Skeleton } from "@/components/Skeleton";
 import { StatusMessage } from "@/components/StatusMessage";
 import type { CatalogCategory } from "@/lib/schemas";
-import { categoryIllustrationLabel, categoryImage, isStoragePart, storageCategory } from "@/lib/category-images";
-import { productImageUrl } from "@/lib/product-image-url";
+import { categoryImage, isStoragePart, storageCategory } from "@/lib/category-images";
+import { PartProductImage } from "@/components/PartProductImage";
 import type { ProductSearchItem, ProductSearchResult } from "@/server/catalog/product-search";
 import styles from "./CatalogExplorer.module.css";
 
@@ -51,15 +50,11 @@ function specDisplayValue(value: string | number | string[] | undefined) {
 
 function ProductCard({ product }: { product: ProductSearchItem }) {
   const categoryArt = categoryImage(product.category);
-  const primaryImage = categoryArt ? product.images[0] : undefined;
-  const imageSrc = primaryImage ? productImageUrl(primaryImage.path) : categoryArt;
-  const imageIsIllustration = !primaryImage || primaryImage.altText === categoryIllustrationLabel;
   return <article className={styles.productCard}>
     <Link className={styles.productLink} href={`/products/${product.slug}`} aria-label={`${product.name}の商品詳細`}>
-      {imageSrc ? (
+      {categoryArt ? (
         <div className={styles.productImage}>
-          <Image src={imageSrc} alt={primaryImage?.altText ?? ""} fill sizes="(max-width: 767px) 112px, (max-width: 1199px) 50vw, 320px" unoptimized={Boolean(primaryImage)} />
-          {imageIsIllustration && <span>{categoryIllustrationLabel}</span>}
+          <PartProductImage image={product.images[0]} categoryArt={categoryArt} sizes="(max-width: 767px) 112px, (max-width: 1199px) 50vw, 320px" />
         </div>
       ) : (
         <div className={styles.productVisual} aria-hidden="true"><span>{categoryNames[product.category] ?? "PC PARTS"}</span><strong>{product.name.slice(0, 1)}</strong></div>

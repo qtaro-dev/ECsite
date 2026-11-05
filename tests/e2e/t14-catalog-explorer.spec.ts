@@ -41,21 +41,29 @@ test("home routes to storage and its SSD and HDD lists keep separate filters", a
   await expect(page.locator('main a[href="/categories/hdd"]')).toBeVisible();
 });
 
-test("product cards use a category illustration only when a part has no registered image", async ({ page }) => {
+test("product cards fall back for missing, failed, or one-pixel images and keep registered photos", async ({ page }) => {
   const part = { id: "part", sku: "T74-PART", name: "Test HDD", brand: "Demo", category: "hdd", description: "",
     beginnerNote: "", priceYen: 6980, useCases: [], specifications: { capacity_gb: 1000 } };
+  await page.route("**/api/product-images/test/hdd.png", (route) => route.fulfill({ path: "public/images/home-category/05_storage.png" }));
+  await page.route("**/api/product-images/test/hdd-unavailable.png", (route) => route.fulfill({ status: 403 }));
   await page.route("**/api/products**", (route) => route.fulfill({ json: {
-    ...emptyResult, data: { ...emptyResult.data, total: 2, items: [
+    ...emptyResult, data: { ...emptyResult.data, total: 4, items: [
       { ...part, slug: "hdd-no-image", images: [] },
       { ...part, id: "with-image", slug: "hdd-with-image", images: [{ path: "test/hdd.png", altText: "登録画像" }] },
+      { ...part, id: "failed-image", slug: "hdd-failed-image", images: [{ path: "test/hdd-unavailable.png", altText: "取得できない画像" }] },
+      { ...part, id: "pixel-image", slug: "hdd-pixel-image", images: [{ path: "t11/t11-cpu-am5.png", altText: "仮画像" }] },
     ] },
   } }));
   await page.goto("/categories/hdd");
-  const fallback = page.locator('article').filter({ has: page.locator('a[href="/products/hdd-no-image"]') });
-  await expect(fallback.getByText("カテゴリのイメージ")).toBeVisible();
-  await expect(fallback.locator("img")).toHaveAttribute("src", /05_storage\.png/);
+  for (const slug of ["hdd-no-image", "hdd-failed-image", "hdd-pixel-image"]) {
+    const fallback = page.locator("article").filter({ has: page.locator('a[href="/products/' + slug + '"]') });
+    await expect(fallback.getByText("カテゴリのイメージ")).toBeVisible();
+    await expect(fallback.locator("img")).toHaveAttribute("src", /05_storage\.png/);
+    await expect.poll(() => fallback.locator("img").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(1);
+  }
   const registered = page.locator('article').filter({ has: page.locator('a[href="/products/hdd-with-image"]') });
-  await expect(registered.getByRole("img", { name: "登録画像" })).toHaveAttribute("src", "/api/product-images/test/hdd.png");
+  await expect(registered.getByRole("img", { name: "登録画像" })).toHaveJSProperty("src", new URL("/api/product-images/test/hdd.png", page.url()).href);
+  await expect.poll(() => registered.locator("img").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(1);
   await expect(registered.getByText("カテゴリのイメージ")).toHaveCount(0);
 });
 
