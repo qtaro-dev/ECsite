@@ -1,0 +1,22 @@
+.navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  padding-top: .75rem;
+}
+
+.navigation a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding-inline: .875rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.navigation a[aria-current="page"] {
+  border-color: var(--color-primary);
+  font-weight: 700;
+}
