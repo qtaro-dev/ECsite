@@ -81,6 +81,8 @@ describe('shared boundary schemas', () => {
     expect(SearchQuerySchema.safeParse({ spec: '{invalid' }).success).toBe(false);
     expect(SearchQuerySchema.safeParse({ category: 'unknown' }).success).toBe(false);
     expect(SearchQuerySchema.safeParse({ category: 'prebuilt-pc', usage: 'gaming' }).success).toBe(true);
+    expect(SearchQuerySchema.safeParse({ category: 'hdd', spec: { capacity_gb: 4000, interface: 'SATA' } }).success).toBe(true);
+    expect(SearchQuerySchema.safeParse({ category: 'hdd', spec: { socket_code: 'AM5' } }).success).toBe(false);
     expect(SearchQuerySchema.safeParse({ category: 'gpu', spec: '{"socket_code":"AM5"}' }).success).toBe(false);
     expect(SearchQuerySchema.safeParse({ category: 'gpu', spec: '{"vram_gb":"12"}' }).success).toBe(false);
     expect(SearchQuerySchema.safeParse({ category: 'gpu', spec: '{"vram_gb":12}' }).success).toBe(true);

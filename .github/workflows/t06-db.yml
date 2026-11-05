@@ -43,6 +43,9 @@ on:
       - 'tests/database/t56-admin-setup-concurrency.py'
       - 'tests/database/t58-prebuilt-pc-admin.sql'
       - 'tests/database/t61-prebuilt-pc-part-selection.sql'
+      - 'tests/database/t73-hdd-category.sql'
+      - 'tests/database/t74-catalog-seed.mjs'
+      - 'supabase/seeds/t74-catalog.mjs'
       - 'tests/database/t58-storage-fixtures.py'
       - '.github/workflows/t06-db.yml'
   push:
@@ -88,6 +91,9 @@ on:
       - 'tests/database/t56-admin-setup-concurrency.py'
       - 'tests/database/t58-prebuilt-pc-admin.sql'
       - 'tests/database/t61-prebuilt-pc-part-selection.sql'
+      - 'tests/database/t73-hdd-category.sql'
+      - 'tests/database/t74-catalog-seed.mjs'
+      - 'supabase/seeds/t74-catalog.mjs'
       - 'tests/database/t58-storage-fixtures.py'
       - '.github/workflows/t06-db.yml'
 
@@ -187,7 +193,24 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t58-prebuilt-pc-admin.sql
       - name: Check T61 selected parts, RLS and atomic save
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t61-prebuilt-pc-part-selection.sql
+      - name: Check T73 HDD admin save, publication, RLS, catalog and order snapshot
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t73-hdd-category.sql
       - name: Upload and read T11 image placeholders
         run: python3 tests/database/t11-storage-fixtures.py
       - name: Check T09 private Storage URLs
         run: python3 tests/database/t09-storage-http.py
+      - name: Set up Node.js for catalog seed verification
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24.x
+          cache: npm
+      - name: Verify T74 complementary seed without changing baseline fixtures
+        run: |
+          npm ci
+          psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 <<'SQL'
+          insert into auth.users(id,aud,role,email,created_at,updated_at)
+          values ('00000000-0000-4000-8000-000000000741','authenticated','authenticated','t74-admin@example.test',now(),now());
+          insert into public.admin_memberships(user_id,granted_by)
+          values ('00000000-0000-4000-8000-000000000741',null);
+          SQL
+          node tests/database/t74-catalog-seed.mjs

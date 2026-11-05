@@ -40,6 +40,10 @@ const categories: CategoryConfig[] = [
     { key: 'capacity_gb', label: '容量（GB）', kind: 'number' }, { key: 'interface', label: '接続方式', kind: 'text' },
     { key: 'form_factor', label: 'フォームファクター', kind: 'text' },
   ] },
+  { slug: 'hdd', label: 'HDD', fields: [
+    { key: 'capacity_gb', label: '容量（GB）', kind: 'number' }, { key: 'interface', label: '接続方式', kind: 'text' },
+    { key: 'form_factor', label: 'フォームファクター', kind: 'text' },
+  ] },
   { slug: 'power-supply', label: '電源', fields: [
     { key: 'rated_w', label: '定格出力（W）', kind: 'number' }, { key: 'form_factor', label: 'フォームファクター', kind: 'text' },
     { key: 'efficiency_grade', label: '効率認証', kind: 'text' },

@@ -14,13 +14,14 @@ export const ProductSortSchema = z.enum(['price_asc', 'price_desc', 'newest']);
 export const ProductUseCaseSchema = z.enum(['gaming', 'daily', 'editing']);
 export const ProductCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler']);
 /** Catalog category includes assembled systems; component compatibility remains limited to ProductCategorySchema. */
-export const CatalogCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler', 'prebuilt-pc']);
-const ProductSpecKeysByCategory: Record<z.infer<typeof ProductCategorySchema>, readonly string[]> = {
+export const CatalogCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler', 'hdd', 'prebuilt-pc']);
+const ProductSpecKeysByCategory: Record<Exclude<z.infer<typeof CatalogCategorySchema>, 'prebuilt-pc'>, readonly string[]> = {
   cpu: ['socket_code', 'core_count', 'base_clock_mhz', 'tdp_w'],
   gpu: ['chipset', 'vram_gb', 'card_length_mm'],
   motherboard: ['socket_code', 'ddr_generation', 'form_factor'],
   memory: ['ddr_generation', 'capacity_gb', 'module_count', 'speed_mt_s'],
   ssd: ['capacity_gb', 'interface', 'form_factor'],
+  hdd: ['capacity_gb', 'interface', 'form_factor'],
   'power-supply': ['rated_w', 'form_factor', 'efficiency_grade'],
   'pc-case': ['max_gpu_length_mm', 'outer_length_mm', 'outer_width_mm', 'outer_height_mm', 'supported_form_factors'],
   'cpu-cooler': ['supported_socket_codes', 'height_mm', 'cooling_type'],
@@ -63,7 +64,7 @@ export const SearchQuerySchema = z.object({
   { path: ['maxPrice'], message: 'maxPrice must be greater than or equal to minPrice' },
 ).refine(({ category, spec }) => !spec || Object.entries(spec).every(([key, value]) => {
   const supported = category
-    ? (category in ProductSpecKeysByCategory && ProductSpecKeysByCategory[category as z.infer<typeof ProductCategorySchema>].includes(key))
+    ? (category in ProductSpecKeysByCategory && ProductSpecKeysByCategory[category as keyof typeof ProductSpecKeysByCategory].includes(key))
     : Object.values(ProductSpecKeysByCategory).some((keys) => keys.includes(key));
   const fieldType = ProductSpecFieldTypes[key];
   const valueTypeMatches = fieldType === 'text' ? typeof value === 'string' && value.length > 0

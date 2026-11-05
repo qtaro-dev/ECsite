@@ -38,7 +38,7 @@ export async function getAdminProducts(query = '') {
 
 const specificationTable: Record<string, string> = {
   cpu: 'cpu_specs', gpu: 'gpu_specs', motherboard: 'motherboard_specs', memory: 'memory_specs',
-  ssd: 'ssd_specs', 'power-supply': 'psu_specs', 'pc-case': 'case_specs', 'cpu-cooler': 'cooler_specs',
+  ssd: 'ssd_specs', hdd: 'hdd_specs', 'power-supply': 'psu_specs', 'pc-case': 'case_specs', 'cpu-cooler': 'cooler_specs',
 };
 
 export async function getAdminProduct(productId: string) {

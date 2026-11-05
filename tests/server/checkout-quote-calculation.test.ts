@@ -48,6 +48,13 @@ describe('checkout formal quote calculation', () => {
     expect(result.quote.priceChanges).toEqual([{ productId: product.id, name: product.name, unitPriceAtAddYen: 9000, unitPriceYen: 9999 }]);
   });
 
+  it('quotes an HDD as a distinct item without adding a compatibility slot', () => {
+    const specs = { capacity_gb: 4000, interface: 'SATA', form_factor: '3.5 inch' };
+    const result = calculate({ products: [{ ...product, category: 'hdd', specs }] });
+    expect(result.ok && result.quote.items).toMatchObject([{ category: 'hdd', unitPriceYen: 9999 }]);
+    expect(result.ok && result.quote.compatibility.map(({ status }) => status)).toEqual(Array(5).fill('not_applicable'));
+  });
+
   it('applies free ordinary shipping at 10,000 yen while preserving heavy parcel fees', () => {
     const tenThousand: CheckoutCatalogProduct = { ...product, priceTaxIncludedYen: 10000 };
     const normal = calculate({ products: [tenThousand], cart: { ...cart, items: [{ ...cart.items[0], unitPriceYen: 10000, lineTotalYen: 10000 }], goodsTotalYen: 10000, estimatedShippingYen: 0 } });

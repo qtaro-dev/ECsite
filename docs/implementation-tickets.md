@@ -495,3 +495,11 @@
 ### [T65 Node.js 24.x統一とVercel本番反映](../tickets/T65-node24-runtime-alignment.md)
 - **目的・範囲**：package engines、CI、ローカル推奨major、Vercel Project設定を24.xに統一する。
 - **依存・受け入れ**：main 72d8a70 / T64。Node24品質チェックとE2E、マージ後のProduction Ready・SHA・実行Nodeを確認する。
+
+### [T73 SSDとHDDのカテゴリを分離](../tickets/T73-separate-ssd-hdd-categories.md)
+- **目的・範囲**：SSDの商品・URLを維持し、トップ導線、管理、公開カタログ、注文に独立したHDDカテゴリを追加する。
+- **依存・受け入れ**：T37/T53/T61/T72後。公開・下書きのRLS、HDD注文、既存SSDの回帰を確認し、加算マイグレーションをアプリ公開より先に適用する。
+
+### [T74 ストレージ選択・パーツのデモ商品補完](../tickets/T74-storage-navigation-catalog-seed.md)
+- **目的・範囲**：トップからストレージ種別へ誘導し、未登録画像の表示を補う。独立seedで既存の9カテゴリの公開不足数を補完する。
+- **依存・受け入れ**：T73後。再実行、既存商品の維持、画像・公開一覧、レスポンシブを確認する。

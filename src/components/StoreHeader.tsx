@@ -3,7 +3,7 @@ import styles from "./StoreHeader.module.css";
 
 const categories = [
   ["CPU", "cpu"], ["グラフィックボード", "gpu"], ["マザーボード", "motherboard"],
-  ["メモリ", "memory"], ["SSD", "ssd"], ["電源", "power-supply"],
+  ["メモリ", "memory"], ["SSD", "ssd"], ["HDD", "hdd"], ["電源", "power-supply"],
   ["PCケース", "pc-case"], ["CPUクーラー", "cpu-cooler"],
 ] as const;
 

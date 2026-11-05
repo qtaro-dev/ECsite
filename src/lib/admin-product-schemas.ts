@@ -5,10 +5,10 @@ const optionalText = (max: number) => z.string().max(max).optional().default('')
 const optionalInt = () => z.number().int().positive().max(2_147_483_647).nullable().optional();
 
 export const AdminProductCategorySchema = z.enum([
-  'cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler',
+  'cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'hdd', 'power-supply', 'pc-case', 'cpu-cooler',
 ]);
 export const AdminProductStatusSchema = z.enum(['draft', 'published', 'hidden']);
-export const AdminProductListCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler', 'prebuilt-pc']);
+export const AdminProductListCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'hdd', 'power-supply', 'pc-case', 'cpu-cooler', 'prebuilt-pc']);
 export const AdminProductUseCaseSchema = z.enum(['gaming', 'daily', 'editing']);
 
 const ProductFields = {
@@ -35,12 +35,13 @@ const specFieldsByCategory: Record<z.infer<typeof AdminProductCategorySchema>, R
   motherboard: { socket_code: 'text', ddr_generation: 'text', form_factor: 'text' },
   memory: { ddr_generation: 'text', capacity_gb: 'positiveInteger', module_count: 'positiveInteger', speed_mt_s: 'positiveInteger' },
   ssd: { capacity_gb: 'positiveInteger', interface: 'text', form_factor: 'text' },
+  hdd: { capacity_gb: 'positiveInteger', interface: 'text', form_factor: 'text' },
   'power-supply': { rated_w: 'positiveInteger', form_factor: 'text', efficiency_grade: 'text' },
   'pc-case': { max_gpu_length_mm: 'positiveInteger', outer_length_mm: 'positiveInteger', outer_width_mm: 'positiveInteger', outer_height_mm: 'positiveInteger', supported_form_factors: 'textList' },
   'cpu-cooler': { supported_socket_codes: 'textList', height_mm: 'positiveInteger', cooling_type: 'text' },
 };
 const requiredSpecFieldsByCategory: Partial<Record<z.infer<typeof AdminProductCategorySchema>, string[]>> = {
-  gpu: ['chipset', 'vram_gb'], ssd: ['capacity_gb', 'interface', 'form_factor'],
+  gpu: ['chipset', 'vram_gb'], ssd: ['capacity_gb', 'interface', 'form_factor'], hdd: ['capacity_gb', 'interface', 'form_factor'],
   'power-supply': ['rated_w', 'form_factor', 'efficiency_grade'],
   'pc-case': ['outer_length_mm', 'outer_width_mm', 'outer_height_mm'],
   'cpu-cooler': ['height_mm', 'cooling_type'],
@@ -51,6 +52,7 @@ const nullableSpecFieldsByCategory: Record<z.infer<typeof AdminProductCategorySc
   motherboard: new Set(['socket_code', 'ddr_generation', 'form_factor']),
   memory: new Set(['ddr_generation', 'capacity_gb', 'module_count', 'speed_mt_s']),
   ssd: new Set(),
+  hdd: new Set(),
   'power-supply': new Set(),
   'pc-case': new Set(['max_gpu_length_mm', 'supported_form_factors']),
   'cpu-cooler': new Set(['supported_socket_codes']),
@@ -67,7 +69,7 @@ function validateSpecifications(value: z.infer<z.ZodObject<typeof ProductFields>
             : false);
     if (!valid) context.addIssue({ code: 'custom', path: ['specifications', field], message: 'カテゴリの仕様項目と値を確認してください。' });
     if ((field === 'ddr_generation' && fieldValue !== null && fieldValue !== 'DDR4' && fieldValue !== 'DDR5')
-      || ((field === 'form_factor' || field === 'supported_form_factors') && fieldValue !== null
+      || (((field === 'form_factor' && value.category !== 'hdd') || field === 'supported_form_factors') && fieldValue !== null
         && !(Array.isArray(fieldValue) ? fieldValue.every((item) => ['ATX', 'mATX', 'ITX'].includes(item)) : ['ATX', 'mATX', 'ITX'].includes(String(fieldValue))))) {
       context.addIssue({ code: 'custom', path: ['specifications', field], message: '選択可能な規格を指定してください。' });
     }

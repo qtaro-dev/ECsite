@@ -3,6 +3,7 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import styles from "./page.module.css";
 import { StatusMessage } from "@/components/StatusMessage";
+import { categoryImageDirectory, categoryImageFiles, storageCategory } from "@/lib/category-images";
 
 const uses = [
   { id: "gaming", title: "ゲーミングPC", description: "ゲーム向けにショップが構成した完成PCを比較できます。", icon: "01", image: { src: "/images/home-purpose/gaming_pc.png", width: 720, height: 405, alt: "ゲーム画面とコントローラーが並ぶPC" } },
@@ -13,14 +14,14 @@ const uses = [
 const useImageSizes = "(max-width: 767px) calc(100vw - 3.375rem), (max-width: 1312px) calc(33.33vw - 4.375rem), 366px";
 
 const categories = [
-  { name: "CPU", slug: "cpu", description: "処理の中心となるパーツ", image: "01_cpu.png" },
-  { name: "グラフィックボード", slug: "gpu", description: "映像処理を担当", image: "02_gpu.png" },
-  { name: "マザーボード", slug: "motherboard", description: "パーツをつなぐ基板", image: "03_motherboard.png" },
-  { name: "メモリ", slug: "memory", description: "作業中のデータを一時保存", image: "04_memory.png" },
-  { name: "ストレージ", previewName: "SSD", slug: "ssd", description: "データを保存するストレージ", image: "05_storage.png" },
-  { name: "電源ユニット", slug: "power-supply", description: "各パーツへ電力を供給", image: "06_power_supply.png" },
-  { name: "PCケース", slug: "pc-case", description: "パーツを収納するケース", image: "07_pc_case.png" },
-  { name: "CPUクーラー", slug: "cpu-cooler", description: "CPUの熱を冷却", image: "08_cpu_cooler.png" },
+  { name: "CPU", slug: "cpu", description: "処理の中心となるパーツ" },
+  { name: "グラフィックボード", slug: "gpu", description: "映像処理を担当" },
+  { name: "マザーボード", slug: "motherboard", description: "パーツをつなぐ基板" },
+  { name: "メモリ", slug: "memory", description: "作業中のデータを一時保存" },
+  { name: "SSD", slug: "ssd", description: "データを保存するストレージ" },
+  { name: "電源ユニット", slug: "power-supply", description: "各パーツへ電力を供給" },
+  { name: "PCケース", slug: "pc-case", description: "パーツを収納するケース" },
+  { name: "CPUクーラー", slug: "cpu-cooler", description: "CPUの熱を冷却" },
 ] as const;
 
 const categoryImageSizes = "(max-width: 457px) max(44px, 14vw), (max-width: 767px) 64px, 80px";
@@ -69,14 +70,14 @@ export function HomeContent({ heroArt, heroClassName, previewNavigation, hideHer
         <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>BROWSE COMPONENTS</p><h2 id="category-title">パーツ一覧</h2></div><Link href="/search">すべての商品を見る <span aria-hidden="true">→</span></Link></div>
         <div className={styles.categoryGrid}>
           {categories.map((item, index) => (
-            <Link className={showCardImages ? `${styles.categoryCard} ${styles.categoryCardWithImage}` : styles.categoryCard} href={`/categories/${item.slug}`} key={item.slug}>
+            <Link className={showCardImages ? `${styles.categoryCard} ${styles.categoryCardWithImage}` : styles.categoryCard} href={showCardImages && item.slug === "ssd" ? storageCategory.href : `/categories/${item.slug}`} key={item.slug}>
               {showCardImages ? (
                 <span className={styles.categoryImage}>
-                  <Image src={`/images/home-category/${item.image}`} alt="" fill sizes={categoryImageSizes} />
+                  <Image src={`${categoryImageDirectory}/${categoryImageFiles[item.slug]}`} alt="" fill sizes={categoryImageSizes} />
                 </span>
               ) : <span className={styles.categoryIndex}>{String(index + 1).padStart(2, "0")}</span>}
               <span className={styles.categoryCopy}>
-                <strong>{!showCardImages && "previewName" in item ? item.previewName : item.name}</strong>
+                <strong>{showCardImages && item.slug === "ssd" ? storageCategory.name : item.name}</strong>
                 <small>{item.description}</small>
               </span>
               {!showCardImages && <span className={styles.arrow} aria-hidden="true">↗</span>}

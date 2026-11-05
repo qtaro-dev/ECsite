@@ -1,18 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Skeleton } from "@/components/Skeleton";
 import { StatusMessage } from "@/components/StatusMessage";
 import type { CatalogCategory } from "@/lib/schemas";
+import { categoryIllustrationLabel, categoryImage, isStoragePart, storageCategory } from "@/lib/category-images";
+import { productImageUrl } from "@/lib/product-image-url";
 import type { ProductSearchItem, ProductSearchResult } from "@/server/catalog/product-search";
 import styles from "./CatalogExplorer.module.css";
 
 const categories: Array<{ slug: CatalogCategory; name: string }> = [
   { slug: "cpu", name: "CPU" }, { slug: "gpu", name: "グラフィックボード" },
   { slug: "motherboard", name: "マザーボード" }, { slug: "memory", name: "メモリ" },
-  { slug: "ssd", name: "SSD" }, { slug: "power-supply", name: "電源ユニット" },
+  { slug: "ssd", name: "SSD" }, { slug: "hdd", name: "HDD" }, { slug: "power-supply", name: "電源ユニット" },
   { slug: "pc-case", name: "PCケース" }, { slug: "cpu-cooler", name: "CPUクーラー" },
   { slug: "prebuilt-pc", name: "構成済みPC" },
 ];
@@ -25,6 +28,7 @@ const specFields: Partial<Record<CatalogCategory, SpecField[]>> = {
   motherboard: [{ key: "socket_code", label: "ソケット", type: "text" }, { key: "ddr_generation", label: "メモリ規格", type: "text" }, { key: "form_factor", label: "フォームファクター", type: "text" }],
   memory: [{ key: "ddr_generation", label: "メモリ規格", type: "text" }, { key: "capacity_gb", label: "容量（GB）", type: "number" }, { key: "module_count", label: "枚数", type: "number" }, { key: "speed_mt_s", label: "速度（MT/s）", type: "number" }],
   ssd: [{ key: "capacity_gb", label: "容量（GB）", type: "number" }, { key: "interface", label: "接続規格", type: "text" }, { key: "form_factor", label: "フォームファクター", type: "text" }],
+  hdd: [{ key: "capacity_gb", label: "容量（GB）", type: "number" }, { key: "interface", label: "接続規格", type: "text" }, { key: "form_factor", label: "フォームファクター", type: "text" }],
   "power-supply": [{ key: "rated_w", label: "定格出力（W）", type: "number" }, { key: "form_factor", label: "フォームファクター", type: "text" }, { key: "efficiency_grade", label: "変換効率", type: "text" }],
   "pc-case": [{ key: "max_gpu_length_mm", label: "対応グラフィックボード長（mm）", type: "number" }, { key: "outer_length_mm", label: "奥行（mm）", type: "number" }, { key: "outer_width_mm", label: "幅（mm）", type: "number" }, { key: "outer_height_mm", label: "高さ（mm）", type: "number" }, { key: "supported_form_factors", label: "対応フォームファクター（カンマ区切り）", type: "list" }],
   "cpu-cooler": [{ key: "supported_socket_codes", label: "対応ソケット（カンマ区切り）", type: "list" }, { key: "height_mm", label: "高さ（mm）", type: "number" }, { key: "cooling_type", label: "冷却方式", type: "text" }],
@@ -46,9 +50,20 @@ function specDisplayValue(value: string | number | string[] | undefined) {
 }
 
 function ProductCard({ product }: { product: ProductSearchItem }) {
+  const categoryArt = categoryImage(product.category);
+  const primaryImage = categoryArt ? product.images[0] : undefined;
+  const imageSrc = primaryImage ? productImageUrl(primaryImage.path) : categoryArt;
+  const imageIsIllustration = !primaryImage || primaryImage.altText === categoryIllustrationLabel;
   return <article className={styles.productCard}>
     <Link className={styles.productLink} href={`/products/${product.slug}`} aria-label={`${product.name}の商品詳細`}>
-      <div className={styles.productVisual} aria-hidden="true"><span>{categoryNames[product.category] ?? "PC PARTS"}</span><strong>{product.name.slice(0, 1)}</strong></div>
+      {imageSrc ? (
+        <div className={styles.productImage}>
+          <Image src={imageSrc} alt={primaryImage?.altText ?? ""} fill sizes="(max-width: 767px) 112px, (max-width: 1199px) 50vw, 320px" unoptimized={Boolean(primaryImage)} />
+          {imageIsIllustration && <span>{categoryIllustrationLabel}</span>}
+        </div>
+      ) : (
+        <div className={styles.productVisual} aria-hidden="true"><span>{categoryNames[product.category] ?? "PC PARTS"}</span><strong>{product.name.slice(0, 1)}</strong></div>
+      )}
       <div className={styles.productBody}><p className={styles.brand}>{product.brand} <span>／</span> {product.sku}</p>
         <h3>{product.name}</h3><p className={styles.productNote}>{productSubtitle(product)}</p>
         <p className={styles.price}>¥{displayPrice(product.priceYen)}<small>（税込）</small></p>
@@ -149,9 +164,10 @@ export function CatalogExplorer({ category }: ExplorerProps) {
     router.push(`${pathname}?${next.toString()}`, { scroll: false });
   }
 
+  const storagePart = isStoragePart(category);
   const title = category ? `${categoryNames[category]}の商品` : "商品を探す";
   return <main className={styles.main} id="main-content" tabIndex={-1}>
-    <nav className={styles.breadcrumb} aria-label="パンくずリスト"><Link href="/">トップ</Link><span aria-hidden="true">/</span><span aria-current="page">{title}</span></nav>
+    <nav className={styles.breadcrumb} aria-label="パンくずリスト"><Link href="/">トップ</Link><span aria-hidden="true">/</span>{storagePart && <><Link href={storageCategory.href}>{storageCategory.name}</Link><span aria-hidden="true">/</span></>}<span aria-current="page">{storagePart && category ? categoryNames[category] : title}</span></nav>
     <header className={styles.pageHeader}><p className={styles.eyebrow}>{category ? "COMPONENTS" : "SEARCH PRODUCTS"}</p><h1>{title}</h1>
       <p>{category ? `${categoryNames[category]}の仕様や価格で絞り込めます。` : "条件を組み合わせて、公開中の商品を探せます。"}</p></header>
     <form className={styles.topSearch} action="/search" role="search" aria-label="検索ページの商品キーワード検索"><label htmlFor="catalog-q">キーワード</label><input id="catalog-q" name="q" type="search" maxLength={100} defaultValue={params.get("q") ?? ""} placeholder="商品名・型番・キーワード" /><button type="submit">検索</button></form>

@@ -11,6 +11,54 @@ test("home offers all three use cases and eight category destinations", async ({
   await expect(page.locator("main a[href^='/categories/']")).toHaveCount(8);
 });
 
+test("home routes to storage and its SSD and HDD lists keep separate filters", async ({ page }) => {
+  const requestedCategories = new Set<string>();
+  await page.route("**/api/products**", async (route) => {
+    const category = new URL(route.request().url()).searchParams.get("category");
+    if (category) requestedCategories.add(category);
+    await route.fulfill({ json: emptyResult });
+  });
+  await page.setViewportSize({ width: 320, height: 844 });
+
+  await page.goto("/");
+  await page.locator('main a[href="/categories/storage"]').click();
+  await expect(page.getByRole("heading", { name: "ストレージ", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+
+  for (const category of ["ssd", "hdd"]) {
+    await page.locator(`main a[href="/categories/${category}"]`).click();
+    await expect(page).toHaveURL(`/categories/${category}`);
+    await expect(page.getByRole("heading", { name: `${category.toUpperCase()}に公開中の商品はありません` })).toBeVisible();
+    const breadcrumb = page.getByRole("navigation", { name: "パンくずリスト" });
+    await expect(breadcrumb.getByRole("link", { name: "トップ" })).toHaveAttribute("href", "/");
+    await expect(breadcrumb.getByText(category.toUpperCase(), { exact: true })).toHaveAttribute("aria-current", "page");
+    await breadcrumb.getByRole("link", { name: "ストレージ" }).click();
+    await expect(page).toHaveURL("/categories/storage");
+  }
+  expect([...requestedCategories]).toEqual(["ssd", "hdd"]);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator('main a[href="/categories/ssd"]')).toBeVisible();
+  await expect(page.locator('main a[href="/categories/hdd"]')).toBeVisible();
+});
+
+test("product cards use a category illustration only when a part has no registered image", async ({ page }) => {
+  const part = { id: "part", sku: "T74-PART", name: "Test HDD", brand: "Demo", category: "hdd", description: "",
+    beginnerNote: "", priceYen: 6980, useCases: [], specifications: { capacity_gb: 1000 } };
+  await page.route("**/api/products**", (route) => route.fulfill({ json: {
+    ...emptyResult, data: { ...emptyResult.data, total: 2, items: [
+      { ...part, slug: "hdd-no-image", images: [] },
+      { ...part, id: "with-image", slug: "hdd-with-image", images: [{ path: "test/hdd.png", altText: "登録画像" }] },
+    ] },
+  } }));
+  await page.goto("/categories/hdd");
+  const fallback = page.locator('article').filter({ has: page.locator('a[href="/products/hdd-no-image"]') });
+  await expect(fallback.getByText("カテゴリのイメージ")).toBeVisible();
+  await expect(fallback.locator("img")).toHaveAttribute("src", /05_storage\.png/);
+  const registered = page.locator('article').filter({ has: page.locator('a[href="/products/hdd-with-image"]') });
+  await expect(registered.getByRole("img", { name: "登録画像" })).toHaveAttribute("src", "/api/product-images/test/hdd.png");
+  await expect(registered.getByText("カテゴリのイメージ")).toHaveCount(0);
+});
+
 test("category filters keep their URL conditions, force the path category, and show a clear empty state", async ({ page }) => {
   let requested: URL | undefined;
   await page.route("**/api/products**", async (route) => {
