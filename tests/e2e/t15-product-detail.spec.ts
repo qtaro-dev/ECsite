@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 test("published detail shows image, labeled specifications, availability, and quantity navigation", async ({ page }) => {
+  await page.route("**/api/product-images/t11/t11-cpu-am5.png", (route) => route.fulfill({ path: "public/images/home-category/01_cpu.png" }));
   await page.goto("/products/t11-cpu-am5");
   await expect(page.getByRole("heading", { name: "T11 Test CPU AM5" })).toBeVisible();
   await expect(page.getByText("AM5", { exact: true })).toBeVisible();
   await expect(page.getByText("販売可能：5点")).toBeVisible();
-  await expect(page.locator("img[alt='合成されたテスト用プレースホルダー画像']")).toBeVisible();
+  const image = page.locator("img[alt='合成されたテスト用プレースホルダー画像']");
+  await expect(image).toBeVisible();
+  await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBeGreaterThan(1);
   const quantity = page.getByLabel("数量");
   await quantity.fill("3");
   await expect(page.getByRole("link", { name: "カートへ進む" })).toHaveAttribute("href", /productId=.*&quantity=3/);
@@ -20,12 +23,21 @@ test("sold out products cannot advance to the cart", async ({ page }) => {
   await expect(page.getByRole("link", { name: "カートへ進む" })).toHaveCount(0);
 });
 
-test("missing specification values and failed image delivery explain the issue and recovery path", async ({ page }) => {
+test("missing specification values remain explained when failed images use a category illustration", async ({ page }) => {
   await page.route("**/api/product-images/**", async (route) => route.fulfill({ status: 404 }));
   await page.goto("/products/t11-cpu-unknown");
-  await expect(page.getByRole("img", { name: "T11 Test CPU Unknown Socketの商品画像を読み込めませんでした" })).toBeVisible();
+  const gallery = page.getByRole("region", { name: "商品画像" });
+  await expect(gallery.getByText("カテゴリのイメージ")).toBeVisible();
+  await expect(gallery.locator("img")).toHaveAttribute("src", "/images/home-category/01_cpu.png");
   await expect(page.getByText("次の仕様は登録されていません：ソケット。", { exact: false })).toBeVisible();
   await expect(page.getByRole("link", { name: "同じカテゴリの商品一覧" })).toHaveAttribute("href", "/categories/cpu");
+});
+
+test("a one-pixel product image loads the correct category illustration", async ({ page }) => {
+  await page.goto("/products/t11-ssd");
+  const gallery = page.getByRole("region", { name: "商品画像" });
+  await expect(gallery.getByText("カテゴリのイメージ")).toBeVisible();
+  await expect(gallery.locator("img")).toHaveAttribute("src", "/images/home-category/05_storage.png");
 });
 
 test("hidden and missing products return an HTTP 404", async ({ request }) => {
