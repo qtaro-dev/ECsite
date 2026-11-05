@@ -46,8 +46,10 @@
 .categoryImage { position: relative; flex: 0 0 5rem; aspect-ratio: 1; }
 .categoryImage img { object-fit: contain; }
 .demo { padding-top: 2rem; }
+.demo.demoAboveHero { padding-top: 1.5rem; }
 .demo p { margin-block: 0; }
 @media (max-width: 767px) {
+  .demo.demoAboveHero { padding-top: 0.5rem; }
   .home { width: min(100% - 1rem, var(--content-max)); }
   .hero { min-height: auto; grid-template-columns: minmax(0, 1fr); margin-top: 0.5rem; padding: 1.5rem 1rem; }
   .hero h1 { font-size: clamp(1.75rem, 8vw, 2.5rem); }

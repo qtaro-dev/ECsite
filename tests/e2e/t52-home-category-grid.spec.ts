@@ -2,6 +2,29 @@ import { expect, test } from "@playwright/test";
 
 const viewportWidths = [320, 768, 1199, 1200, 1440, 1920];
 
+test("home shows one demo notice immediately before the hero at the same width", async ({ page }) => {
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+
+    const main = page.locator("main");
+    const notice = main.getByRole("status").filter({ hasText: "公開デモについて" });
+    const hero = main.locator('section[aria-labelledby="home-title"]');
+    await expect(notice).toHaveCount(1);
+    await expect(notice).toBeVisible();
+    await expect(hero).toBeVisible();
+
+    const directlyBeforeHero = await notice.evaluate((element) =>
+      element.parentElement?.nextElementSibling?.getAttribute("aria-labelledby") === "home-title",
+    );
+    expect(directlyBeforeHero).toBe(true);
+    const noticeBox = await notice.boundingBox();
+    const heroBox = await hero.boundingBox();
+    expect(noticeBox?.x).toBeCloseTo(heroBox?.x ?? -1);
+    expect(noticeBox?.width).toBeCloseTo(heroBox?.width ?? -1);
+  }
+});
+
 test("home category section aligns with purpose content and preserves responsive columns", async ({ page }) => {
   const section = page.locator('section[aria-labelledby="category-title"]');
   const purposeSection = page.locator('section[aria-labelledby="use-title"]');
