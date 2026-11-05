@@ -41,7 +41,7 @@ describe('published product detail service', () => {
 
   it('proxies private images with only the publishable key and rejects unsafe paths', async () => {
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', env.NEXT_PUBLIC_SUPABASE_URL);
-    vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_test');
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(new Uint8Array([1, 2, 3]), {
       headers: { 'content-type': 'image/png' },
     }));
@@ -53,11 +53,51 @@ describe('published product detail service', () => {
     expect(response.headers.get('content-type')).toBe('image/png');
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
     expect(fetcher.mock.calls[0][0]).toBe('https://example.supabase.co/storage/v1/object/authenticated/product-images/catalog/cpu.png');
-    expect(new Headers(fetcher.mock.calls[0][1]?.headers).get('apikey')).toBe('publishable');
+    expect(new Headers(fetcher.mock.calls[0][1]?.headers).get('apikey')).toBe('sb_publishable_test');
     expect(new Headers(fetcher.mock.calls[0][1]?.headers).has('authorization')).toBe(false);
     const unsafe = await getProductImage(new Request('http://localhost/api/product-images/../private.png'), {
       params: Promise.resolve({ path: ['..', 'private.png'] }),
     });
     expect(unsafe.status).toBe(404);
+  });
+
+  it('authorizes Storage with the legacy anon JWT and still denies restricted images', async () => {
+    const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url');
+    const payload = Buffer.from(JSON.stringify({ role: 'anon' })).toString('base64url');
+    const legacyKey = [header, payload, 'mock-signature'].join('.');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', env.NEXT_PUBLIC_SUPABASE_URL);
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', legacyKey);
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(new Uint8Array([1]), { headers: { 'content-type': 'image/png' } }))
+      .mockResolvedValueOnce(new Response(null, { status: 403 }));
+    vi.stubGlobal('fetch', fetcher);
+
+    for (const [file, status] of [['published.png', 200], ['hidden.png', 403]] as const) {
+      const result = await getProductImage(new Request('http://localhost/api/product-images/catalog/' + file), {
+        params: Promise.resolve({ path: ['catalog', file] }),
+      });
+      expect(result.status).toBe(status);
+    }
+    for (const [, init] of fetcher.mock.calls) {
+      const headers = new Headers(init?.headers);
+      expect(headers.get('apikey')).toBe(legacyKey);
+      expect(headers.get('authorization')).toBe('Bearer ' + legacyKey);
+    }
+  });
+
+  it('does not contact Storage if a non-anonymous JWT is configured', async () => {
+    const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url');
+    const payload = Buffer.from(JSON.stringify({ role: 'service_role' })).toString('base64url');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', env.NEXT_PUBLIC_SUPABASE_URL);
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', [header, payload, 'mock-signature'].join('.'));
+    const fetcher = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetcher);
+
+    const result = await getProductImage(new Request('http://localhost/api/product-images/catalog/cpu.png'), {
+      params: Promise.resolve({ path: ['catalog', 'cpu.png'] }),
+    });
+
+    expect(result.status).toBe(503);
+    expect(fetcher).not.toHaveBeenCalled();
   });
 });
