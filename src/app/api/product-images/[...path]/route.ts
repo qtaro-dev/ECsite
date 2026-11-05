@@ -11,11 +11,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pat
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!baseUrl || !anonKey) return new Response(null, { status: 503 });
+  const headers = new Headers({ apikey: anonKey });
+  // Hosted Storage requires a bearer token for a legacy anon JWT.
+  if (/^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(anonKey)) {
+    headers.set('Authorization', `Bearer ${anonKey}`);
+  }
   const encodedPath = path.map(encodeURIComponent).join('/');
   let upstream: Response;
   try {
     upstream = await fetch(`${baseUrl.replace(/\/$/, '')}/storage/v1/object/authenticated/product-images/${encodedPath}`, {
-      headers: { apikey: anonKey },
+      headers,
       cache: 'no-store',
     });
   } catch {
