@@ -62,7 +62,7 @@ test("product cards fall back for missing, failed, or one-pixel images and keep 
     await expect.poll(() => fallback.locator("img").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(1);
   }
   const registered = page.locator('article').filter({ has: page.locator('a[href="/products/hdd-with-image"]') });
-  await expect(registered.getByRole("img", { name: "登録画像" })).toHaveAttribute("src", "/api/product-images/test/hdd.png");
+  await expect(registered.getByRole("img", { name: "登録画像" })).toHaveJSProperty("src", new URL("/api/product-images/test/hdd.png", page.url()).href);
   await expect.poll(() => registered.locator("img").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(1);
   await expect(registered.getByText("カテゴリのイメージ")).toHaveCount(0);
 });
