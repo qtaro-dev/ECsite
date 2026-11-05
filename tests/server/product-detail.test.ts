@@ -84,4 +84,20 @@ describe('published product detail service', () => {
       expect(headers.get('authorization')).toBe('Bearer ' + legacyKey);
     }
   });
+
+  it('does not contact Storage if a non-anonymous JWT is configured', async () => {
+    const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url');
+    const payload = Buffer.from(JSON.stringify({ role: 'service_role' })).toString('base64url');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', env.NEXT_PUBLIC_SUPABASE_URL);
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', [header, payload, 'mock-signature'].join('.'));
+    const fetcher = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetcher);
+
+    const result = await getProductImage(new Request('http://localhost/api/product-images/catalog/cpu.png'), {
+      params: Promise.resolve({ path: ['catalog', 'cpu.png'] }),
+    });
+
+    expect(result.status).toBe(503);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
 });

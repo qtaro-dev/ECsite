@@ -12,8 +12,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pat
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!baseUrl || !anonKey) return new Response(null, { status: 503 });
   const headers = new Headers({ apikey: anonKey });
-  // Hosted Storage requires a bearer token for a legacy anon JWT.
-  if (/^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(anonKey)) {
+  if (!anonKey.startsWith('sb_publishable_')) {
+    // Hosted Storage requires a bearer token for a legacy anon JWT.
+    // Refuse other key types so this proxy always uses the anonymous RLS role.
+    const legacyKey = /^eyJ[A-Za-z0-9_-]+\.([A-Za-z0-9_-]+)\.[A-Za-z0-9_-]+$/.exec(anonKey);
+    if (!legacyKey) return new Response(null, { status: 503 });
+    try {
+      const payload: unknown = JSON.parse(Buffer.from(legacyKey[1], 'base64url').toString('utf8'));
+      if (typeof payload !== 'object' || payload === null || !('role' in payload) || payload.role !== 'anon') {
+        return new Response(null, { status: 503 });
+      }
+    } catch {
+      return new Response(null, { status: 503 });
+    }
     headers.set('Authorization', `Bearer ${anonKey}`);
   }
   const encodedPath = path.map(encodeURIComponent).join('/');
