@@ -12,7 +12,7 @@ import styles from "./CatalogExplorer.module.css";
 const categories: Array<{ slug: CatalogCategory; name: string }> = [
   { slug: "cpu", name: "CPU" }, { slug: "gpu", name: "グラフィックボード" },
   { slug: "motherboard", name: "マザーボード" }, { slug: "memory", name: "メモリ" },
-  { slug: "ssd", name: "SSD" }, { slug: "power-supply", name: "電源ユニット" },
+  { slug: "ssd", name: "SSD" }, { slug: "hdd", name: "HDD" }, { slug: "power-supply", name: "電源ユニット" },
   { slug: "pc-case", name: "PCケース" }, { slug: "cpu-cooler", name: "CPUクーラー" },
   { slug: "prebuilt-pc", name: "構成済みPC" },
 ];
@@ -25,6 +25,7 @@ const specFields: Partial<Record<CatalogCategory, SpecField[]>> = {
   motherboard: [{ key: "socket_code", label: "ソケット", type: "text" }, { key: "ddr_generation", label: "メモリ規格", type: "text" }, { key: "form_factor", label: "フォームファクター", type: "text" }],
   memory: [{ key: "ddr_generation", label: "メモリ規格", type: "text" }, { key: "capacity_gb", label: "容量（GB）", type: "number" }, { key: "module_count", label: "枚数", type: "number" }, { key: "speed_mt_s", label: "速度（MT/s）", type: "number" }],
   ssd: [{ key: "capacity_gb", label: "容量（GB）", type: "number" }, { key: "interface", label: "接続規格", type: "text" }, { key: "form_factor", label: "フォームファクター", type: "text" }],
+  hdd: [{ key: "capacity_gb", label: "容量（GB）", type: "number" }, { key: "interface", label: "接続規格", type: "text" }, { key: "form_factor", label: "フォームファクター", type: "text" }],
   "power-supply": [{ key: "rated_w", label: "定格出力（W）", type: "number" }, { key: "form_factor", label: "フォームファクター", type: "text" }, { key: "efficiency_grade", label: "変換効率", type: "text" }],
   "pc-case": [{ key: "max_gpu_length_mm", label: "対応グラフィックボード長（mm）", type: "number" }, { key: "outer_length_mm", label: "奥行（mm）", type: "number" }, { key: "outer_width_mm", label: "幅（mm）", type: "number" }, { key: "outer_height_mm", label: "高さ（mm）", type: "number" }, { key: "supported_form_factors", label: "対応フォームファクター（カンマ区切り）", type: "list" }],
   "cpu-cooler": [{ key: "supported_socket_codes", label: "対応ソケット（カンマ区切り）", type: "list" }, { key: "height_mm", label: "高さ（mm）", type: "number" }, { key: "cooling_type", label: "冷却方式", type: "text" }],

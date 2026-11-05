@@ -7,7 +7,7 @@ import { getLegacyPrebuiltPcIds } from '@/server/admin/prebuilt-pcs';
 export const dynamic = 'force-dynamic';
 
 const labels: Record<string, string> = {
-  cpu: 'CPU', gpu: 'グラフィックボード', motherboard: 'マザーボード', memory: 'メモリ', ssd: 'SSD',
+  cpu: 'CPU', gpu: 'グラフィックボード', motherboard: 'マザーボード', memory: 'メモリ', ssd: 'SSD', hdd: 'HDD',
   'power-supply': '電源', 'pc-case': 'PCケース', 'cpu-cooler': 'CPUクーラー',
   'prebuilt-pc': '構成済みPC',
 };

@@ -9,7 +9,7 @@ paths:
       summary: Search published products
       parameters:
         - { $ref: '#/components/parameters/Q' }
-        - { name: category, in: query, schema: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] } }
+        - { name: category, in: query, schema: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, hdd, power-supply, pc-case, cpu-cooler] } }
         - { name: usage, in: query, schema: { type: string, enum: [gaming, daily, editing] } }
         - { name: manufacturer, in: query, schema: { type: string, maxLength: 100 } }
         - { name: minPrice, in: query, schema: { type: integer, minimum: 0 } }
@@ -863,7 +863,7 @@ components:
         sku: { type: string }
         name: { type: string }
         brand: { type: string }
-        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] }
+        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, hdd, power-supply, pc-case, cpu-cooler] }
         description: { type: string }
         beginnerNote: { type: string }
         priceYen: { type: integer, minimum: 0 }
@@ -960,7 +960,7 @@ components:
         sku: { type: string, minLength: 1 }
         name: { type: string, minLength: 1 }
         brand: { type: string, minLength: 1 }
-        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] }
+        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, hdd, power-supply, pc-case, cpu-cooler] }
         quantity: { type: integer, minimum: 1, maximum: 10 }
         unitPriceYen: { type: integer, minimum: 0 }
         lineTotalYen: { type: integer, minimum: 0 }
@@ -1179,7 +1179,7 @@ components:
       type: object
       required: [category, slug, sku, useCases, specifications]
       properties:
-        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] }
+        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, hdd, power-supply, pc-case, cpu-cooler] }
         slug: { type: string }
         sku: { type: string }
         name: { type: string }
@@ -1347,7 +1347,7 @@ components:
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
-        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] }
+        category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, hdd, power-supply, pc-case, cpu-cooler] }
         slug: { type: string }
         sku: { type: string }
         name: { type: string }

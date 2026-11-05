@@ -36,6 +36,15 @@ describe('admin product input', () => {
     expect(AdminProductCreateSchema.safeParse({ ...completeProduct, category: 'gpu', specifications: { chipset: 'X', vram_gb: null } }).success).toBe(false);
   });
 
+  it('requires capacity, interface and form factor to publish an HDD', () => {
+    const hdd = {
+      ...draft, category: 'hdd', status: 'published', name: 'HDD', brand: 'Maker', description: 'Description', beginnerNote: 'Guide',
+      priceTaxIncludedYen: 1000, weightG: 500, packLengthMm: 100, packWidthMm: 100, packHeightMm: 50,
+    };
+    expect(AdminProductCreateSchema.safeParse({ ...hdd, specifications: { capacity_gb: 4000, interface: 'SATA' } }).success).toBe(false);
+    expect(AdminProductCreateSchema.safeParse({ ...hdd, specifications: { capacity_gb: 4000, interface: 'SATA', form_factor: '3.5 inch' } }).success).toBe(true);
+  });
+
   it('accepts an incomplete GPU draft without a spec row', () => {
     expect(AdminProductCreateSchema.safeParse({ ...draft, category: 'gpu', specifications: {} }).success).toBe(true);
   });

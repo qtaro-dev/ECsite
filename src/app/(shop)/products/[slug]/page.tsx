@@ -18,7 +18,7 @@ const labels: Record<string, string> = {
 };
 const categoryNames: Record<string, string> = {
   cpu: "CPU", gpu: "グラフィックボード", motherboard: "マザーボード", memory: "メモリ",
-  ssd: "SSD", "power-supply": "電源ユニット", "pc-case": "PCケース", "cpu-cooler": "CPUクーラー", "prebuilt-pc": "構成済みPC",
+  ssd: "SSD", hdd: "HDD", "power-supply": "電源ユニット", "pc-case": "PCケース", "cpu-cooler": "CPUクーラー", "prebuilt-pc": "構成済みPC",
 };
 const prebuiltPartLabels: Array<[string, string]> = [
   ["cpu", "CPU"], ["gpu", "グラフィックボード"], ["memory", "メモリ"], ["ssd", "SSD"],
@@ -31,6 +31,7 @@ const categorySpecFields: Record<string, string[]> = {
   motherboard: ["socket_code", "ddr_generation", "form_factor"],
   memory: ["ddr_generation", "capacity_gb", "module_count", "speed_mt_s"],
   ssd: ["capacity_gb", "interface", "form_factor"],
+  hdd: ["capacity_gb", "interface", "form_factor"],
   "power-supply": ["rated_w", "form_factor", "efficiency_grade"],
   "pc-case": ["max_gpu_length_mm", "outer_length_mm", "outer_width_mm", "outer_height_mm", "supported_form_factors"],
   "cpu-cooler": ["supported_socket_codes", "height_mm", "cooling_type"],

@@ -2,13 +2,31 @@ import { expect, test } from "@playwright/test";
 
 const emptyResult = { data: { items: [], total: 0, page: 1, pageSize: 24 }, requestId: "test-request" };
 
-test("home offers all three use cases and eight category destinations", async ({ page }) => {
+test("home offers all three use cases and nine category destinations", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "用途別から探す" })).toBeVisible();
   await expect(page.getByRole("link", { name: /ゲーミングPC/ })).toHaveAttribute("href", "/prebuilt-pc/gaming");
   await expect(page.getByRole("link", { name: /一般用途向けPC/ })).toHaveAttribute("href", "/prebuilt-pc/daily");
   await expect(page.getByRole("link", { name: /クリエイターPC/ })).toHaveAttribute("href", "/prebuilt-pc/editing");
-  await expect(page.locator("main a[href^='/categories/']")).toHaveCount(8);
+  await expect(page.locator("main a[href^='/categories/']")).toHaveCount(9);
+});
+
+test("home routes SSD and HDD cards to separate catalog filters", async ({ page }) => {
+  const requestedCategories = new Set<string>();
+  await page.route("**/api/products**", async (route) => {
+    const category = new URL(route.request().url()).searchParams.get("category");
+    if (category) requestedCategories.add(category);
+    await route.fulfill({ json: emptyResult });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  for (const category of ["ssd", "hdd"]) {
+    await page.goto("/");
+    await page.locator(`main a[href="/categories/${category}"]`).click();
+    await expect(page).toHaveURL(`/categories/${category}`);
+    await expect(page.getByRole("heading", { name: `${category.toUpperCase()}に公開中の商品はありません` })).toBeVisible();
+  }
+  expect([...requestedCategories]).toEqual(["ssd", "hdd"]);
 });
 
 test("category filters keep their URL conditions, force the path category, and show a clear empty state", async ({ page }) => {

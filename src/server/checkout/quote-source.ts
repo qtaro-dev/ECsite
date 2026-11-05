@@ -1,5 +1,5 @@
 import 'server-only';
-import type { Address, CartProjection, CatalogCategory, ProductCategory } from '@/lib/schemas';
+import type { Address, CartProjection, CatalogCategory } from '@/lib/schemas';
 import { createCartServiceClient } from '@/server/cart/service-client';
 import type { CheckoutCatalogProduct } from './quote-calculation';
 import type { ShippingSettings } from '@/server/shipping/calculator';
@@ -20,13 +20,13 @@ const PRODUCT_SELECT = [
   'category:categories(slug)',
   'cpu_specs(socket_code)', 'gpu_specs(card_length_mm)',
   'motherboard_specs(socket_code,ddr_generation,form_factor)', 'memory_specs(ddr_generation)',
-  'ssd_specs(capacity_gb)', 'psu_specs(rated_w)',
+  'ssd_specs(capacity_gb)', 'hdd_specs(capacity_gb,interface,form_factor)', 'psu_specs(rated_w)',
   'case_specs(max_gpu_length_mm,supported_form_factors)', 'cooler_specs(supported_socket_codes)',
   'prebuilt_pc_specs(components)',
 ].join(',');
-const CATEGORY_SPEC_TABLE: Record<ProductCategory, string> = {
+const CATEGORY_SPEC_TABLE: Record<Exclude<CatalogCategory, 'prebuilt-pc'>, string> = {
   cpu: 'cpu_specs', gpu: 'gpu_specs', motherboard: 'motherboard_specs', memory: 'memory_specs',
-  ssd: 'ssd_specs', 'power-supply': 'psu_specs', 'pc-case': 'case_specs', 'cpu-cooler': 'cooler_specs',
+  ssd: 'ssd_specs', hdd: 'hdd_specs', 'power-supply': 'psu_specs', 'pc-case': 'case_specs', 'cpu-cooler': 'cooler_specs',
 };
 
 function relationRow(value: unknown): Record<string, unknown> | null {
@@ -40,7 +40,7 @@ export function mapCheckoutCatalogProduct(row: Record<string, unknown>): Checkou
   if (typeof category !== 'string' || !(category === 'prebuilt-pc' || Object.hasOwn(CATEGORY_SPEC_TABLE, category))) return null;
   const specs = category === 'prebuilt-pc'
     ? relationRow(row.prebuilt_pc_specs) ?? {}
-    : relationRow(row[CATEGORY_SPEC_TABLE[category as ProductCategory]]) ?? {};
+    : relationRow(row[CATEGORY_SPEC_TABLE[category as keyof typeof CATEGORY_SPEC_TABLE]]) ?? {};
   const nullableNumber = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) ? value : null;
   if (typeof row.id !== 'string' || typeof row.sku !== 'string' || typeof row.name !== 'string'
     || typeof row.brand !== 'string' || typeof row.status !== 'string'

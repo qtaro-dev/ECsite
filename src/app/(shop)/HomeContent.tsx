@@ -17,7 +17,8 @@ const categories = [
   { name: "グラフィックボード", slug: "gpu", description: "映像処理を担当", image: "02_gpu.png" },
   { name: "マザーボード", slug: "motherboard", description: "パーツをつなぐ基板", image: "03_motherboard.png" },
   { name: "メモリ", slug: "memory", description: "作業中のデータを一時保存", image: "04_memory.png" },
-  { name: "ストレージ", previewName: "SSD", slug: "ssd", description: "データを保存するストレージ", image: "05_storage.png" },
+  { name: "SSD", slug: "ssd", description: "データを保存するストレージ", image: "05_storage.png" },
+  { name: "HDD", slug: "hdd", description: "データを保存するストレージ", image: "05_storage.png" },
   { name: "電源ユニット", slug: "power-supply", description: "各パーツへ電力を供給", image: "06_power_supply.png" },
   { name: "PCケース", slug: "pc-case", description: "パーツを収納するケース", image: "07_pc_case.png" },
   { name: "CPUクーラー", slug: "cpu-cooler", description: "CPUの熱を冷却", image: "08_cpu_cooler.png" },
@@ -68,7 +69,7 @@ export function HomeContent({ heroArt, heroClassName, previewNavigation, hideHer
       <section className={styles.categorySection} aria-labelledby="category-title">
         <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>BROWSE COMPONENTS</p><h2 id="category-title">パーツ一覧</h2></div><Link href="/search">すべての商品を見る <span aria-hidden="true">→</span></Link></div>
         <div className={styles.categoryGrid}>
-          {categories.map((item, index) => (
+          {categories.filter((item) => showCardImages || item.slug !== "hdd").map((item, index) => (
             <Link className={showCardImages ? `${styles.categoryCard} ${styles.categoryCardWithImage}` : styles.categoryCard} href={`/categories/${item.slug}`} key={item.slug}>
               {showCardImages ? (
                 <span className={styles.categoryImage}>
@@ -76,7 +77,7 @@ export function HomeContent({ heroArt, heroClassName, previewNavigation, hideHer
                 </span>
               ) : <span className={styles.categoryIndex}>{String(index + 1).padStart(2, "0")}</span>}
               <span className={styles.categoryCopy}>
-                <strong>{!showCardImages && "previewName" in item ? item.previewName : item.name}</strong>
+                <strong>{item.name}</strong>
                 <small>{item.description}</small>
               </span>
               {!showCardImages && <span className={styles.arrow} aria-hidden="true">↗</span>}

@@ -12,7 +12,7 @@ test("home category section aligns with purpose content and preserves responsive
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "用途別から探す" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "パーツ一覧" })).toBeVisible();
-    await expect(cards).toHaveCount(8);
+    await expect(cards).toHaveCount(9);
     await expect(cards.first()).toBeVisible();
 
     const geometry = await page.evaluate(() => {
@@ -33,7 +33,7 @@ test("home category section aligns with purpose content and preserves responsive
       };
     });
 
-    expect(geometry.cards).toHaveLength(8);
+    expect(geometry.cards).toHaveLength(9);
     expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
     expect(geometry.section?.x).toBeCloseTo(geometry.purposeSection?.x ?? -1, 0);
     expect(geometry.section?.width).toBeCloseTo(geometry.purposeSection?.width ?? -1, 0);
@@ -47,7 +47,7 @@ test("home category section aligns with purpose content and preserves responsive
 
     if (width >= 1200) {
       expect(columns).toHaveLength(4);
-      expect(rows).toHaveLength(2);
+      expect(rows).toHaveLength(3);
       expect(Math.max(...cardWidths) - Math.min(...cardWidths)).toBeLessThanOrEqual(1);
     } else {
       expect(columns).toHaveLength(width < 768 ? 2 : 3);

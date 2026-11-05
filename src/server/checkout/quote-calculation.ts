@@ -98,7 +98,7 @@ export function calculateCheckoutQuote(input: {
   const compatibilityProducts: CompatibilityProduct[] = [];
   const seenCategories = new Set<ProductCategory>();
   currentProducts.forEach((product) => {
-    if (product.category === 'prebuilt-pc') return;
+    if (product.category === 'prebuilt-pc' || product.category === 'hdd') return;
     if (seenCategories.has(product.category)) return;
     seenCategories.add(product.category);
     compatibilityProducts.push({ id: product.id, category: product.category, specs: product.specs });
