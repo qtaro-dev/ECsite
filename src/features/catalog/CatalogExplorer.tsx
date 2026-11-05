@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Skeleton } from "@/components/Skeleton";
 import { StatusMessage } from "@/components/StatusMessage";
 import type { CatalogCategory } from "@/lib/schemas";
+import { categoryIllustrationLabel, categoryImage, isStoragePart, storageCategory } from "@/lib/category-images";
+import { productImageUrl } from "@/lib/product-image-url";
 import type { ProductSearchItem, ProductSearchResult } from "@/server/catalog/product-search";
 import styles from "./CatalogExplorer.module.css";
 
@@ -47,9 +50,20 @@ function specDisplayValue(value: string | number | string[] | undefined) {
 }
 
 function ProductCard({ product }: { product: ProductSearchItem }) {
+  const categoryArt = categoryImage(product.category);
+  const primaryImage = categoryArt ? product.images[0] : undefined;
+  const imageSrc = primaryImage ? productImageUrl(primaryImage.path) : categoryArt;
+  const imageIsIllustration = !primaryImage || primaryImage.altText === categoryIllustrationLabel;
   return <article className={styles.productCard}>
     <Link className={styles.productLink} href={`/products/${product.slug}`} aria-label={`${product.name}の商品詳細`}>
-      <div className={styles.productVisual} aria-hidden="true"><span>{categoryNames[product.category] ?? "PC PARTS"}</span><strong>{product.name.slice(0, 1)}</strong></div>
+      {imageSrc ? (
+        <div className={styles.productImage}>
+          <Image src={imageSrc} alt={primaryImage?.altText ?? ""} fill sizes="(max-width: 767px) 112px, (max-width: 1199px) 50vw, 320px" unoptimized={Boolean(primaryImage)} />
+          {imageIsIllustration && <span>{categoryIllustrationLabel}</span>}
+        </div>
+      ) : (
+        <div className={styles.productVisual} aria-hidden="true"><span>{categoryNames[product.category] ?? "PC PARTS"}</span><strong>{product.name.slice(0, 1)}</strong></div>
+      )}
       <div className={styles.productBody}><p className={styles.brand}>{product.brand} <span>／</span> {product.sku}</p>
         <h3>{product.name}</h3><p className={styles.productNote}>{productSubtitle(product)}</p>
         <p className={styles.price}>¥{displayPrice(product.priceYen)}<small>（税込）</small></p>
@@ -150,9 +164,10 @@ export function CatalogExplorer({ category }: ExplorerProps) {
     router.push(`${pathname}?${next.toString()}`, { scroll: false });
   }
 
+  const storagePart = isStoragePart(category);
   const title = category ? `${categoryNames[category]}の商品` : "商品を探す";
   return <main className={styles.main} id="main-content" tabIndex={-1}>
-    <nav className={styles.breadcrumb} aria-label="パンくずリスト"><Link href="/">トップ</Link><span aria-hidden="true">/</span><span aria-current="page">{title}</span></nav>
+    <nav className={styles.breadcrumb} aria-label="パンくずリスト"><Link href="/">トップ</Link><span aria-hidden="true">/</span>{storagePart && <><Link href={storageCategory.href}>{storageCategory.name}</Link><span aria-hidden="true">/</span></>}<span aria-current="page">{storagePart && category ? categoryNames[category] : title}</span></nav>
     <header className={styles.pageHeader}><p className={styles.eyebrow}>{category ? "COMPONENTS" : "SEARCH PRODUCTS"}</p><h1>{title}</h1>
       <p>{category ? `${categoryNames[category]}の仕様や価格で絞り込めます。` : "条件を組み合わせて、公開中の商品を探せます。"}</p></header>
     <form className={styles.topSearch} action="/search" role="search" aria-label="検索ページの商品キーワード検索"><label htmlFor="catalog-q">キーワード</label><input id="catalog-q" name="q" type="search" maxLength={100} defaultValue={params.get("q") ?? ""} placeholder="商品名・型番・キーワード" /><button type="submit">検索</button></form>
