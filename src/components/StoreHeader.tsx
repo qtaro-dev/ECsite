@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CartHeaderLink } from "./CartHeaderLink";
 import styles from "./StoreHeader.module.css";
 
 const categories = [
@@ -23,7 +24,7 @@ export function StoreHeader() {
             <button type="submit">検索</button>
           </form>
           <nav className={styles.utilityNav} aria-label="会員・カート">
-            <Link href="/cart">カート</Link>
+            <CartHeaderLink />
             <Link href="/account" aria-label="会員メニュー">会員</Link>
           </nav>
         </div>

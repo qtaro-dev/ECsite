@@ -115,4 +115,7 @@ test('HDD and SSD stay independent through selection, compatibility and a shared
   await expect(page.locator('#product-select-hdd')).toHaveValue('t24-hdd');
   await expect(page.locator('#product-select-ssd')).toHaveValue('t11-ssd');
   await expect(storage).toContainText('登録仕様上、ストレージの接続規格に対応しています。');
+
+  await page.locator('article[aria-labelledby="slot-hdd"]').getByRole('button', { name: 'カートに追加' }).click();
+  await expect(page.locator('header a[href="/cart"]')).toHaveAccessibleName('カート（商品1点）');
 });
