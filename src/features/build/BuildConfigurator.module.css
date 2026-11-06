@@ -43,6 +43,7 @@
 .compatibilitySection { margin-top: 2.5rem; }
 .findingGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .finding { min-width: 0; padding: 1rem; border: 1px solid var(--color-border); border-inline-start: 4px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); overflow-wrap: anywhere; }
+.storageFinding { margin-top: 1rem; }
 .finding h3 { margin: 0; font-size: 1rem; }
 .finding > p { margin: .75rem 0; }
 .findingHeading { display: flex; align-items: start; justify-content: space-between; gap: .75rem; }

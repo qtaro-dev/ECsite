@@ -10,6 +10,7 @@ import { getPublishedPrebuiltPartLinks } from "@/server/catalog/prebuilt-part-li
 import { productImageUrl } from "@/lib/product-image-url";
 
 const labels: Record<string, string> = {
+  sata_port_count: "SATAポート数", m2_slot_count: "M.2スロット数", m2_protocols: "M.2対応規格", power_w: "消費電力（W）",
   socket_code: "ソケット", core_count: "コア数", base_clock_mhz: "基本クロック（MHz）", tdp_w: "TDP（W）",
   chipset: "チップセット", vram_gb: "VRAM（GB）", card_length_mm: "カード長（mm）",
   ddr_generation: "メモリ規格", form_factor: "フォームファクター", capacity_gb: "容量（GB）",

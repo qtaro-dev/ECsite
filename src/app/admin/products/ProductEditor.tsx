@@ -11,7 +11,7 @@ import {
 import styles from './editor.module.css';
 
 type SpecKind = 'text' | 'number' | 'select' | 'list';
-type SpecField = { key: string; label: string; kind: SpecKind; nullable?: boolean; options?: string[] };
+type SpecField = { key: string; label: string; kind: SpecKind; nullable?: boolean; min?: number; step?: string; options?: string[] };
 type CategoryConfig = { slug: AdminProductCategory; label: string; fields: SpecField[] };
 
 const categories: CategoryConfig[] = [
@@ -29,6 +29,9 @@ const categories: CategoryConfig[] = [
     { key: 'socket_code', label: 'CPUソケット', kind: 'text', nullable: true },
     { key: 'ddr_generation', label: 'メモリ規格', kind: 'select', nullable: true, options: ['DDR4', 'DDR5'] },
     { key: 'form_factor', label: 'フォームファクター', kind: 'select', nullable: true, options: ['ATX', 'mATX', 'ITX'] },
+    { key: 'sata_port_count', label: 'SATAポート数', kind: 'number', nullable: true, min: 0 },
+    { key: 'm2_slot_count', label: 'M.2スロット数', kind: 'number', nullable: true, min: 0 },
+    { key: 'm2_protocols', label: 'M.2対応規格（SATA、PCIeを半角カンマ区切り）', kind: 'list', nullable: true },
   ] },
   { slug: 'memory', label: 'メモリ', fields: [
     { key: 'ddr_generation', label: 'メモリ規格', kind: 'select', nullable: true, options: ['DDR4', 'DDR5'] },
@@ -43,6 +46,7 @@ const categories: CategoryConfig[] = [
   { slug: 'hdd', label: 'HDD', fields: [
     { key: 'capacity_gb', label: '容量（GB）', kind: 'number' }, { key: 'interface', label: '接続方式', kind: 'text' },
     { key: 'form_factor', label: 'フォームファクター', kind: 'text' },
+    { key: 'power_w', label: 'HDDの消費電力（W）', kind: 'number', nullable: true, min: 0, step: 'any' },
   ] },
   { slug: 'power-supply', label: '電源', fields: [
     { key: 'rated_w', label: '定格出力（W）', kind: 'number' }, { key: 'form_factor', label: 'フォームファクター', kind: 'text' },
@@ -269,7 +273,7 @@ export function AdminProductEditor({ initial }: ProductEditorProps) {
           return <div className={styles.field} key={field.key}>
             <label htmlFor={id}>{field.label}{field.nullable ? '（任意）' : '（必須）'}</label>
             {field.kind === 'select' ? <select {...common}><option value="">未設定</option>{field.options?.map((option) => <option key={option}>{option}</option>)}</select>
-              : <input {...common} type={field.kind === 'number' ? 'number' : 'text'} min={field.kind === 'number' ? 1 : undefined} />}
+              : <input {...common} type={field.kind === 'number' ? 'number' : 'text'} min={field.kind === 'number' ? field.min ?? 1 : undefined} step={field.step} />}
             {fieldErrorList.map((error, index) => <p className={styles.error} id={`${id}-error`} key={`${field.key}-${index}`}>{error}</p>)}
           </div>;
         })}</div>

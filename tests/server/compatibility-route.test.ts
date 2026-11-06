@@ -22,7 +22,19 @@ describe('POST /api/compatibility', () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data).toHaveLength(5);
+    expect(body).not.toHaveProperty('storage');
     expect(body.data[0]).toMatchObject({ status: 'compatible', comparedValues: { cpuSocketCode: 'AM5', motherboardSocketCode: 'AM5' } });
+  });
+
+  it('returns optional storage findings without changing the five legacy findings', async () => {
+    const hdd = { id: '00000000-0000-4000-8000-000000000003', category: 'hdd', specs: { interface: 'SATA', form_factor: '3.5インチ' } } as const;
+    load.mockResolvedValue([cpu, mb, hdd]);
+    const products = [cpu, mb, hdd].map(({ id, category }) => ({ category, productId: id }));
+    const response = await POST(new Request('http://local/api/compatibility', { method: 'POST', body: JSON.stringify({ products, includeStorage: true }) }));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data).toHaveLength(5);
+    expect(body.storage).toMatchObject({ connection: { status: 'unknown' }, ports: { status: 'unknown' }, sataPortsRequired: 1, hddPower: { watts: null } });
   });
 
   it('rejects malformed input and absent/unpublished IDs', async () => {

@@ -18,13 +18,13 @@ const RULES = [
 const SPEC_SELECT: Record<ProductCategory, string> = {
   cpu: 'cpu_specs(socket_code)', gpu: 'gpu_specs(card_length_mm)',
   motherboard: 'motherboard_specs(socket_code,ddr_generation,form_factor)',
-  memory: 'memory_specs(ddr_generation)', ssd: 'ssd_specs(capacity_gb)',
+  memory: 'memory_specs(ddr_generation)', ssd: 'ssd_specs(capacity_gb)', hdd: 'hdd_specs(capacity_gb)',
   'power-supply': 'psu_specs(rated_w)', 'pc-case': 'case_specs(max_gpu_length_mm,supported_form_factors)',
   'cpu-cooler': 'cooler_specs(supported_socket_codes)',
 };
 const SPEC_ALIAS: Record<ProductCategory, string> = {
   cpu: 'cpu_specs', gpu: 'gpu_specs', motherboard: 'motherboard_specs', memory: 'memory_specs',
-  ssd: 'ssd_specs', 'power-supply': 'psu_specs', 'pc-case': 'case_specs', 'cpu-cooler': 'cooler_specs',
+  ssd: 'ssd_specs', hdd: 'hdd_specs', 'power-supply': 'psu_specs', 'pc-case': 'case_specs', 'cpu-cooler': 'cooler_specs',
 };
 
 function readSpec(specs: ProductSpecs, key: string): unknown {
@@ -107,7 +107,12 @@ export async function loadCompatibilityProducts(request: CompatibilityRequest, o
   const anonKey = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!baseUrl || !anonKey) throw new Error('Supabase public compatibility configuration is unavailable');
   if (!request.products.length) return [];
-  const selects = new Set(request.products.map(({ category }) => SPEC_SELECT[category]));
+  const storageSelect: Partial<Record<ProductCategory, string>> = {
+    motherboard: 'motherboard_specs(socket_code,ddr_generation,form_factor,sata_port_count,m2_slot_count,m2_protocols)',
+    ssd: 'ssd_specs(interface,form_factor)',
+    hdd: 'hdd_specs(interface,form_factor,power_w)',
+  };
+  const selects = new Set(request.products.map(({ category }) => (request.includeStorage ? storageSelect[category] : undefined) ?? SPEC_SELECT[category]));
   const select = ['id', 'category:categories(slug)', ...selects].join(',');
   const ids = request.products.map(({ productId }) => productId);
   const url = new URL(`${baseUrl.replace(/\/$/, '')}/rest/v1/products`);

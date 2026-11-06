@@ -40,6 +40,7 @@ jobs:
           supabase start
           supabase db reset --local
           psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t15-e2e-fixtures.sql
+          psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t24-e2e-fixtures.sql
 
       - name: Export local Supabase credentials
         run: |

@@ -26,16 +26,16 @@ const ProductFields = {
   packWidthMm: optionalInt(),
   packHeightMm: optionalInt(),
   useCases: z.array(AdminProductUseCaseSchema).max(3).default([]),
-  specifications: z.record(z.string(), z.union([z.string().max(120), z.number().int().positive(), z.array(z.string().max(32)), z.null()])).default({}),
+  specifications: z.record(z.string(), z.union([z.string().max(120), z.number(), z.array(z.string().max(32)), z.null()])).default({}),
 };
 
-const specFieldsByCategory: Record<z.infer<typeof AdminProductCategorySchema>, Record<string, 'text' | 'positiveInteger' | 'textList'>> = {
+const specFieldsByCategory: Record<z.infer<typeof AdminProductCategorySchema>, Record<string, 'text' | 'positiveInteger' | 'portCount' | 'watts' | 'textList'>> = {
   cpu: { socket_code: 'text', core_count: 'positiveInteger', base_clock_mhz: 'positiveInteger', tdp_w: 'positiveInteger' },
   gpu: { chipset: 'text', vram_gb: 'positiveInteger', card_length_mm: 'positiveInteger' },
-  motherboard: { socket_code: 'text', ddr_generation: 'text', form_factor: 'text' },
+  motherboard: { socket_code: 'text', ddr_generation: 'text', form_factor: 'text', sata_port_count: 'portCount', m2_slot_count: 'portCount', m2_protocols: 'textList' },
   memory: { ddr_generation: 'text', capacity_gb: 'positiveInteger', module_count: 'positiveInteger', speed_mt_s: 'positiveInteger' },
   ssd: { capacity_gb: 'positiveInteger', interface: 'text', form_factor: 'text' },
-  hdd: { capacity_gb: 'positiveInteger', interface: 'text', form_factor: 'text' },
+  hdd: { capacity_gb: 'positiveInteger', interface: 'text', form_factor: 'text', power_w: 'watts' },
   'power-supply': { rated_w: 'positiveInteger', form_factor: 'text', efficiency_grade: 'text' },
   'pc-case': { max_gpu_length_mm: 'positiveInteger', outer_length_mm: 'positiveInteger', outer_width_mm: 'positiveInteger', outer_height_mm: 'positiveInteger', supported_form_factors: 'textList' },
   'cpu-cooler': { supported_socket_codes: 'textList', height_mm: 'positiveInteger', cooling_type: 'text' },
@@ -49,10 +49,10 @@ const requiredSpecFieldsByCategory: Partial<Record<z.infer<typeof AdminProductCa
 const nullableSpecFieldsByCategory: Record<z.infer<typeof AdminProductCategorySchema>, Set<string>> = {
   cpu: new Set(['socket_code', 'core_count', 'base_clock_mhz', 'tdp_w']),
   gpu: new Set(['card_length_mm']),
-  motherboard: new Set(['socket_code', 'ddr_generation', 'form_factor']),
+  motherboard: new Set(['socket_code', 'ddr_generation', 'form_factor', 'sata_port_count', 'm2_slot_count', 'm2_protocols']),
   memory: new Set(['ddr_generation', 'capacity_gb', 'module_count', 'speed_mt_s']),
   ssd: new Set(),
-  hdd: new Set(),
+  hdd: new Set(['power_w']),
   'power-supply': new Set(),
   'pc-case': new Set(['max_gpu_length_mm', 'supported_form_factors']),
   'cpu-cooler': new Set(['supported_socket_codes']),
@@ -65,7 +65,9 @@ function validateSpecifications(value: z.infer<z.ZodObject<typeof ProductFields>
     const valid = (fieldValue === null && nullableSpecFieldsByCategory[value.category].has(field))
       || (type === 'text' ? typeof fieldValue === 'string'
         : type === 'positiveInteger' ? typeof fieldValue === 'number' && Number.isSafeInteger(fieldValue) && fieldValue > 0
-          : type === 'textList' ? Array.isArray(fieldValue) && fieldValue.length <= 5 && fieldValue.every((item) => typeof item === 'string')
+          : type === 'portCount' ? typeof fieldValue === 'number' && Number.isInteger(fieldValue) && fieldValue >= 0 && fieldValue <= 2_147_483_647
+            : type === 'watts' ? typeof fieldValue === 'number' && fieldValue > 0 && fieldValue <= 1000
+              : type === 'textList' ? Array.isArray(fieldValue) && fieldValue.length <= 5 && fieldValue.every((item) => typeof item === 'string')
             : false);
     if (!valid) context.addIssue({ code: 'custom', path: ['specifications', field], message: 'カテゴリの仕様項目と値を確認してください。' });
     if ((field === 'ddr_generation' && fieldValue !== null && fieldValue !== 'DDR4' && fieldValue !== 'DDR5')
@@ -73,7 +75,10 @@ function validateSpecifications(value: z.infer<z.ZodObject<typeof ProductFields>
         && !(Array.isArray(fieldValue) ? fieldValue.every((item) => ['ATX', 'mATX', 'ITX'].includes(item)) : ['ATX', 'mATX', 'ITX'].includes(String(fieldValue))))) {
       context.addIssue({ code: 'custom', path: ['specifications', field], message: '選択可能な規格を指定してください。' });
     }
-    if ((field === 'supported_form_factors' || field === 'supported_socket_codes') && Array.isArray(fieldValue)
+    if (field === 'm2_protocols' && Array.isArray(fieldValue) && fieldValue.some((item) => item !== 'SATA' && item !== 'PCIe')) {
+      context.addIssue({ code: 'custom', path: ['specifications', field], message: 'M.2の接続規格はSATAまたはPCIeを指定してください。' });
+    }
+    if ((field === 'supported_form_factors' || field === 'supported_socket_codes' || field === 'm2_protocols') && Array.isArray(fieldValue)
       && new Set(fieldValue).size !== fieldValue.length) {
       context.addIssue({ code: 'custom', path: ['specifications', field], message: '重複する値は登録できません。' });
     }
