@@ -97,7 +97,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <p className={styles.price}>¥{product.priceYen.toLocaleString("ja-JP")} <small>（税込）</small></p>
         <p className={styles.description}>{product.description || "商品仕様をご確認のうえ、用途に合わせてお選びください。"}</p>
         <div className={styles.beginner}><h2>初心者向けの選び方</h2><p>{product.beginnerNote || "対応するマザーボードやケースの仕様を確認して選びましょう。"}</p></div>
-        <ProductActions productId={product.id} slug={product.slug} availableQuantity={product.availableQuantity} category={product.category} />
+        <ProductActions productId={product.id} availableQuantity={product.availableQuantity} category={product.category} />
       </section>
       <section className={styles.specifications} aria-labelledby="spec-title">
         <h2 id="spec-title">{isPrebuilt ? "採用構成" : "主な仕様"}</h2>

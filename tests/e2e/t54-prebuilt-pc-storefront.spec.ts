@@ -28,10 +28,13 @@ test("home purpose cards open two configured PCs per use case and their detail e
       await expect(configuration.getByText(part, { exact: true })).toBeVisible();
     }
     await expect(page.getByRole("link", { name: "構成に追加" })).toHaveCount(0);
-    await page.getByRole("link", { name: "この完成PCをカートに入れる" }).click();
-    await expect(page).toHaveURL(/\/cart\?productId=.*quantity=1/);
+    const productUrl = page.url();
+    await page.getByRole("button", { name: "カートに追加" }).click();
+    await expect(page.getByText("商品をカートに追加しました。", { exact: false })).toBeVisible();
+    await expect(page).toHaveURL(productUrl);
+    await page.locator('header a[href="/cart"]').click();
+    await expect(page).toHaveURL("/cart");
     await expect(page.getByRole("heading", { level: 1, name: "カート", exact: true })).toBeVisible();
-    await expect(page.getByText("商品をカートに追加しました。現在の価格と販売可能数を確認してください。")).toBeVisible();
     await expect(page.locator('section[aria-labelledby="cart-items-heading"]')
       .getByRole("heading", { level: 3, name: productName ?? "", exact: true })).toBeVisible();
   }

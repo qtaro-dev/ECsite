@@ -10,6 +10,7 @@ import { CartLineSchema, CartProjectionSchema } from '@/lib/schemas';
 import { productImageUrl } from '@/lib/product-image-url';
 import styles from './CartScreen.module.css';
 import { notifyCartChanged } from './cart-events';
+import { cartFailureMessage } from './cart-messages';
 
 const CartDisplayLineSchema = CartLineSchema;
 const CartScreenProjectionSchema = CartProjectionSchema.extend({ items: z.array(CartDisplayLineSchema) });
@@ -30,13 +31,6 @@ function itemName(item: CartDisplayLine): string {
   return item.name ?? `商品 ${item.productId.slice(0, 8)}`;
 }
 
-function failureMessage(status: number, code?: string): string {
-  if (status === 409 || code === 'CONFLICT') return '販売可能数が更新されました。該当商品の数量を確認してください。';
-  if (status === 404 || code === 'NOT_FOUND') return '商品が販売終了、または現在カートに追加できません。商品一覧から別の商品をお選びください。';
-  if (status === 400 || code === 'BAD_REQUEST') return 'カートの操作内容を確認できませんでした。ページを再読み込みしてください。';
-  return 'カートに接続できませんでした。通信状態を確認して再試行してください。';
-}
-
 export function CartScreen({ isMember, initialProduct }: { isMember: boolean; initialProduct: InitialProduct }) {
   const [cart, setCart] = useState<CartScreenProjection | null>(null);
   const [drafts, setDrafts] = useState<Record<string, number>>({});
@@ -52,7 +46,7 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
   const loadCart = useCallback(async () => {
     const response = await fetch('/api/cart', { cache: 'no-store' });
     const payload = await response.json() as { data?: unknown; error?: { code?: string } };
-    if (!response.ok || payload.data === undefined) throw new Error(failureMessage(response.status, payload.error?.code));
+    if (!response.ok || payload.data === undefined) throw new Error(cartFailureMessage(response.status, payload.error?.code));
     return parseCart(payload.data);
   }, []);
 
@@ -87,9 +81,9 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
           } else {
             const conflictCart = payload.error?.currentCart;
             if (conflictCart !== undefined) setCart(parseCart(conflictCart));
-            setPageError(failureMessage(response.status, payload.error?.code));
+            setPageError(cartFailureMessage(response.status, payload.error?.code));
             setInitialAddFailed(true);
-            setLineMessages((current) => ({ ...current, [initialProduct.productId]: failureMessage(response.status, payload.error?.code) }));
+            setLineMessages((current) => ({ ...current, [initialProduct.productId]: cartFailureMessage(response.status, payload.error?.code) }));
             // Keep the request eligible for a later remount/retry. A rejected
             // first attempt must not consume the query-string add action.
           }
@@ -125,7 +119,7 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
       } else {
         const conflictCart = payload.error?.currentCart;
         if (conflictCart !== undefined) setCart(parseCart(conflictCart));
-        setLineMessages((current) => ({ ...current, [item.productId]: failureMessage(response.status, payload.error?.code) }));
+        setLineMessages((current) => ({ ...current, [item.productId]: cartFailureMessage(response.status, payload.error?.code) }));
       }
     } catch {
       setLineMessages((current) => ({ ...current, [item.productId]: '通信できませんでした。入力数量を保持しています。再試行してください。' }));
@@ -143,7 +137,7 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
         setCart(parseCart(payload.data));
         setDrafts((current) => { const next = { ...current }; delete next[item.productId]; return next; });
         setNotice(`${itemName(item)}をカートから削除しました。`);
-      } else setLineMessages((current) => ({ ...current, [item.productId]: failureMessage(response.status, payload.error?.code) }));
+      } else setLineMessages((current) => ({ ...current, [item.productId]: cartFailureMessage(response.status, payload.error?.code) }));
     } catch {
       setLineMessages((current) => ({ ...current, [item.productId]: '通信できませんでした。商品はカートに残っています。再試行してください。' }));
     } finally { setBusyProductId(null); }
