@@ -80,14 +80,15 @@ test("a pending add is disabled and stock or network failures preserve quantity 
   });
   await page.goto("/products/t11-cpu-am5");
   const quantity = page.getByLabel("数量");
+  const purchaseAlert = page.getByRole("region", { name: "購入", exact: true }).getByRole("alert");
   await quantity.fill("3");
   await page.getByRole("button", { name: "カートに追加" }).click();
   await expect(page.getByRole("button", { name: "追加中…" })).toBeDisabled();
   finishRequest();
-  await expect(page.getByRole("alert")).toContainText("販売可能数が更新されました");
+  await expect(purchaseAlert).toContainText("販売可能数が更新されました");
   await expect(quantity).toHaveValue("3");
   await page.getByRole("button", { name: "カートに追加" }).click();
-  await expect(page.getByRole("alert")).toContainText("通信状態を確認して再試行してください");
+  await expect(purchaseAlert).toContainText("通信状態を確認して再試行してください");
   await expect(quantity).toHaveValue("3");
   await expect(page).toHaveURL("/products/t11-cpu-am5");
   await expect(page.locator('header a[href="/cart"]')).toHaveAccessibleName("カート");
