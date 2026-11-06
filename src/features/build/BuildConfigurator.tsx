@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { StatusMessage } from '@/components/StatusMessage';
-import { CompatibilityFindingSchema, type CompatibilityFinding, type ProductCategory } from '@/lib/schemas';
+import { CompatibilityFindingSchema, StorageCompatibilitySchema, type CompatibilityFinding, type ProductCategory, type StorageCompatibility } from '@/lib/schemas';
 import type { ProductDetail } from '@/server/catalog/product-detail';
 import type { ProductSearchItem, ProductSearchResult } from '@/server/catalog/product-search';
 import styles from './BuildConfigurator.module.css';
@@ -15,6 +15,7 @@ const categories: Array<{ slug: ProductCategory; name: string }> = [
   { slug: 'motherboard', name: 'マザーボード' },
   { slug: 'memory', name: 'メモリ' },
   { slug: 'ssd', name: 'SSD' },
+  { slug: 'hdd', name: 'HDD' },
   { slug: 'power-supply', name: '電源ユニット' },
   { slug: 'pc-case', name: 'PCケース' },
   { slug: 'cpu-cooler', name: 'CPUクーラー' },
@@ -58,7 +59,8 @@ const comparisonLabels: Record<string, string> = {
 const specificationLabels: Record<string, string> = {
   socket_code: 'Socket', core_count: 'コア数', base_clock_mhz: '基本クロック', tdp_w: 'TDP',
   chipset: 'チップセット', vram_gb: 'VRAM', card_length_mm: 'カード長', ddr_generation: 'DDR規格',
-  form_factor: 'フォームファクター', capacity_gb: '容量', module_count: '枚数', speed_mt_s: '速度',
+  sata_port_count: 'SATAポート数', m2_slot_count: 'M.2スロット数', m2_protocols: 'M.2対応規格',
+  form_factor: 'フォームファクター', capacity_gb: '容量', power_w: '消費電力', module_count: '枚数', speed_mt_s: '速度',
   interface: '接続規格', rated_w: '定格出力', efficiency_grade: '変換効率', max_gpu_length_mm: '最大グラフィックボード搭載長',
   outer_length_mm: 'ケース奥行', outer_width_mm: 'ケース幅', outer_height_mm: 'ケース高さ',
   supported_form_factors: '対応フォームファクター', supported_socket_codes: '対応Socket', height_mm: '高さ', cooling_type: '冷却方式',
@@ -198,7 +200,7 @@ function ProductSlot({
       <p>{displayProduct.brand} ／ {displayProduct.sku}</p>
       <p className={styles.price}>¥{displayProduct.priceYen.toLocaleString('ja-JP')} <small>（税込）</small></p>
       {displayProduct.specifications && Object.keys(displayProduct.specifications).length > 0 && <dl className={styles.specifications}>
-        {Object.entries(displayProduct.specifications).filter(([, value]) => value !== null && value !== undefined).slice(0, 4).map(([key, value]) => <div key={key}><dt>{specificationLabels[key] ?? key}</dt><dd>{Array.isArray(value) ? value.join('、') : String(value)}{key.endsWith('_mm') ? ' mm' : key.endsWith('_gb') ? ' GB' : key === 'rated_w' || key === 'tdp_w' ? ' W' : ''}</dd></div>)}
+        {Object.entries(displayProduct.specifications).filter(([, value]) => value !== null && value !== undefined).slice(0, 4).map(([key, value]) => <div key={key}><dt>{specificationLabels[key] ?? key}</dt><dd>{Array.isArray(value) ? value.join('、') : String(value)}{key.endsWith('_mm') ? ' mm' : key.endsWith('_gb') ? ' GB' : key === 'rated_w' || key === 'tdp_w' || key === 'power_w' ? ' W' : ''}</dd></div>)}
       </dl>}
       <div className={styles.cartControls}>
         <label htmlFor={`quantity-${category.slug}`}>数量</label>
@@ -235,7 +237,7 @@ export function BuildConfigurator({ initialSelections, initialLoadStates }: {
     return selectedSlug && product?.slug === selectedSlug ? [{ category: slug, product }] : [];
   }), [catalogCache, initialByCategory, urlSelections]);
   const selectionKey = selectedProducts.map(({ category, product }) => `${category}:${product.id}`).join('|');
-  const [compatibility, setCompatibility] = useState<{ key: string; state: 'ready' | 'error'; findings: CompatibilityFinding[]; retry: number }>({ key: '', state: 'ready', findings: [], retry: 0 });
+  const [compatibility, setCompatibility] = useState<{ key: string; state: 'ready' | 'error'; findings: CompatibilityFinding[]; storage?: StorageCompatibility; retry: number }>({ key: '', state: 'ready', findings: [], retry: 0 });
   const [compatibilityRetry, setCompatibilityRetry] = useState(0);
 
   useEffect(() => {
@@ -246,19 +248,23 @@ export function BuildConfigurator({ initialSelections, initialLoadStates }: {
     fetch('/api/compatibility', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ products: selectedProducts.map(({ category, product }) => ({ category, productId: product.id })) }),
+      body: JSON.stringify({ products: selectedProducts.map(({ category, product }) => ({ category, productId: product.id })),
+        ...(selectedProducts.some(({ category }) => category === 'ssd' || category === 'hdd') ? { includeStorage: true } : {}) }),
       signal: controller.signal,
     }).then(async (response) => {
-      const payload = await response.json() as { data?: unknown };
+      const payload = await response.json() as { data?: unknown; storage?: unknown };
       if (!response.ok || !Array.isArray(payload.data)) throw new Error('compatibility unavailable');
       const findings = CompatibilityFindingSchema.array().length(5).parse(payload.data);
-      setCompatibility({ key: selectionKey, state: 'ready', findings, retry: compatibilityRetry });
+      const storage = payload.storage === undefined ? undefined : StorageCompatibilitySchema.parse(payload.storage);
+      setCompatibility({ key: selectionKey, state: 'ready', findings, storage, retry: compatibilityRetry });
     }).catch((cause: unknown) => {
       if (cause instanceof Error && cause.name === 'AbortError') return;
       setCompatibility({ key: selectionKey, state: 'error', findings: [], retry: compatibilityRetry });
     });
     return () => controller.abort();
   }, [selectionKey, compatibilityRetry, selectedProducts]);
+
+  const storage = compatibility.key === selectionKey && compatibility.retry === compatibilityRetry ? compatibility.storage : undefined;
 
   const updateSelection = useCallback((category: ProductCategory, slug: string) => {
     const selections = readSelectionSlugs(new URLSearchParams(queryString));
@@ -275,7 +281,7 @@ export function BuildConfigurator({ initialSelections, initialLoadStates }: {
   return <main className={styles.main} id="main-content" tabIndex={-1}>
     <nav className={styles.breadcrumb} aria-label="パンくずリスト"><Link href="/">トップ</Link><span aria-hidden="true">/</span><span aria-current="page">構成確認</span></nav>
     <header className={styles.pageHeader}><p className={styles.eyebrow}>BUILD CHECK</p><h1>パーツの構成を確認</h1>
-      <p>商品を選ぶと、設計で定めた5項目の互換性を確認できます。選択内容はURLで共有できます。</p>
+      <p>商品を選ぶと、設計で定めた5項目の互換性を確認できます。SSDやHDDを選ぶと、ストレージ接続の補足も確認できます。選択内容はURLで共有できます。</p>
       <p className={styles.disclaimer}>ここで確認するのは基本的な互換性です。すべての組合せでPC全体の動作を保証するものではありません。選択は保存されません。</p>
     </header>
 
@@ -309,6 +315,16 @@ export function BuildConfigurator({ initialSelections, initialLoadStates }: {
           </article>;
         })}
       </div>}
+      {storage && <article className={`${styles.finding} ${styles.storageFinding}`} aria-labelledby="storage-check-heading">
+        <h3 id="storage-check-heading">ストレージ接続の補足</h3>
+        <p>必要な接続口{storage.unknownPortTypes ? '（判明分）' : ''}：SATAポート {storage.sataPortsRequired}、M.2スロット {storage.m2SlotsRequired}</p>
+        <dl className={styles.comparisonValues}>
+          <div><dt>接続規格</dt><dd>{statusLabels[storage.connection.status]} — {storage.connection.reason}</dd></div>
+          <div><dt>ポート数</dt><dd>{statusLabels[storage.ports.status]} — {storage.ports.reason}</dd></div>
+          {storage.hddPower && <div><dt>HDDの消費電力</dt><dd>{storage.hddPower.watts === null ? '未登録' : storage.hddPower.watts + ' W'} — {storage.hddPower.reason}</dd></div>}
+        </dl>
+        <p className={styles.missingNote}>M.2の世代・レーン共有・スロットごとの組み合わせは、マザーボードの仕様をご確認ください。</p>
+      </article>}
     </section>
   </main>;
 }

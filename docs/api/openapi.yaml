@@ -881,17 +881,41 @@ components:
       required: [products]
       additionalProperties: false
       properties:
+        includeStorage: { type: boolean, description: Include supplementary storage checks when an SSD or HDD is selected. }
         products:
           type: array
-          maxItems: 8
+          maxItems: 9
           items:
             type: object
             required: [category, productId]
             additionalProperties: false
             properties:
-              category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, power-supply, pc-case, cpu-cooler] }
+              category: { type: string, enum: [cpu, gpu, motherboard, memory, ssd, hdd, power-supply, pc-case, cpu-cooler] }
               productId: { type: string, format: uuid }
           description: At most one product per category and product ID.
+    StorageCheck:
+      type: object
+      required: [status, reason]
+      properties:
+        status: { type: string, enum: [compatible, incompatible, unknown, not_applicable] }
+        reason: { type: string }
+    StorageCompatibility:
+      type: object
+      required: [connection, ports, sataPortsRequired, m2SlotsRequired, unknownPortTypes, hddPower]
+      additionalProperties: false
+      properties:
+        connection: { $ref: '#/components/schemas/StorageCheck' }
+        ports: { $ref: '#/components/schemas/StorageCheck' }
+        sataPortsRequired: { type: integer, minimum: 0 }
+        m2SlotsRequired: { type: integer, minimum: 0 }
+        unknownPortTypes: { type: boolean }
+        hddPower:
+          type: [object, 'null']
+          required: [status, reason, watts]
+          properties:
+            status: { type: string, enum: [compatible, incompatible, unknown, not_applicable] }
+            reason: { type: string }
+            watts: { type: [number, 'null'], exclusiveMinimum: 0 }
     CompatibilityFinding:
       type: object
       required: [rule, status, reason, comparedValues, matchingUrl]
@@ -1626,7 +1650,7 @@ components:
                       page: { type: integer, minimum: 1 }
                       pageSize: { type: integer, const: 24 }
     Compatibility:
-      description: Five rule findings in rule order.
+      description: Five rule findings in rule order, with optional storage findings.
       content:
         application/json:
           schema:
@@ -1635,6 +1659,7 @@ components:
               - type: object
                 properties:
                   data: { type: array, minItems: 5, maxItems: 5, items: { $ref: '#/components/schemas/CompatibilityFinding' } }
+                  storage: { $ref: '#/components/schemas/StorageCompatibility' }
     Cart:
       description: Current server-priced cart and estimated shipping.
       content:

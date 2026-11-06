@@ -12,9 +12,9 @@ const SearchIntegerSchema = z.preprocess((value) => {
 
 export const ProductSortSchema = z.enum(['price_asc', 'price_desc', 'newest']);
 export const ProductUseCaseSchema = z.enum(['gaming', 'daily', 'editing']);
-export const ProductCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler']);
+export const ProductCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'hdd', 'power-supply', 'pc-case', 'cpu-cooler']);
 /** Catalog category includes assembled systems; component compatibility remains limited to ProductCategorySchema. */
-export const CatalogCategorySchema = z.enum(['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler', 'hdd', 'prebuilt-pc']);
+export const CatalogCategorySchema = z.enum([...ProductCategorySchema.options, 'prebuilt-pc']);
 const ProductSpecKeysByCategory: Record<Exclude<z.infer<typeof CatalogCategorySchema>, 'prebuilt-pc'>, readonly string[]> = {
   cpu: ['socket_code', 'core_count', 'base_clock_mhz', 'tdp_w'],
   gpu: ['chipset', 'vram_gb', 'card_length_mm'],
@@ -136,7 +136,8 @@ export const QuoteRequestSchema = z.object({
 export const CompatibilityStatusSchema = z.enum(['compatible', 'incompatible', 'unknown', 'not_applicable']);
 export const CompatibilityCategorySchema = ProductCategorySchema;
 export const CompatibilityRequestSchema = z.object({
-  products: z.array(z.object({ category: CompatibilityCategorySchema, productId: IdSchema }).strict()).max(8),
+  products: z.array(z.object({ category: CompatibilityCategorySchema, productId: IdSchema }).strict()).max(ProductCategorySchema.options.length),
+  includeStorage: z.boolean().optional(),
 }).strict().superRefine(({ products }, context) => {
   const seen = new Set<string>();
   products.forEach((item, index) => {
@@ -147,6 +148,17 @@ export const CompatibilityRequestSchema = z.object({
     }
   });
 });
+const StorageCheckSchema = z.object({ status: CompatibilityStatusSchema, reason: z.string() }).strict();
+export const StorageCompatibilitySchema = z.object({
+  connection: StorageCheckSchema,
+  ports: StorageCheckSchema,
+  sataPortsRequired: z.number().int().nonnegative(),
+  m2SlotsRequired: z.number().int().nonnegative(),
+  unknownPortTypes: z.boolean(),
+  hddPower: StorageCheckSchema.extend({ watts: z.number().positive().nullable() }).nullable(),
+}).strict();
+export type StorageCompatibility = z.infer<typeof StorageCompatibilitySchema>;
+
 export const CompatibilityFindingSchema = z.object({
   rule: z.enum(['cpu_motherboard_socket', 'motherboard_memory_ddr', 'motherboard_case_form_factor', 'gpu_case_length', 'cpu_cooler_socket']),
   status: CompatibilityStatusSchema,

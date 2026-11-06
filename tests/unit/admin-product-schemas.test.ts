@@ -45,6 +45,15 @@ describe('admin product input', () => {
     expect(AdminProductCreateSchema.safeParse({ ...hdd, specifications: { capacity_gb: 4000, interface: 'SATA', form_factor: '3.5 inch' } }).success).toBe(true);
   });
 
+  it('keeps storage specifications optional, accepts explicit zero ports and validates the protocol and power', () => {
+    const motherboard = { ...draft, category: 'motherboard' };
+    const hdd = { ...draft, category: 'hdd' };
+    expect(AdminProductCreateSchema.safeParse({ ...motherboard, specifications: { sata_port_count: 0, m2_slot_count: null, m2_protocols: ['PCIe'] } }).success).toBe(true);
+    expect(AdminProductCreateSchema.safeParse({ ...motherboard, specifications: { sata_port_count: -1, m2_protocols: ['SAS'] } }).success).toBe(false);
+    expect(AdminProductCreateSchema.safeParse({ ...hdd, specifications: { power_w: 6.25 } }).success).toBe(true);
+    expect(AdminProductCreateSchema.safeParse({ ...hdd, specifications: { power_w: 0 } }).success).toBe(false);
+  });
+
   it('accepts an incomplete GPU draft without a spec row', () => {
     expect(AdminProductCreateSchema.safeParse({ ...draft, category: 'gpu', specifications: {} }).success).toBe(true);
   });

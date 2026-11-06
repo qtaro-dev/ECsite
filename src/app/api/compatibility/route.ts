@@ -1,6 +1,7 @@
 import { ZodError } from 'zod';
 import { apiErrorResponse, validationErrorResponse } from '../../../lib/schemas';
 import { evaluateCompatibility, loadCompatibilityProducts, parseCompatibilityRequest } from '../../../server/catalog/compatibility';
+import { evaluateStorageCompatibility } from '../../../server/catalog/storage-compatibility';
 
 export async function POST(request: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
@@ -22,7 +23,8 @@ export async function POST(request: Request): Promise<Response> {
     if (products.length !== parsed.products.length || parsed.products.some((item) => products.find((product) => product.id === item.productId)?.category !== item.category)) {
       return Response.json(apiErrorResponse('NOT_FOUND', requestId), { status: 404 });
     }
-    return Response.json({ data: evaluateCompatibility(products), requestId });
+    const storage = parsed.includeStorage ? evaluateStorageCompatibility(products) : undefined;
+    return Response.json({ data: evaluateCompatibility(products), ...(storage ? { storage } : {}), requestId });
   } catch {
     return Response.json(apiErrorResponse('UNAVAILABLE', requestId), { status: 503 });
   }

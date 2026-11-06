@@ -44,9 +44,10 @@ test('S05 checks compatible, incompatible, and unknown parts; selections survive
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/build');
   await expect(page.getByRole('heading', { name: 'パーツの構成を確認' })).toBeVisible();
-  await expect(page.locator("section[aria-labelledby='parts-heading'] article")).toHaveCount(8);
+  await expect(page.locator("section[aria-labelledby='parts-heading'] article")).toHaveCount(9);
   await expect.poll(async () => page.evaluate(() => getComputedStyle(document.querySelector("section[aria-labelledby='parts-heading'] > div:last-child")!).gridTemplateColumns.split(' ').length)).toBe(2);
 
+  await expect(page.locator('article[aria-labelledby=slot-ssd] + article')).toHaveAttribute('aria-labelledby', 'slot-hdd');
   const cpu = page.locator("article[aria-labelledby='slot-cpu']");
   await page.locator('#product-select-cpu').selectOption({ label: 'Fixture CPU AM5（CPU-AM5）' });
   await expect(cpu.getByRole('link', { name: 'Fixture CPU AM5' })).toBeVisible();
@@ -92,4 +93,26 @@ test('S05 checks compatible, incompatible, and unknown parts; selections survive
   expect(mobileColumns).toBe(1);
   const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(pageWidth).toBeLessThanOrEqual(375);
+});
+
+test('HDD and SSD stay independent through selection, compatibility and a shared URL', async ({ page }) => {
+  await page.goto('/products/t24-hdd');
+  await page.getByRole('link', { name: '構成に追加' }).click();
+  await expect(page).toHaveURL(/category=hdd&product=t24-hdd/);
+  await expect(page.locator('#product-select-hdd')).toHaveValue('t24-hdd');
+
+  const storage = page.getByRole('article', { name: 'ストレージ接続の補足' });
+  await expect(storage).toContainText('SATAポート 1、M.2スロット 0');
+  await expect(storage).toContainText('6.5 W');
+  await page.locator('#product-select-ssd').selectOption('t11-ssd');
+  await expect(page).toHaveURL(/ssd=t11-ssd&hdd=t24-hdd/);
+  await page.locator('#product-select-motherboard').selectOption('t11-motherboard-atx');
+  await expect(page).toHaveURL(/ssd=t11-ssd&hdd=t24-hdd/);
+  await expect(storage).toContainText('SATAポート 1、M.2スロット 1');
+  await expect(storage).toContainText('登録仕様上、必要なポート数を満たしています。');
+
+  await page.reload();
+  await expect(page.locator('#product-select-hdd')).toHaveValue('t24-hdd');
+  await expect(page.locator('#product-select-ssd')).toHaveValue('t11-ssd');
+  await expect(storage).toContainText('登録仕様上、ストレージの接続規格に対応しています。');
 });

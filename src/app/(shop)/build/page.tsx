@@ -4,7 +4,7 @@ import { ProductCategorySchema, type ProductCategory } from '@/lib/schemas';
 import { getPublishedProductDetail, type ProductDetail } from '@/server/catalog/product-detail';
 import { BuildConfigurator, type BuildSelectionLoadState } from '@/features/build/BuildConfigurator';
 
-const categories: ProductCategory[] = ['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'power-supply', 'pc-case', 'cpu-cooler'];
+const categories: ProductCategory[] = ['cpu', 'gpu', 'motherboard', 'memory', 'ssd', 'hdd', 'power-supply', 'pc-case', 'cpu-cooler'];
 const slugPattern = /^[a-z0-9][a-z0-9-]{0,119}$/;
 
 function single(value: string | string[] | undefined): string | undefined {

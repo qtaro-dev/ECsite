@@ -13,7 +13,7 @@ set local role service_role;
 select set_config('request.jwt.claim.role','service_role',true);
 do $$ declare
   fields jsonb := '{"category_slug":"hdd","slug":"t73-hdd","sku":"T73-HDD","name":"T73 HDD","brand":"T73 fixture","description":"Synthetic HDD","beginner_note":"Test fixture","price_tax_included_yen":10000,"status":"draft","weight_g":1000,"pack_length_mm":300,"pack_width_mm":200,"pack_height_mm":100}';
-  specs jsonb := '{"capacity_gb":4000,"interface":"SATA","form_factor":"3.5 inch"}';
+  specs jsonb := '{"capacity_gb":4000,"interface":"SATA","form_factor":"3.5 inch","power_w":6.25}';
   admin_id uuid := '00000000-0000-4000-8000-000000000734';
 begin
   perform public.admin_save_product('00000000-0000-4000-8000-000000000735',null,
@@ -22,10 +22,28 @@ begin
     fields || '{"status":"published"}',specs,'{}',
     '[{"storage_path":"00000000-0000-4000-8000-000000000735/00000000-0000-4000-8000-000000000737.png","alt_text":"T73 synthetic placeholder","sort_order":0}]',
     admin_id,'t73-publish-hdd');
+  perform public.admin_save_product('00000000-0000-4000-8000-000000000738',null,
+    fields || '{"category_slug":"motherboard","slug":"t73-storage-board","sku":"T73-STORAGE-BOARD"}',
+    '{"sata_port_count":0,"m2_slot_count":1,"m2_protocols":["PCIe"]}', '{}','[]',admin_id,'t73-save-storage-board');
   perform public.admin_save_product('00000000-0000-4000-8000-000000000736',null,
     fields || '{"slug":"t73-hdd-draft","sku":"T73-HDD-DRAFT"}',specs,'{}','[]',admin_id,'t73-save-hidden-draft');
 end $$;
 reset role;
+
+do $$ begin
+  if not exists (select 1 from public.motherboard_specs where product_id='00000000-0000-4000-8000-000000000738'
+      and sata_port_count=0 and m2_slot_count=1 and m2_protocols=array['PCIe']) then
+    raise exception 'Admin save did not preserve explicit zero and M.2 specifications';
+  end if;
+  if exists (select 1 from public.motherboard_specs s join public.products p on p.id=s.product_id
+      where p.slug='t11-motherboard-atx' and (s.sata_port_count is not null or s.m2_slot_count is not null or s.m2_protocols is not null)) then
+    raise exception 'Optional storage specs should remain NULL on existing boards';
+  end if;
+  begin
+    update public.motherboard_specs set m2_protocols=array['SAS'] where product_id='00000000-0000-4000-8000-000000000738';
+    raise exception 'Invalid M.2 protocol was accepted';
+  exception when check_violation then null; end;
+end $$;
 
 insert into public.inventory(product_id,on_hand) values ('00000000-0000-4000-8000-000000000735',5);
 
@@ -46,7 +64,8 @@ do $$ begin
     update public.products set status='published' where slug='t73-hdd';
     raise exception 'HDD was published without its specification';
   exception when check_violation then null; end;
-  insert into public.hdd_specs values ('00000000-0000-4000-8000-000000000735',4000,'SATA','3.5 inch');
+  insert into public.hdd_specs(product_id,capacity_gb,interface,form_factor,power_w)
+  values ('00000000-0000-4000-8000-000000000735',4000,'SATA','3.5 inch',6.25);
   update public.products set status='published' where slug='t73-hdd';
 end $$;
 
@@ -68,6 +87,7 @@ do $$ declare catalog_result record; detail jsonb; begin
   end if;
   detail := public.get_published_product_detail('t73-hdd');
   if detail->>'category' is distinct from 'hdd' or detail->'specifications'->>'interface' is distinct from 'SATA'
+    or detail->'specifications'->'power_w' is distinct from '6.25'::jsonb
     or public.get_published_product_detail('t73-hdd-draft') is not null then
     raise exception 'HDD detail omitted specifications or exposed a draft';
   end if;
@@ -120,6 +140,7 @@ do $$ declare v_product_id uuid; product_price integer; product_sku text; produc
   v_order_id := (result->>'orderId')::uuid;
   if (select count(*) from public.order_items oi where oi.order_id=v_order_id) <> 1
      or (select oi.spec_snapshot from public.order_items oi where oi.order_id=v_order_id) is distinct from specs
+     or (select oi.spec_snapshot->'power_w' from public.order_items oi where oi.order_id=v_order_id) is distinct from '6.25'::jsonb
      or (select allocated from public.inventory where public.inventory.product_id=v_product_id) <> 1
      or (select count(*) from public.stock_allocations sa where sa.order_id=v_order_id and sa.product_id=v_product_id and sa.state='active') <> 1 then
     raise exception 'T73 order did not snapshot the HDD specifications and allocate the HDD SKU';
