@@ -1,5 +1,7 @@
 'use client';
 
+import { notifyCartChanged } from '@/features/cart/cart-events';
+
 import { useCallback, useEffect, useState } from 'react';
 import styles from './orders.module.css';
 
@@ -14,6 +16,7 @@ export function PaidCartCleanup({ orderId }: { orderId: string }) {
         body: JSON.stringify({ orderId }),
       });
       if (!response.ok) throw new Error('cleanup failed');
+      notifyCartChanged();
       setState('done');
     } catch { setState('failed'); }
   }, [orderId]);

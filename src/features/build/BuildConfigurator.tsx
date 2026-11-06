@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { StatusMessage } from '@/components/StatusMessage';
+import { notifyCartChanged } from '@/features/cart/cart-events';
 import { CompatibilityFindingSchema, StorageCompatibilitySchema, type CompatibilityFinding, type ProductCategory, type StorageCompatibility } from '@/lib/schemas';
 import type { ProductDetail } from '@/server/catalog/product-detail';
 import type { ProductSearchItem, ProductSearchResult } from '@/server/catalog/product-search';
@@ -155,8 +156,10 @@ function ProductSlot({
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: displayProduct.id, quantity }),
       });
-      if (response.ok) setCartMessage(`${displayProduct.name}をカートに追加しました。`);
-      else {
+      if (response.ok) {
+        notifyCartChanged();
+        setCartMessage(`${displayProduct.name}をカートに追加しました。`);
+      } else {
         const payload = await response.json() as { error?: { code?: string } };
         if (payload.error?.code === 'CONFLICT') setCartMessage('販売可能数が更新されています。数量を減らして再度お試しください。');
         else if (payload.error?.code === 'NOT_FOUND') setCartMessage('この商品は現在カートに追加できません。商品一覧から別の商品をお選びください。');

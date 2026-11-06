@@ -56,7 +56,32 @@ describe('cart routes', () => {
     expect(createCartServiceClient).toHaveBeenCalledOnce();
   });
 
-  it('keeps Auth transport failures as 503 instead of treating them as anonymous', async () => {
+  it('peeks without issuing an anonymous cookie or creating a cart for a new visitor', async () => {
+    const response = await GET(request('/cart?peek=1'));
+    expect(response.status).toBe(200);
+    expect(response.headers.get('set-cookie')).toBeNull();
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect((await response.json()).data).toEqual(projection);
+    expect(getCart).not.toHaveBeenCalled();
+  });
+
+  it('peeks using the same verified anonymous or member owner as the standard cart read', async () => {
+    const signed = createAnonymousCartCookieValue();
+    const valid = await GET(request('/cart?peek=1', { headers: { cookie: 'ec_cart=' + signed } }));
+    expect(valid.status).toBe(200);
+    expect(valid.headers.get('set-cookie')).toBeNull();
+    expect(getCart).toHaveBeenLastCalledWith({ role: 'service_role' }, anonymousCartTokenHash(signed));
+    const invalid = await GET(request('/cart?peek=1', { headers: { cookie: 'ec_cart=' + signed + 'x' } }));
+    expect(invalid.status).toBe(400);
+    const memberClient = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: UUID } }, error: null }) } };
+    createSupabaseServerClient.mockResolvedValueOnce(memberClient);
+    const member = await GET(request('/cart?peek=1'));
+    expect(member.status).toBe(200);
+    expect(member.headers.get('set-cookie')).toBeNull();
+    expect(getCart).toHaveBeenLastCalledWith(memberClient, null);
+  });
+
+  it.each(['/cart', '/cart?peek=1'])('keeps Auth transport failures as 503 for %s', async (path) => {
     mocks.getUser.mockResolvedValueOnce({ data: { user: null }, error: new Error('Auth service unavailable') });
     const response = await GET(request('/cart'));
     expect(response.status).toBe(503);

@@ -49,6 +49,8 @@ paths:
         '503': { $ref: '#/components/responses/Unavailable' }
   /cart:
     get:
+      parameters:
+        - { name: peek, in: query, schema: { type: string, const: "1" }, description: Read the current cart without issuing an anonymous cart cookie to a new visitor. }
       operationId: get_cart
       summary: Read the current-price cart and its server-recorded add-time reference prices
       description: Add-time prices are informational comparison values only. Checkout re-reads current prices. Anonymous carts use an HttpOnly, Secure-in-production, SameSite=Lax signed cookie. A heavy-item shipping amount remains null until its destination is known.

@@ -1,5 +1,7 @@
 'use client';
 
+import { notifyCartChanged } from '@/features/cart/cart-events';
+
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
@@ -42,6 +44,7 @@ export function DemoStart({ returnTo }: { returnTo: string }) {
       const auth = createBrowserClient(url, key).auth;
       const result = await startDemoSession(auth, () => fetch('/api/cart/merge', { method: 'POST', cache: 'no-store', credentials: 'same-origin' }));
       if (!result.ok) { setMessage(result.message); return; }
+      notifyCartChanged(true);
       if (result.mergeWarning) {
         setMessage('デモ会員は開始できましたが、カートを統合できませんでした。カートを開いて内容を確認してください。');
         router.replace('/cart');

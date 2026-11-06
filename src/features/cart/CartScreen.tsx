@@ -9,6 +9,7 @@ import { StatusMessage } from '@/components/StatusMessage';
 import { CartLineSchema, CartProjectionSchema } from '@/lib/schemas';
 import { productImageUrl } from '@/lib/product-image-url';
 import styles from './CartScreen.module.css';
+import { notifyCartChanged } from './cart-events';
 
 const CartDisplayLineSchema = CartLineSchema;
 const CartScreenProjectionSchema = CartProjectionSchema.extend({ items: z.array(CartDisplayLineSchema) });
@@ -76,6 +77,7 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
             method: 'PUT', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(initialProduct),
           });
+          if (response.ok) notifyCartChanged();
           const payload = await response.json() as { data?: unknown } & ApiError;
           if (cancelled) return;
           if (response.ok && payload.data !== undefined) {
@@ -114,6 +116,7 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: item.productId, quantity }),
       });
+      if (response.ok) notifyCartChanged();
       const payload = await response.json() as { data?: unknown } & ApiError;
       if (response.ok && payload.data !== undefined) {
         setCart(parseCart(payload.data));
@@ -134,6 +137,7 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
     setLineMessages((current) => ({ ...current, [item.productId]: '' }));
     try {
       const response = await fetch(`/api/cart?productId=${encodeURIComponent(item.productId)}`, { method: 'DELETE' });
+      if (response.ok) notifyCartChanged();
       const payload = await response.json() as { data?: unknown } & ApiError;
       if (response.ok && payload.data !== undefined) {
         setCart(parseCart(payload.data));

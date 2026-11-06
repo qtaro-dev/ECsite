@@ -31,6 +31,10 @@ export async function GET(request: NextRequest): Promise<Response> {
   try {
     const resolved = await owner(request);
     if (!resolved.user && resolved.cookieValue && !resolved.tokenHash) throw new CartApiError('BAD_REQUEST');
+    if (!resolved.user && !resolved.tokenHash && request.nextUrl.searchParams.get('peek') === '1') {
+      return NextResponse.json({ data: { items: [], goodsTotalYen: 0, estimatedShippingYen: 0 }, requestId: id },
+        { headers: { 'Cache-Control': 'no-store' } });
+    }
     let tokenHash = resolved.tokenHash;
     let issuedCookie: string | null = null;
     const shouldIssue = !resolved.user && !tokenHash;

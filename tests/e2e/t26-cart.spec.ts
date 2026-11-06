@@ -70,7 +70,19 @@ test('anonymous cart adds an item, shows current and reference prices, and adapt
   await expect(page.getByText('追加時 ¥890 → 現在 ¥890。合計には現在価格を使用しています。')).toHaveCount(0);
   await expect(page.getByText('送料（概算）')).toBeVisible();
   await expect(page.getByText('税込合計見込み')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'デモ会員を開始して購入手続きへ' })).toHaveAttribute('href', '/login?next=%2Fcheckout%2Faddress');
+  const checkout = page.getByRole('link', { name: 'デモ会員を開始して購入手続きへ' });
+  await expect(checkout).toHaveAttribute('href', '/login?next=%2Fcheckout%2Faddress');
+  await expect(checkout).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await checkout.hover();
+  await expect(checkout).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(checkout).toHaveCSS('background-color', 'rgb(0, 78, 235)');
+  await page.mouse.move(0, 0);
+  await checkout.focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  await expect(checkout).toBeFocused();
+  await expect(checkout).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(checkout).not.toHaveCSS('box-shadow', 'none');
 
   await expect.poll(async () => page.evaluate(() => getComputedStyle(document.querySelector('main > div:last-of-type')!).gridTemplateColumns.split(' ').length)).toBe(2);
 
@@ -103,7 +115,11 @@ test('stock conflicts and unavailable items are shown per line and can be correc
   await expect(endedRow.getByText('販売終了', { exact: true })).toBeVisible();
   await expect(page.getByText('送料概算を表示できません')).toBeVisible();
   await expect(page.getByText('税込合計見込み')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'デモ会員を開始して購入手続きへ' })).toHaveAttribute('aria-disabled', 'true');
+  const disabledCheckout = page.getByRole('link', { name: 'デモ会員を開始して購入手続きへ' });
+  await expect(disabledCheckout).toHaveAttribute('aria-disabled', 'true');
+  await disabledCheckout.hover({ force: true });
+  await expect(disabledCheckout).toHaveCSS('color', 'rgb(80, 91, 109)');
+  await expect(disabledCheckout).toHaveCSS('background-color', 'rgb(229, 232, 239)');
 
   await stockRow.getByRole('button', { name: '数量を更新' }).click();
   await expect(stockRow.getByRole('alert')).toContainText('販売可能数が更新されました');
@@ -154,4 +170,52 @@ test('signed-in member cart links directly to checkout', async ({ page }) => {
   await expect(page).toHaveURL('/cart');
   await page.goto(`/cart?productId=${sampleProductId}&quantity=1`);
   await expect(page.getByRole('link', { name: '購入手続きへ' })).toHaveAttribute('href', '/checkout/address');
+});
+
+test('cart header sums item quantities, caps the visible badge and stays in sync on desktop and mobile', async ({ page }) => {
+  setCartRoutes(page, emptyCart);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const link = page.locator('header a[href="/cart"]');
+  const badge = link.locator('[aria-hidden="true"]');
+
+  await page.goto('/cart');
+  await expect(page.getByRole('heading', { name: 'カートは空です' })).toBeVisible();
+  await expect(link).toHaveAccessibleName('カート');
+  await expect(badge).toHaveCount(0);
+
+  await page.goto('/cart?productId=' + sampleProductId + '&quantity=1');
+  await expect(link).toHaveAccessibleName('カート（商品1点）');
+  await expect(badge).toHaveText('1');
+  const firstRow = page.locator('article').filter({ has: page.locator('[id="cart-item-' + sampleProductId + '"]') });
+  await firstRow.getByLabel('数量（1〜10）').fill('5');
+  await firstRow.getByRole('button', { name: '数量を更新' }).click();
+  await expect(badge).toHaveText('5');
+
+  const otherId = '00000000-0000-4000-8000-000000000265';
+  await page.goto('/cart?productId=' + otherId + '&quantity=4');
+  await expect(badge).toHaveText('9');
+  const secondRow = page.locator('article').filter({ has: page.locator('[id="cart-item-' + otherId + '"]') });
+  await secondRow.getByLabel('数量（1〜10）').fill('5');
+  await secondRow.getByRole('button', { name: '数量を更新' }).click();
+  await expect(link).toHaveAccessibleName('カート（商品10点）');
+  await expect(badge).toHaveText('9+');
+
+  await page.setViewportSize({ width: 320, height: 812 });
+  await page.locator('header a[href="/"]').click();
+  await expect(page).toHaveURL('/');
+  await expect(badge).toHaveText('9+');
+  await page.reload();
+  await expect(link).toHaveAccessibleName('カート（商品10点）');
+  await expect(badge).toHaveText('9+');
+  const corner = await badge.boundingBox();
+  const button = await link.boundingBox();
+  expect(corner && button && corner.x > button.x + button.width / 2 && corner.y < button.y).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+
+  await link.click();
+  await firstRow.getByRole('button', { name: '削除' }).click();
+  await expect(badge).toHaveText('5');
+  await secondRow.getByRole('button', { name: '削除' }).click();
+  await expect(link).toHaveAccessibleName('カート');
+  await expect(badge).toHaveCount(0);
 });

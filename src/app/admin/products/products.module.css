@@ -5,7 +5,7 @@
 .heading p { margin: 8px 0 0; color: #475467; }
 .primary, .search button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border: 0; border-radius: 6px; background: #155eef; color: #fff; font-weight: 700; text-decoration: none; cursor: pointer; }
 .secondary { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 9px 15px; border: 1px solid #155eef; border-radius: 6px; background: #fff; color: #155eef; font-weight: 700; text-decoration: none; }
-.primary:hover, .search button:hover { background: #004eeb; }
+.primary:is(:hover, :focus-visible), .search button:hover { background: var(--color-primary-hover); color: var(--color-on-primary); }
 .search { max-width: 720px; margin-bottom: 20px; padding: 16px; background: #fff; border: 1px solid #d0d5dd; border-radius: 8px; }
 .search label { display: block; margin-bottom: 8px; font-weight: 600; }
 .search div { display: flex; gap: 8px; }

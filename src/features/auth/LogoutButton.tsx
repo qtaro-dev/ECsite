@@ -1,5 +1,7 @@
 'use client';
 
+import { notifyCartChanged } from '@/features/cart/cart-events';
+
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import styles from './auth.module.css';
@@ -13,6 +15,7 @@ export function LogoutButton({ demo = false }: { demo?: boolean }) {
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST' });
       if (!response.ok) throw new Error();
+      notifyCartChanged(true);
       router.replace('/'); router.refresh();
     } catch { setError('ログアウトできませんでした。時間をおいて再度お試しください。'); setBusy(false); }
   }

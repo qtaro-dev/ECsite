@@ -1,5 +1,7 @@
 'use client';
 
+import { notifyCartChanged } from '@/features/cart/cart-events';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './auth.module.css';
@@ -39,6 +41,7 @@ export function AuthForm({ mode, returnTo }: AuthFormProps) {
         const queryEmail = encodeURIComponent(email);
         router.push(`/verify?email=${queryEmail}${returnTo ? `&next=${encodeURIComponent(returnTo)}` : ''}`);
       } else {
+        notifyCartChanged(true);
         router.replace(result.data?.returnTo ?? '/account');
         router.refresh();
       }
