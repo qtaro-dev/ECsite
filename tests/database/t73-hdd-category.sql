@@ -30,7 +30,7 @@ begin
 end $$;
 reset role;
 
-do $ begin
+do $$ begin
   if not exists (select 1 from public.motherboard_specs where product_id='00000000-0000-4000-8000-000000000738'
       and sata_port_count=0 and m2_slot_count=1 and m2_protocols=array['PCIe']) then
     raise exception 'Admin save did not preserve explicit zero and M.2 specifications';
@@ -43,7 +43,7 @@ do $ begin
     update public.motherboard_specs set m2_protocols=array['SAS'] where product_id='00000000-0000-4000-8000-000000000738';
     raise exception 'Invalid M.2 protocol was accepted';
   exception when check_violation then null; end;
-end $;
+end $$;
 
 insert into public.inventory(product_id,on_hand) values ('00000000-0000-4000-8000-000000000735',5);
 
