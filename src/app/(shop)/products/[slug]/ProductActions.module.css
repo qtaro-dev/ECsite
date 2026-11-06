@@ -5,9 +5,7 @@
 .available, .soldOut { margin: 0; font-weight: 700; }
 .available { color: var(--color-success); }
 .soldOut { color: var(--color-danger); }
-.primaryAction, .secondaryAction, .disabledLink { display: grid; min-height: 48px; place-items: center; padding: 0.75rem; border-radius: var(--radius-control); font-weight: 700; text-align: center; }
-.primaryAction { background: var(--color-primary); color: var(--color-on-primary); text-decoration: none; }
-.primaryAction:is(:hover, :focus-visible) { background: var(--color-primary-hover); color: var(--color-on-primary); }
-.secondaryAction { border: 1px solid var(--color-primary); background: white; text-decoration: none; }
-.disabledLink { background: #e2e8f0; color: #475569; }
+.purchaseForm { display: grid; gap: 0.75rem; }
+.purchaseForm .primaryAction { min-height: 48px; }
+.actions .primaryAction:disabled { border-color: transparent; background: #e2e8f0; color: #475569; opacity: 1; }
 .note { margin: 0; color: var(--color-muted); font-size: var(--font-size-small); }

@@ -96,8 +96,7 @@ test('S05 checks compatible, incompatible, and unknown parts; selections survive
 });
 
 test('HDD and SSD stay independent through selection, compatibility and a shared URL', async ({ page }) => {
-  await page.goto('/products/t24-hdd');
-  await page.getByRole('link', { name: '構成に追加' }).click();
+  await page.goto('/build?category=hdd&product=t24-hdd');
   await expect(page).toHaveURL(/category=hdd&product=t24-hdd/);
   await expect(page.locator('#product-select-hdd')).toHaveValue('t24-hdd');
 

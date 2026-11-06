@@ -25,7 +25,10 @@ async function discoverAddAndQuote(page: Page, query: string, prefecture: string
   const productName = (await productLink.getAttribute('aria-label'))!.replace(/の商品詳細$/, '');
   await productLink.click();
   await expect(page.getByRole('heading', { level: 1, name: productName })).toBeVisible();
-  await page.getByRole('link', { name: 'カートへ進む' }).click();
+  await page.getByRole('button', { name: 'カートに追加' }).click();
+  await expect(page.getByText('商品をカートに追加しました。', { exact: false })).toBeVisible();
+  await expect(page).toHaveURL(/\/products\//);
+  await page.locator('header a[href="/cart"]').click();
   await expect(page).toHaveURL(/\/cart/);
   await expect(page.getByText(productName, { exact: true })).toBeVisible();
   await page.goto('/checkout/address');
