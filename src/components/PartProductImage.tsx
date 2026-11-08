@@ -40,7 +40,7 @@ function PartProductImageContent({ image, categoryArt, fallbackLabel = categoryI
     onLoad: (event: React.SyntheticEvent<HTMLImageElement>) => checkRegisteredImage(event.currentTarget),
     onError: () => setFailed(true),
   };
-  const illustration = showFallback || alt === fallbackLabel;
+  const illustration = showFallback || alt === fallbackLabel || registeredSource === categoryArt;
 
   return <>
     {sizes ? <Image src={src} alt={alt} fill sizes={sizes} unoptimized={!showFallback} {...events} />

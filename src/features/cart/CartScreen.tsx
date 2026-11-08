@@ -47,15 +47,19 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
   useEffect(() => {
     let cancelled = false;
     if (!imageProductIds) return;
-    fetch(`/api/catalog/image-categories?ids=${encodeURIComponent(imageProductIds)}`, { cache: 'no-store' })
-      .then(async (response) => {
+    const ids = imageProductIds.split(',');
+    const batches = Array.from({ length: Math.ceil(ids.length / 100) }, (_, index) => ids.slice(index * 100, (index + 1) * 100));
+    Promise.all(batches.map(async (batch) => {
+      try {
+        const response = await fetch(`/api/catalog/image-categories?ids=${encodeURIComponent(batch.join(','))}`, { cache: 'no-store' });
         if (!response.ok) return {};
         const payload = await response.json() as { data?: unknown };
         if (typeof payload.data !== 'object' || payload.data === null || Array.isArray(payload.data)) return {};
         return Object.fromEntries(Object.entries(payload.data).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
-      })
-      .catch(() => ({}))
-      .then((categories: Record<string, string>) => { if (!cancelled) setImageCategories(categories); });
+      } catch { return {}; }
+    })).then((results) => {
+      if (!cancelled) setImageCategories(Object.assign({}, ...results));
+    });
     return () => { cancelled = true; };
   }, [imageProductIds]);
 

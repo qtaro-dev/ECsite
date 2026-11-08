@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { apiErrorResponse } from '@/lib/schemas';
 import { createSupabaseServerClient } from '@/server/auth/supabase';
 
 const IdsSchema = z.array(z.uuid()).min(1).max(100);
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest): Promise<Response> {
   const rawIds = request.nextUrl.searchParams.get('ids')?.split(',') ?? [];
   const parsed = IdsSchema.safeParse(rawIds);
   if (!parsed.success || new Set(parsed.data).size !== parsed.data.length) {
-    return NextResponse.json({ error: { code: 'BAD_REQUEST', message: 'Invalid product IDs', requestId } }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json(apiErrorResponse('BAD_REQUEST', requestId), { status: 400, headers: { 'Cache-Control': 'no-store' } });
   }
 
   try {
@@ -26,6 +27,6 @@ export async function GET(request: NextRequest): Promise<Response> {
     }));
     return NextResponse.json({ data: categories, requestId }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
-    return NextResponse.json({ error: { code: 'UNAVAILABLE', message: 'Product categories are unavailable', requestId } }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json(apiErrorResponse('UNAVAILABLE', requestId), { status: 503, headers: { 'Cache-Control': 'no-store' } });
   }
 }

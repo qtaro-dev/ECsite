@@ -17,6 +17,14 @@ describe('cart image category lookup', () => {
   it('validates and caps IDs before making a public RLS query', async () => {
     const response = await GET(new NextRequest(`http://localhost/api/catalog/image-categories?ids=${id},not-a-uuid`));
     expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: { code: 'BAD_REQUEST', message: expect.any(String) }, requestId: expect.any(String) });
+    expect(mocks.createSupabaseServerClient).not.toHaveBeenCalled();
+  });
+
+  it('rejects more than 100 IDs before querying', async () => {
+    const ids = Array.from({ length: 101 }, (_, index) => `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`);
+    const response = await GET(new NextRequest(`http://localhost/api/catalog/image-categories?ids=${ids.join(',')}`));
+    expect(response.status).toBe(400);
     expect(mocks.createSupabaseServerClient).not.toHaveBeenCalled();
   });
 
