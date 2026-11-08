@@ -23,6 +23,9 @@ export function DeleteDemoAccount() {
       if (!response.ok) throw new Error(body.error?.message ?? '削除できませんでした。再試行してください。');
       window.sessionStorage.removeItem('checkoutQuote');
       window.sessionStorage.removeItem('checkoutIdempotencyKey');
+      for (const key of Object.keys(window.sessionStorage)) {
+        if (key.startsWith('checkoutIdempotencyKey:')) window.sessionStorage.removeItem(key);
+      }
       if (body.data?.status === 'deleted') { router.replace('/'); router.refresh(); return; }
       setQueued(true);
       setMessage('削除を受け付けました。決済状態の確認後、15分間隔のジョブが自動で再試行します。注文は新たに作成できません。');

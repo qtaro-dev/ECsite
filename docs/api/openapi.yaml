@@ -145,7 +145,7 @@ paths:
     post:
       operationId: post_checkout_start
       summary: Revalidate quote and create a 30-minute Stripe test Checkout session
-      description: Creates the order and 35-minute stock allocation atomically, then opens a test-mode Checkout Session with the server-confirmed JPY amount. Demo members require a fixed fictional address; their Checkout Session pre-fills a synthetic example.invalid email and sends only non-personal IDs in metadata. Same-key retries resume the existing order; uncertain Stripe or database results retain the allocation for safe recovery.
+      description: For regular signed-in members, creates the order and 35-minute stock allocation atomically, then opens a test-mode Checkout Session with the server-confirmed JPY amount. Anonymous demo members are rejected here and must use /checkout/demo-complete, which never calls Stripe. Same-quote retries reuse the same key; uncertain Stripe or database results retain the allocation for safe recovery.
       security: [{ sessionCookies: [] }]
       x-origin-check: required
       parameters:
@@ -160,6 +160,23 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/CheckoutConflict' }
         '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /checkout/demo-complete:
+    post:
+      operationId: post_checkout_demo_complete
+      summary: Complete a fictional demo checkout without creating an order or payment
+      description: Demo members only. Revalidates the owned, unexpired quote, fictional address, cart, current product prices and availability, shipping version, and stock. Atomically marks the quote complete and clears the current cart. It does not call Stripe, create an order or payment attempt, or allocate stock. Replaying the same quote returns success without clearing a later cart.
+      security: [{ sessionCookies: [] }]
+      x-origin-check: required
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DemoCheckoutComplete' } } } }
+      responses:
+        '200': { $ref: '#/components/responses/DemoCheckoutComplete' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
         '503': { $ref: '#/components/responses/Unavailable' }
   /checkout/status:
     get:
@@ -1033,6 +1050,18 @@ components:
       required: [quoteId, userConfirmed]
       additionalProperties: false
       properties: { quoteId: { type: string, format: uuid }, userConfirmed: { type: boolean, const: true } }
+    DemoCheckoutComplete:
+      type: object
+      required: [quoteId, userConfirmed]
+      additionalProperties: false
+      properties: { quoteId: { type: string, format: uuid }, userConfirmed: { type: boolean, const: true } }
+    DemoCheckoutCompleteResult:
+      type: object
+      required: [completed, replayed]
+      additionalProperties: false
+      properties:
+        completed: { type: boolean, const: true }
+        replayed: { type: boolean, description: True when this quote had already been completed. }
     CheckoutStartResult:
       type: object
       required: [orderId, checkoutUrl]
@@ -1695,6 +1724,16 @@ components:
               - type: object
                 properties:
                   data: { $ref: '#/components/schemas/CheckoutStartResult' }
+    DemoCheckoutComplete:
+      description: The fictional demo purchase completed without an order, payment, Stripe Session, or stock allocation. A quote replay does not clear the cart again.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Envelope' }
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/DemoCheckoutCompleteResult' }
     CheckoutStatus:
       description: Current order state and next-action guidance; redirect return alone does not establish success.
       content:

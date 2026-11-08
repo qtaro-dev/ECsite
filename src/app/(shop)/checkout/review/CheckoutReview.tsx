@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { CheckoutQuoteResultSchema } from '@/lib/checkout-quote-schemas';
+import { notifyCartChanged } from '@/features/cart/cart-events';
 import styles from './page.module.css';
 
 const prefectures = ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'];
@@ -10,6 +12,7 @@ const prefectures = ['北海道','青森県','岩手県','宮城県','秋田県'
 type ErrorEnvelope = { error?: { code?: string; message?: string }; requestId?: string };
 
 export function CheckoutReview({ demo = false }: { demo?: boolean }) {
+  const router = useRouter();
   const rawQuote = useSyncExternalStore(
     (notify) => {
       const listener = () => notify();
@@ -38,10 +41,28 @@ export function CheckoutReview({ demo = false }: { demo?: boolean }) {
     if (!quote || expired || !confirmed || busy) return;
     setBusy(true); setMessage('');
     try {
-      let idempotencyKey = window.sessionStorage.getItem('checkoutIdempotencyKey');
+      if (demo) {
+        const response = await fetch('/api/checkout/demo-complete', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quoteId: quote.quoteId, userConfirmed: true }),
+        });
+        const body = await response.json() as ErrorEnvelope;
+        if (!response.ok) throw new Error(body.error?.message ?? 'デモ購入を完了できませんでした。');
+        window.sessionStorage.removeItem('checkoutQuote');
+        window.sessionStorage.removeItem(`checkoutIdempotencyKey:${quote.quoteId}`);
+        notifyCartChanged();
+        router.push(`/checkout/demo-result?quoteId=${encodeURIComponent(quote.quoteId)}`);
+        return;
+      }
+
+      // A retry of one quote must reuse its key, while a newly created quote
+      // receives a fresh key. A session-wide key can bind another quote to an
+      // earlier order and cause CHECKOUT_KEY_CONFLICT.
+      const keyName = `checkoutIdempotencyKey:${quote.quoteId}`;
+      let idempotencyKey = window.sessionStorage.getItem(keyName);
       if (!idempotencyKey) {
         idempotencyKey = crypto.randomUUID();
-        window.sessionStorage.setItem('checkoutIdempotencyKey', idempotencyKey);
+        window.sessionStorage.setItem(keyName, idempotencyKey);
       }
       const response = await fetch('/api/checkout/start', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
@@ -85,11 +106,11 @@ export function CheckoutReview({ demo = false }: { demo?: boolean }) {
         </dl>
         <p>送料規則版: {quote.shippingSettingsVersion}</p>
         <p><a href={quote.shippingSourceUrl} target="_blank" rel="noreferrer">ヤマト運輸公式料金表</a>{quote.shippingSourceCheckedAt && <>（確認日 {new Date(quote.shippingSourceCheckedAt).toLocaleDateString('ja-JP')}）</>}</p>
-        <p className={styles.note}>これはテスト環境の模擬購入です。実際の課金・発送はありません。</p>
-        {demo && <p className={styles.note}>Stripeのテスト画面には架空のメールが事前入力されます。編集できる欄があっても、実際の氏名・住所・電話番号・メールや実カード番号を入力しないでください。キャンセル時はこの画面に戻り、見積から再試行できます。</p>}
+        <p className={styles.note}>{demo ? 'このデモでは実際の決済・注文・発送は行われません。' : 'これはテスト環境の模擬購入です。実際の課金・発送はありません。'}</p>
+        {demo && <p className={styles.note}>個人情報やカード情報は入力不要です。完了するとデモ操作の記録だけを残し、注文や決済を作らずにカートを空にします。</p>}
         {message && <p className={styles.error} role="alert">{message}</p>}
         <label className={styles.confirm}><input type="checkbox" checked={confirmed} disabled={expired} onChange={(event) => setConfirmed(event.target.checked)} /> 商品・配送先・正式な金額を確認しました。</label>
-        <button className={styles.primary} type="button" disabled={!confirmed || expired || busy} onClick={startCheckout}>{busy ? '決済先を準備中…' : '内容を確認してテスト決済へ'}</button>
+        <button className={styles.primary} type="button" disabled={!confirmed || expired || busy} onClick={startCheckout}>{busy ? (demo ? 'デモ購入を完了中…' : '決済先を準備中…') : demo ? 'デモ購入を完了する' : '内容を確認してテスト決済へ'}</button>
         <Link href="/checkout/address">配送先を変更して再見積する</Link>
       </aside>
     </div>

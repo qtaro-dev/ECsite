@@ -47,7 +47,7 @@ test('two demo browsers use owned fictional addresses and quotes without free-fo
       const response = await responsePromise;
       expect(response.status()).toBe(200);
       await expect(page).toHaveURL('/checkout/review');
-      await expect(page.getByText('実カード番号を入力しないでください。')).toBeVisible();
+      await expect(page.getByText('個人情報やカード情報は入力不要です。')).toBeVisible();
       return (await response.json()).data as { quoteId: string; address: { id: string; recipientName: string; postalCode: string; prefectureCode: number } };
     };
     const [aQuote, bQuote] = await Promise.all([quote(a), quote(b)]);
@@ -67,6 +67,28 @@ test('two demo browsers use owned fictional addresses and quotes without free-fo
     }
     await b.setViewportSize({ width: 320, height: 800 });
     expect(await b.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+
+    await a.getByLabel('商品・配送先・正式な金額を確認しました。').check();
+    await a.getByRole('button', { name: 'デモ購入を完了する' }).click();
+    await expect(a).toHaveURL(new RegExp(`/checkout/demo-result\\?quoteId=${aQuote.quoteId}`));
+    await expect(a.getByText('実際の決済・注文・発送は行われません。')).toBeVisible();
+    await expect(a.getByRole('link', { name: 'カート', exact: true })).toBeVisible();
+    await a.reload();
+    await expect(a.getByRole('heading', { name: 'デモ購入が完了しました' })).toBeVisible();
+    await b.goto(`${origin}/checkout/demo-result?quoteId=${aQuote.quoteId}`);
+    await expect(b).toHaveURL('/checkout/address');
+    const emptyCart = await a.request.get('/api/cart');
+    expect((await emptyCart.json()).data.items).toEqual([]);
+
+    // A completed quote replay is idempotent and must not clear products added later.
+    const reAdded = await a.request.put('/api/cart', { headers: { origin }, data: { productId: product!.id, quantity: 1 } });
+    expect(reAdded.status()).toBe(200);
+    const replay = await a.request.post('/api/checkout/demo-complete', {
+      headers: { origin }, data: { quoteId: aQuote.quoteId, userConfirmed: true },
+    });
+    expect(replay.status()).toBe(200);
+    expect((await replay.json()).data).toMatchObject({ completed: true, replayed: true });
+    expect((await (await a.request.get('/api/cart')).json()).data.items).toHaveLength(1);
   } finally {
     await first.close();
     await second.close();

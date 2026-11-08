@@ -29,6 +29,8 @@ on:
       - 'tests/database/t35-demo-checkout-integration.py'
       - 'tests/database/t50-demo-auth-rls.sql'
       - 'tests/database/t51-demo-address-rls.sql'
+      - 'tests/database/t51-demo-checkout-completion.sql'
+      - 'tests/database/t51-demo-checkout-concurrency.py'
       - 'tests/database/t53-prebuilt-pc-catalog.sql'
       - 'tests/database/t22-demo-retention.sql'
       - 'tests/database/t33-order-cart-cleanup.sql'
@@ -77,6 +79,8 @@ on:
       - 'tests/database/t35-demo-checkout-integration.py'
       - 'tests/database/t50-demo-auth-rls.sql'
       - 'tests/database/t51-demo-address-rls.sql'
+      - 'tests/database/t51-demo-checkout-completion.sql'
+      - 'tests/database/t51-demo-checkout-concurrency.py'
       - 'tests/database/t53-prebuilt-pc-catalog.sql'
       - 'tests/database/t22-demo-retention.sql'
       - 'tests/database/t33-order-cart-cleanup.sql'
@@ -159,6 +163,10 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t50-demo-auth-rls.sql
       - name: Check T51 demo address write denial and owner isolation
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t51-demo-address-rls.sql
+      - name: Check T51 demo completion, replay, quote locking, and Stripe exclusion
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t51-demo-checkout-completion.sql
+      - name: Race T51 demo completion with Stripe order creation
+        run: python3 tests/database/t51-demo-checkout-concurrency.py
       - name: Check T53 prebuilt PC catalog, public projections, RLS, and independent checkout stock
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --set ON_ERROR_STOP=1 --file tests/database/t53-prebuilt-pc-catalog.sql
       - name: Check T22 anonymous retention boundary, retry, cascade, and RLS
