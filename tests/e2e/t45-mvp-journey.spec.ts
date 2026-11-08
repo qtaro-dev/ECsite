@@ -42,7 +42,7 @@ async function discoverAddAndQuote(page: Page, query: string, prefecture: string
   await expect(page.getByRole('heading', { name: '注文内容の確認' })).toBeVisible();
   await expect(page.getByText(productName, { exact: true })).toBeVisible();
   await page.getByLabel('商品・配送先・正式な金額を確認しました。').check();
-  await expect(page.getByRole('button', { name: '内容を確認してテスト決済へ' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'デモ購入を完了する' })).toBeEnabled();
   const data = (await response.json()).data as { quoteId: string; address: { id: string; prefectureCode: number }; grandTotalYen: number };
   expect(data.quoteId).toMatch(/^[0-9a-f-]{36}$/);
   expect(data.grandTotalYen).toBeGreaterThan(0);

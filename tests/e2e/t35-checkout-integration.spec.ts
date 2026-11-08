@@ -21,7 +21,7 @@ async function createQuote(page: Page, prefectureCode: string) {
   return (await response.json()).data as { quoteId: string; address: { id: string; prefectureCode: number } };
 }
 
-test('demo buyers keep checkout quotes isolated and handle mocked Stripe success and stock failure', async ({ browser }) => {
+test('demo buyers keep quotes isolated, report stock conflicts, and complete without Stripe', async ({ browser }) => {
   test.skip(!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     'Local Supabase anonymous Auth credentials are required');
   const firstContext = await browser.newContext({ baseURL: origin, viewport: { width: 1280, height: 800 } });
@@ -53,29 +53,24 @@ test('demo buyers keep checkout quotes isolated and handle mocked Stripe success
     });
     expect(crossed.status()).toBe(404);
 
-    let firstStart: { quoteId: string; userConfirmed: boolean } | undefined;
-    await first.route('**/api/checkout/start', async (route) => {
-      firstStart = route.request().postDataJSON() as typeof firstStart;
+    let firstCompletion: { quoteId: string; userConfirmed: boolean } | undefined;
+    await first.route('**/api/checkout/demo-complete', async (route) => {
+      firstCompletion = route.request().postDataJSON() as typeof firstCompletion;
       await route.fulfill({ status: 409, json: { error: { code: 'CONFLICT', message: '在庫が不足しています。カートの数量を見直してください。' } } });
     });
     await first.getByLabel('商品・配送先・正式な金額を確認しました。').check();
-    await first.getByRole('button', { name: '内容を確認してテスト決済へ' }).click();
+    await first.getByRole('button', { name: 'デモ購入を完了する' }).click();
     await expect(first.getByText('在庫が不足しています。カートの数量を見直してください。', { exact: true })).toBeVisible();
-    expect(firstStart).toMatchObject({ quoteId: firstQuote.quoteId, userConfirmed: true });
+    expect(firstCompletion).toMatchObject({ quoteId: firstQuote.quoteId, userConfirmed: true });
 
-    let secondStart: { quoteId: string; userConfirmed: boolean } | undefined;
-    await second.route('**/api/checkout/start', async (route) => {
-      secondStart = route.request().postDataJSON() as typeof secondStart;
-      await route.fulfill({ json: { data: { orderId: '00000000-0000-4000-8000-000000000035', checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_test_t35_mock' } } });
-    });
-    await second.route('https://checkout.stripe.com/**', (route) => route.fulfill({
-      contentType: 'text/html', body: '<main><h1>Mock Stripe test checkout</h1></main>',
-    }));
+    let stripeStartRequests = 0;
+    second.on('request', (request) => { if (request.url().endsWith('/api/checkout/start')) stripeStartRequests += 1; });
     await second.getByLabel('商品・配送先・正式な金額を確認しました。').check();
-    await second.getByRole('button', { name: '内容を確認してテスト決済へ' }).click();
-    await expect(second).toHaveURL('https://checkout.stripe.com/c/pay/cs_test_t35_mock');
-    await expect(second.getByRole('heading', { name: 'Mock Stripe test checkout' })).toBeVisible();
-    expect(secondStart).toMatchObject({ quoteId: secondQuote.quoteId, userConfirmed: true });
+    await second.getByRole('button', { name: 'デモ購入を完了する' }).click();
+    await expect(second).toHaveURL(new RegExp(`/checkout/demo-result\\?quoteId=${secondQuote.quoteId}`));
+    await expect(second.getByRole('heading', { name: 'デモ購入が完了しました' })).toBeVisible();
+    await expect(second.getByText('実際の決済・注文・発送は行われません。')).toBeVisible();
+    expect(stripeStartRequests).toBe(0);
     expect(await second.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   } finally {
     await firstContext.close();

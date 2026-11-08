@@ -12,7 +12,6 @@ import { CheckoutQuoteSourceError, loadCheckoutQuoteSource } from '@/server/chec
 import { getStripeCheckoutGateway } from '@/server/checkout/stripe-client';
 import { startStripeSession } from '@/server/checkout/start-stripe-session';
 import { isDemoUser } from '@/lib/demo-auth';
-import { isDemoAddress } from '@/lib/demo-address';
 
 const unavailableMessage = '現在決済を開始できません。内容を確認し、時間をおいて再度お試しください。';
 const conflictMessages = {
@@ -53,7 +52,6 @@ async function sessionResponse(input: {
   expiresAt: string;
   idempotencyKey: string;
   request: NextRequest;
-  demoUserId?: string;
 }) {
   const result = await startStripeSession({
     stripe: input.stripe,
@@ -64,7 +62,6 @@ async function sessionResponse(input: {
     allocationExpiresAt: input.expiresAt,
     idempotencyKey: input.idempotencyKey,
     siteOrigin: process.env.NEXT_PUBLIC_SITE_URL ?? new URL(input.request.url).origin,
-    demoUserId: input.demoUserId,
   });
   if (result.ok) return authSuccess({ orderId: input.orderId, checkoutUrl: result.session.url });
   if (result.reason === 'allocation_window_elapsed' || result.reason === 'session_expired') return conflict('QUOTE_EXPIRED', 'create_new_quote');
@@ -90,6 +87,7 @@ export async function POST(request: NextRequest) {
     user = auth.data.user;
   } catch { return authError(503, 'UNAVAILABLE', unavailableMessage); }
   if (!user) return authError(401, 'UNAUTHORIZED', 'ログインしてください。');
+  if (isDemoUser(user)) return authError(403, 'FORBIDDEN', '公開デモでは決済を開始しません。架空購入の完了操作をご利用ください。');
 
   // Check Stripe configuration before creating an order or inventory hold.
   let stripe;
@@ -99,24 +97,16 @@ export async function POST(request: NextRequest) {
   let serviceClient;
   try { serviceClient = createCartServiceClient(); }
   catch { return authError(503, 'UNAVAILABLE', unavailableMessage); }
-  if (isDemoUser(user)) {
-    const pendingDeletion = await serviceClient.from('demo_retention_queue').select('user_id')
-      .eq('user_id', user.id).maybeSingle();
-    if (pendingDeletion.error) return authError(503, 'UNAVAILABLE', unavailableMessage);
-    if (pendingDeletion.data) return authError(409, 'CONFLICT', 'デモ会員の削除を受け付けています。新しい注文は開始できません。');
-  }
-
   // Recover an uncertain Stripe or DB response by the stable checkout key
   // before requiring a still-live quote or rereading mutable cart data.
   let replayOrder;
   try {
-    const result = await serviceClient.from('orders').select('id,user_id,checkout_key,checkout_quote_id,status,grand_total_yen,address_snapshot')
+    const result = await serviceClient.from('orders').select('id,user_id,checkout_key,checkout_quote_id,status,grand_total_yen')
       .eq('checkout_key', checkoutKey.data).eq('user_id', user.id).maybeSingle();
     if (result.error) return authError(503, 'UNAVAILABLE', unavailableMessage);
     replayOrder = result.data;
   } catch { return authError(503, 'UNAVAILABLE', unavailableMessage); }
   if (replayOrder) {
-    if (isDemoUser(user) && !isDemoAddress(replayOrder.address_snapshot)) return conflict('ADDRESS_CHANGED', 'select_address');
     if (replayOrder.checkout_quote_id !== parsed.data.quoteId) return conflict('CHECKOUT_KEY_CONFLICT', 'create_new_quote');
     if (replayOrder.status !== 'payment_pending') return conflict('QUOTE_EXPIRED', 'create_new_quote');
     const pending = await loadPendingCheckout(serviceClient, user.id, replayOrder.id);
@@ -128,7 +118,6 @@ export async function POST(request: NextRequest) {
       stripe, serviceClient, orderId: replayOrder.id, attemptId: pending.attempt.id,
       amountYen: pending.attempt.amount_yen, expiresAt: pending.attempt.expires_at,
       idempotencyKey: replayOrder.checkout_key, request,
-      demoUserId: isDemoUser(user) ? user.id : undefined,
     });
   }
 
@@ -156,7 +145,6 @@ export async function POST(request: NextRequest) {
     if (error instanceof CheckoutQuoteSourceError && error.code === 'ADDRESS_NOT_FOUND') return conflict('ADDRESS_CHANGED', 'select_address');
     return authError(503, 'UNAVAILABLE', unavailableMessage);
   }
-  if (isDemoUser(user) && !isDemoAddress(source.address)) return conflict('ADDRESS_CHANGED', 'select_address');
   const calculation = calculateCheckoutQuote({ ...source, cart });
   if (!calculation.ok) {
     if (calculation.failure.kind === 'cart_empty') return conflict('CART_CHANGED', 'review_cart');
@@ -184,6 +172,7 @@ export async function POST(request: NextRequest) {
   if (allocation.status === 'address_changed' || allocation.status === 'address_unavailable') return conflict('ADDRESS_CHANGED', 'select_address');
   if (allocation.status === 'product_unavailable') return conflict('PRODUCT_UNAVAILABLE', 'review_cart', allocation.productId ? [{ field: 'availability', productId: allocation.productId }] : []);
   if (allocation.status === 'key_conflict') return conflict('CHECKOUT_KEY_CONFLICT', 'create_new_quote');
+  if (allocation.status === 'demo_checkout_completed') return authError(409, 'CONFLICT', 'この見積はデモ購入で完了済みです。新しい見積を作成してください。');
   if (allocation.status === 'shipping_unavailable') return authError(503, 'UNAVAILABLE', '送料を確定できないため、注文を開始できません。');
   if (allocation.status !== 'created' && allocation.status !== 'already_created') return authError(503, 'UNAVAILABLE', unavailableMessage);
   if (allocation.attemptId === null || allocation.amountYen !== calculation.quote.grandTotalYen) return authError(503, 'UNAVAILABLE', unavailableMessage);
@@ -194,6 +183,5 @@ export async function POST(request: NextRequest) {
     stripe, serviceClient, orderId: allocation.orderId, attemptId: pending.attempt.id,
     amountYen: pending.attempt.amount_yen, expiresAt: pending.attempt.expires_at,
     idempotencyKey: allocation.checkoutKey, request,
-    demoUserId: isDemoUser(user) ? user.id : undefined,
   });
 }

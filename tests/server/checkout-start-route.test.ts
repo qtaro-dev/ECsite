@@ -116,6 +116,14 @@ describe('POST /api/checkout/start', () => {
     expect(createSession).not.toHaveBeenCalled();
   });
 
+  it('refuses Stripe order creation when the quote was already completed as a demo', async () => {
+    mocks.allocateCheckoutOrder.mockResolvedValueOnce({ status: 'demo_checkout_completed' });
+    const response = await POST(request());
+    expect(response.status).toBe(409);
+    expect((await response.json()).error.message).toContain('デモ購入で完了済み');
+    expect(createSession).not.toHaveBeenCalled();
+  });
+
   it('recovers a pending order with the same key after its saved quote has expired', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-26T03:20:00.000Z'));
@@ -132,13 +140,11 @@ describe('POST /api/checkout/start', () => {
     } finally { vi.useRealTimers(); }
   });
 
-  it('refuses to replay a demo order with an earlier free-form address snapshot', async () => {
+  it('prevents demo members from reaching the Stripe test path', async () => {
     mocks.authUser.isDemo = true;
-    mocks.replayOrder = { id: orderId, user_id: userId, checkout_key: checkoutKey, checkout_quote_id: quoteId,
-      status: 'payment_pending', grand_total_yen: grandTotalYen,
-      address_snapshot: { recipientName: '実名', postalCode: '1000001', prefectureCode: 13, city: '実在市', street: '実住所' } };
     const response = await POST(request());
-    expect(response.status).toBe(409);
+    expect(response.status).toBe(403);
+    expect(mocks.allocateCheckoutOrder).not.toHaveBeenCalled();
     expect(createSession).not.toHaveBeenCalled();
   });
 

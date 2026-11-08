@@ -52,7 +52,7 @@ export const CheckoutDifferenceSchema = z.object({
 
 export const CheckoutAllocationRpcResultSchema = z.discriminatedUnion('status', [
   z.object({ status: z.enum(['created', 'already_created']), orderId: IdSchema, attemptId: IdSchema.nullable(), amountYen: YenSchema, expiresAt: z.string().datetime({ offset: true }), checkoutKey: IdSchema }).strict(),
-  z.object({ status: z.enum(['not_found', 'quote_expired', 'cart_changed', 'address_unavailable', 'address_changed', 'product_unavailable', 'shipping_unavailable', 'key_conflict']), nextAction: z.string().optional(), productId: IdSchema.optional() }).strict(),
+  z.object({ status: z.enum(['not_found', 'quote_expired', 'cart_changed', 'address_unavailable', 'address_changed', 'product_unavailable', 'shipping_unavailable', 'key_conflict', 'demo_checkout_completed']), nextAction: z.string().optional(), productId: IdSchema.optional() }).strict(),
   z.object({ status: z.literal('stock_unavailable'), items: z.array(z.object({ productId: IdSchema, name: z.string().optional(), requestedQuantity: z.number().int().positive(), availableQuantity: z.number().int().nonnegative() }).strict()), nextAction: z.string() }).strict(),
   z.object({ status: z.literal('snapshot_stale'), differences: z.array(CheckoutDifferenceSchema), nextAction: z.string() }).strict(),
   z.object({ status: z.literal('quote_changed'), changedFields: z.array(z.string()), differences: z.array(CheckoutDifferenceSchema), quotedTotals: z.record(z.string(), YenSchema), currentTotals: z.record(z.string(), YenSchema), nextAction: z.string() }).strict(),
