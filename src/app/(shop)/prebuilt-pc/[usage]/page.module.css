@@ -7,6 +7,9 @@
 .header > p:last-child { margin: 0.5rem 0 0; color: var(--color-muted); }
 .productGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
 .productCard { display: flex; min-width: 0; flex-direction: column; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }
+.productImage { position: relative; min-height: 12rem; overflow: hidden; background: var(--color-background); }
+.productImage img { object-fit: contain; }
+.productImage > span { position: absolute; right: 0.5rem; bottom: 0.5rem; padding: 0.125rem 0.375rem; border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-muted); font-size: 0.6875rem; }
 .productBody { flex: 1; padding: 1.25rem; }
 .sku { margin: 0 0 0.375rem; color: var(--color-muted); font-size: var(--font-size-small); }
 .productBody h2 { margin: 0; font-size: 1.125rem; line-height: 1.45; }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PartProductImage } from "@/components/PartProductImage";
 import { StatusMessage } from "@/components/StatusMessage";
 import { parseProductSearch, searchProducts } from "@/server/catalog/product-search";
 import { getPublishedProductDetail, type ProductDetail } from "@/server/catalog/product-detail";
@@ -80,6 +81,11 @@ export default async function PrebuiltPCUseCasePage({ params }: { params: Promis
       {products.map((product) => {
         const components = componentSummary(product);
         return <article className={styles.productCard} key={product.id}>
+          <div className={styles.productImage}>
+            <PartProductImage image={product.images[0]} categoryArt="/images/prebuilt-pc-placeholder.svg"
+              fallbackLabel="完成PCのイメージ"
+              sizes="(max-width: 767px) 90vw, (max-width: 1199px) 45vw, 320px" />
+          </div>
           <div className={styles.productBody}>
             <p className={styles.sku}>完成PC ／ {product.sku}</p>
             <h2><Link href={`/products/${product.slug}`}>{product.name}</Link></h2>

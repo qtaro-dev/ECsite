@@ -99,6 +99,19 @@ test('anonymous cart adds an item, shows current and reference prices, and adapt
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 });
 
+test('cart uses the product image first and falls back to its category illustration when unavailable', async ({ page }) => {
+  const item: CartItem = { productId: sampleProductId, quantity: 1, unitPriceYen: 890, lineTotalYen: 890,
+    availableQuantity: 5, name: 'Fixture CPU', slug: 'fixture-cpu', brand: 'Fixture Works', sku: 'CPU-261',
+    imagePath: 'test/cpu-unavailable.png', unitPriceAtAddYen: 890, availabilityState: 'available' };
+  setCartRoutes(page, { items: [item], goodsTotalYen: 890, estimatedShippingYen: 940 });
+  await page.route('**/api/catalog/image-categories**', (route) => route.fulfill({ json: { data: { [sampleProductId]: 'cpu' } } }));
+  await page.route('**/api/product-images/**', (route) => route.fulfill({ status: 404 }));
+  await page.goto('/cart');
+  const imageLink = page.getByRole('link', { name: 'Fixture CPUの商品詳細' });
+  await expect(imageLink.locator('img')).toHaveAttribute('src', '/images/home-category/01_cpu.png');
+  await expect(imageLink.getByText('カテゴリのイメージ')).toBeVisible();
+});
+
 test('stock conflicts and unavailable items are shown per line and can be corrected or removed', async ({ page }) => {
   const stockItem: CartItem = { productId: sampleProductId, quantity: 2, unitPriceYen: 890, lineTotalYen: 1780,
     availableQuantity: 1, name: 'Fixture CPU', slug: 'fixture-cpu', brand: 'Fixture Works', sku: 'CPU-261',
