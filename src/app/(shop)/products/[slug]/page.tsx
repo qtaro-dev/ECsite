@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductActions } from "./ProductActions";
-import { ProductImage } from "./ProductImage";
 import { PartProductImage } from "@/components/PartProductImage";
 import { categoryImage } from "@/lib/category-images";
 import styles from "./page.module.css";
 import { getPublishedProductDetail } from "@/server/catalog/product-detail";
 import { getPublishedPrebuiltPartLinks } from "@/server/catalog/prebuilt-part-links";
-import { productImageUrl } from "@/lib/product-image-url";
 
 const labels: Record<string, string> = {
   sata_port_count: "SATAポート数", m2_slot_count: "M.2スロット数", m2_protocols: "M.2対応規格", power_w: "消費電力（W）",
@@ -52,6 +50,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   const category = categoryNames[product.category] ?? product.category;
   const categoryArt = categoryImage(product.category);
+  const imageFallback = categoryArt ?? "/images/prebuilt-pc-placeholder.svg";
   const isPrebuilt = product.category === "prebuilt-pc";
   const partLinks = isPrebuilt ? await getPublishedPrebuiltPartLinks(product.id) : {};
   const specifications = Object.entries(product.specifications ?? {}).filter(([key, value]) =>
@@ -82,13 +81,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     </nav>
     <div className={styles.layout}>
       <section className={styles.gallery} aria-label="商品画像">
-        {categoryArt ? (product.images.length > 0 ? product.images : [undefined]).map((image, index) => (
+        {(product.images.length > 0 ? product.images : [undefined]).map((image, index) => (
           <div className={styles.partImage} key={image?.path ?? index}>
-            <PartProductImage image={image} categoryArt={categoryArt} />
+            <PartProductImage image={image} categoryArt={imageFallback}
+              fallbackLabel={categoryArt ? undefined : "完成PCのイメージ"} />
           </div>
-        )) : product.images.length > 0 ? product.images.map((image, index) => (
-          <ProductImage key={`${image.path}-${index}`} src={productImageUrl(image.path)} alt={image.altText} productName={product.name} />
-        )) : <div className={styles.imagePlaceholder} role="img" aria-label={`${product.name}の商品画像はありません`}>商品画像はありません</div>}
+        ))}
       </section>
       <section className={styles.summary}>
         <p className={styles.eyebrow}>{category} ／ {product.brand}</p>

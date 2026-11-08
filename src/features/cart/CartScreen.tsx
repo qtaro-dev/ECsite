@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { Button } from '@/components/Button';
 import { StatusMessage } from '@/components/StatusMessage';
 import { CartLineSchema, CartProjectionSchema } from '@/lib/schemas';
-import { productImageUrl } from '@/lib/product-image-url';
+import { CartProductImage } from './CartProductImage';
 import styles from './CartScreen.module.css';
 import { notifyCartChanged } from './cart-events';
 import { cartFailureMessage } from './cart-messages';
@@ -33,6 +32,7 @@ function itemName(item: CartDisplayLine): string {
 
 export function CartScreen({ isMember, initialProduct }: { isMember: boolean; initialProduct: InitialProduct }) {
   const [cart, setCart] = useState<CartScreenProjection | null>(null);
+  const [imageCategories, setImageCategories] = useState<Record<string, string>>({});
   const [drafts, setDrafts] = useState<Record<string, number>>({});
   const [lineMessages, setLineMessages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -42,6 +42,22 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
   const [initialAddAttempt, setInitialAddAttempt] = useState(0);
   const [initialAddFailed, setInitialAddFailed] = useState(false);
   const handledInitialProduct = useRef(false);
+  const imageProductIds = [...new Set(cart?.items.map((item) => item.productId) ?? [])].sort().join(',');
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!imageProductIds) return;
+    fetch(`/api/catalog/image-categories?ids=${encodeURIComponent(imageProductIds)}`, { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) return {};
+        const payload = await response.json() as { data?: unknown };
+        if (typeof payload.data !== 'object' || payload.data === null || Array.isArray(payload.data)) return {};
+        return Object.fromEntries(Object.entries(payload.data).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+      })
+      .catch(() => ({}))
+      .then((categories: Record<string, string>) => { if (!cancelled) setImageCategories(categories); });
+    return () => { cancelled = true; };
+  }, [imageProductIds]);
 
   const loadCart = useCallback(async () => {
     const response = await fetch('/api/cart', { cache: 'no-store' });
@@ -169,7 +185,9 @@ export function CartScreen({ isMember, initialProduct }: { isMember: boolean; in
           const name = itemName(item);
           const hasPriceChanged = item.unitPriceAtAddYen !== null && item.unitPriceYen !== null && item.unitPriceAtAddYen !== item.unitPriceYen;
           return <article className={styles.line} key={item.productId} aria-labelledby={`cart-item-${item.productId}`}>
-            {item.imagePath && <Link href={item.slug ? `/products/${item.slug}` : '/search'} aria-label={`${name}の商品詳細`} className={styles.imageLink}><Image src={productImageUrl(item.imagePath)} alt="" width={112} height={84} unoptimized /></Link>}
+            <Link href={item.slug ? `/products/${item.slug}` : '/search'} aria-label={`${name}の商品詳細`} className={styles.imageLink}>
+              <CartProductImage imagePath={item.imagePath} category={imageCategories[item.productId]} />
+            </Link>
             <div className={styles.itemMain}>
               <h3 id={`cart-item-${item.productId}`}>{item.slug ? <Link href={`/products/${item.slug}`}>{name}</Link> : name}</h3>
               {item.brand && item.sku && <p className={styles.itemSub}>{item.brand} / {item.sku}</p>}

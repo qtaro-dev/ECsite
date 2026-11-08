@@ -8,6 +8,7 @@ import { productImageUrl } from "@/lib/product-image-url";
 type PartProductImageProps = {
   image?: { path: string; altText: string };
   categoryArt: string;
+  fallbackLabel?: string;
   sizes?: string;
 };
 
@@ -15,7 +16,7 @@ export function PartProductImage(props: PartProductImageProps) {
   return <PartProductImageContent key={props.image?.path} {...props} />;
 }
 
-function PartProductImageContent({ image, categoryArt, sizes }: PartProductImageProps) {
+function PartProductImageContent({ image, categoryArt, fallbackLabel = categoryIllustrationLabel, sizes }: PartProductImageProps) {
   const [failed, setFailed] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
   const registeredSource = image && productImageUrl(image.path);
@@ -39,12 +40,12 @@ function PartProductImageContent({ image, categoryArt, sizes }: PartProductImage
     onLoad: (event: React.SyntheticEvent<HTMLImageElement>) => checkRegisteredImage(event.currentTarget),
     onError: () => setFailed(true),
   };
-  const illustration = showFallback || alt === categoryIllustrationLabel;
+  const illustration = showFallback || alt === fallbackLabel;
 
   return <>
     {sizes ? <Image src={src} alt={alt} fill sizes={sizes} unoptimized={!showFallback} {...events} />
       // eslint-disable-next-line @next/next/no-img-element
       : <img src={src} alt={alt} {...events} />}
-    {illustration && <span>{categoryIllustrationLabel}</span>}
+    {illustration && <span>{fallbackLabel}</span>}
   </>;
 }

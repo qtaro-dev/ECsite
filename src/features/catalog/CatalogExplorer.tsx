@@ -50,15 +50,14 @@ function specDisplayValue(value: string | number | string[] | undefined) {
 
 function ProductCard({ product }: { product: ProductSearchItem }) {
   const categoryArt = categoryImage(product.category);
+  const imageFallback = categoryArt ?? "/images/prebuilt-pc-placeholder.svg";
   return <article className={styles.productCard}>
     <Link className={styles.productLink} href={`/products/${product.slug}`} aria-label={`${product.name}の商品詳細`}>
-      {categoryArt ? (
-        <div className={styles.productImage}>
-          <PartProductImage image={product.images[0]} categoryArt={categoryArt} sizes="(max-width: 767px) 112px, (max-width: 1199px) 50vw, 320px" />
-        </div>
-      ) : (
-        <div className={styles.productVisual} aria-hidden="true"><span>{categoryNames[product.category] ?? "PC PARTS"}</span><strong>{product.name.slice(0, 1)}</strong></div>
-      )}
+      <div className={styles.productImage}>
+        <PartProductImage image={product.images[0]} categoryArt={imageFallback}
+          fallbackLabel={categoryArt ? undefined : "完成PCのイメージ"}
+          sizes="(max-width: 767px) 112px, (max-width: 1199px) 50vw, 320px" />
+      </div>
       <div className={styles.productBody}><p className={styles.brand}>{product.brand} <span>／</span> {product.sku}</p>
         <h3>{product.name}</h3><p className={styles.productNote}>{productSubtitle(product)}</p>
         <p className={styles.price}>¥{displayPrice(product.priceYen)}<small>（税込）</small></p>
